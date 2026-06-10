@@ -279,9 +279,11 @@ impl WorldState {
         if self.shop.is_some() {
             match input {
                 Input::ShopCursor(delta) => {
-                    if let Some((items, cursor)) = &mut self.shop {
-                        let len = items.len() as i32;
-                        let next = (*cursor as i32 + i32::from(delta)).clamp(0, len - 1);
+                    if let Some((items, cursor)) = &mut self.shop
+                        && !items.is_empty()
+                    {
+                        let last = items.len() as i32 - 1;
+                        let next = (*cursor as i32 + i32::from(delta)).clamp(0, last);
                         *cursor = usize::try_from(next).unwrap_or(0);
                     }
                 }
@@ -1113,6 +1115,9 @@ impl WorldState {
 
     /// Restores position/flags/counters from a save into a fresh world
     /// built over the same content.
+    /// Contract: saves are only written outside battles/shops/prompts
+    /// (rest points, menu, post-battle), so those modal fields stay at
+    /// their fresh-world defaults here by design.
     pub fn restore(&mut self, file: &save::SaveFile) {
         self.current_map = file.player.position.map.clone();
         self.player = (file.player.position.x, file.player.position.y);
