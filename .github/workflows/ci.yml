@@ -1,0 +1,43 @@
+# CI gate (docs/03-ARCHITECTURE.md §6): fmt, clippy, tests, content
+# validation. A red main is an emergency.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bevy's Linux build needs ALSA and udev headers.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev pkg-config
+
+      # rust-toolchain.toml pins the channel and components; this just
+      # makes sure rustup has synced it on the runner.
+      - name: Sync Rust toolchain
+        run: rustup show
+
+      - name: Cache cargo + target
+        uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Validate content
+        run: cargo run -p tools -- validate
