@@ -19,7 +19,7 @@ const WINDOW_SCALE: u32 = 2;
 /// Top-level app states (doc 03 §3). Stubbed in P0: only `Boot` is ever
 /// active; transitions arrive with the state plugins from P2.
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[allow(dead_code, reason = "variants are wired up by the P2 state plugins")]
+#[expect(dead_code, reason = "variants are wired up by the P2 state plugins")]
 enum AppState {
     #[default]
     Boot,
