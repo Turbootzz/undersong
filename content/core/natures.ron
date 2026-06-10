@@ -1,0 +1,19 @@
+// The 25 Temperaments — docs/02-GAME-DESIGN.md §3. The index order is law:
+// boosted stat = n / 5, hindered = n % 5, over [atk, def, spa, spd, spe];
+// the diagonal (n / 5 == n % 5) is neutral. Rows below follow the doc's
+// 5×5 grid, one row per boosted stat. Data carries only UI name keys;
+// the multiplier math lives with the stat formulas (battle crate, P1).
+Natures(
+    name_keys: [
+        // +atk row: −atk (neutral), −def, −spa, −spd, −spe
+        "nature.marcato", "nature.forte", "nature.bravura", "nature.sforzando", "nature.pesante",
+        // +def row
+        "nature.tenuto", "nature.fermo", "nature.solido", "nature.grave", "nature.largo",
+        // +spa row
+        "nature.brillante", "nature.estro", "nature.lucido", "nature.acuto", "nature.rubato",
+        // +spd row
+        "nature.placido", "nature.sereno", "nature.velato", "nature.calmo", "nature.adagio",
+        // +spe row
+        "nature.vivace", "nature.presto", "nature.agile", "nature.scherzo", "nature.moderato",
+    ],
+)

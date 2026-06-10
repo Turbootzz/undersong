@@ -1,0 +1,74 @@
+// Type effectiveness chart — docs/02-GAME-DESIGN.md §1. The table there is law.
+//
+// Fully explicit 12×12: every attacker lists every defender, in canonical
+// type order, so the validator proves totality instead of assuming neutral
+// for gaps (doc 04 §3 rule 6). `tools validate` and the cross-transcription
+// test in crates/data/tests/core_content.rs must stay green when editing.
+//
+// Known doc note: the §1 "derived defensive weakness counts" sanity line
+// says frost has 3 weaknesses; the table itself gives frost 4
+// (ember, stone, alloy, resonant all hit frost 2×). The table wins.
+TypeChart(
+    entries: {
+        Feral: {
+            Feral: Neutral, Ember: Neutral, Tide: Neutral, Bloom: Neutral,
+            Volt: Neutral, Gale: Neutral, Stone: Half, Frost: Neutral,
+            Venom: Neutral, Phantom: Zero, Alloy: Half, Resonant: Neutral,
+        },
+        Ember: {
+            Feral: Neutral, Ember: Half, Tide: Half, Bloom: Double,
+            Volt: Neutral, Gale: Neutral, Stone: Half, Frost: Double,
+            Venom: Neutral, Phantom: Neutral, Alloy: Double, Resonant: Neutral,
+        },
+        Tide: {
+            Feral: Neutral, Ember: Double, Tide: Half, Bloom: Half,
+            Volt: Neutral, Gale: Neutral, Stone: Double, Frost: Neutral,
+            Venom: Neutral, Phantom: Neutral, Alloy: Double, Resonant: Neutral,
+        },
+        Bloom: {
+            Feral: Neutral, Ember: Half, Tide: Double, Bloom: Half,
+            Volt: Neutral, Gale: Half, Stone: Double, Frost: Neutral,
+            Venom: Half, Phantom: Neutral, Alloy: Neutral, Resonant: Neutral,
+        },
+        Volt: {
+            Feral: Neutral, Ember: Neutral, Tide: Double, Bloom: Half,
+            Volt: Half, Gale: Double, Stone: Zero, Frost: Neutral,
+            Venom: Neutral, Phantom: Neutral, Alloy: Neutral, Resonant: Neutral,
+        },
+        Gale: {
+            Feral: Neutral, Ember: Neutral, Tide: Neutral, Bloom: Double,
+            Volt: Half, Gale: Neutral, Stone: Half, Frost: Neutral,
+            Venom: Double, Phantom: Neutral, Alloy: Half, Resonant: Neutral,
+        },
+        Stone: {
+            Feral: Neutral, Ember: Double, Tide: Neutral, Bloom: Half,
+            Volt: Double, Gale: Double, Stone: Neutral, Frost: Double,
+            Venom: Double, Phantom: Neutral, Alloy: Half, Resonant: Neutral,
+        },
+        Frost: {
+            Feral: Neutral, Ember: Half, Tide: Half, Bloom: Double,
+            Volt: Neutral, Gale: Double, Stone: Double, Frost: Half,
+            Venom: Neutral, Phantom: Neutral, Alloy: Half, Resonant: Neutral,
+        },
+        Venom: {
+            Feral: Neutral, Ember: Neutral, Tide: Neutral, Bloom: Double,
+            Volt: Neutral, Gale: Neutral, Stone: Half, Frost: Neutral,
+            Venom: Half, Phantom: Half, Alloy: Zero, Resonant: Double,
+        },
+        Phantom: {
+            Feral: Zero, Ember: Neutral, Tide: Neutral, Bloom: Neutral,
+            Volt: Neutral, Gale: Neutral, Stone: Neutral, Frost: Neutral,
+            Venom: Neutral, Phantom: Double, Alloy: Neutral, Resonant: Double,
+        },
+        Alloy: {
+            Feral: Neutral, Ember: Half, Tide: Half, Bloom: Neutral,
+            Volt: Half, Gale: Neutral, Stone: Double, Frost: Double,
+            Venom: Neutral, Phantom: Neutral, Alloy: Half, Resonant: Neutral,
+        },
+        Resonant: {
+            Feral: Neutral, Ember: Neutral, Tide: Neutral, Bloom: Neutral,
+            Volt: Neutral, Gale: Neutral, Stone: Neutral, Frost: Double,
+            Venom: Half, Phantom: Double, Alloy: Neutral, Resonant: Half,
+        },
+    },
+)
