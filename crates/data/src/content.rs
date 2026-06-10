@@ -45,13 +45,15 @@ pub struct CoreContent {
 
 #[derive(Debug, thiserror::Error)]
 pub enum LoadError {
-    #[error("failed to read {path}: {source}")]
+    // Display omits {source}: callers print the chain (anyhow `{:#}`),
+    // and including it here would double every cause.
+    #[error("failed to read {path}")]
     Io {
         path: PathBuf,
         #[source]
         source: std::io::Error,
     },
-    #[error("failed to parse {path}: {source}")]
+    #[error("failed to parse {path}")]
     Parse {
         path: PathBuf,
         // Boxed: SpannedError is large and would bloat every Result
