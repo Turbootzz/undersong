@@ -9,7 +9,7 @@ use game::world::{Input as WorldInput, WorldEvent, WorldState, load_dev_world};
 use undersong_core::types::Type;
 use undersong_core::world::Facing;
 
-use crate::AppState;
+use crate::{AppState, WINDOW_SCALE};
 
 const TILE: f32 = 16.0;
 const VIEW_W: f32 = 480.0;
@@ -21,18 +21,21 @@ pub struct UndersongPlugin;
 
 impl Plugin for UndersongPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UiScale(2.0))
+        app.insert_resource(UiScale(WINDOW_SCALE as f32))
             .insert_resource(RenderedMap(None))
             .insert_resource(PlayerAnim(None))
+            .insert_resource(BufferedDir(None))
             .insert_resource(WanderTimer(Timer::from_seconds(1.2, TimerMode::Repeating)))
             .insert_resource(MenuCursor(0))
+            .insert_resource(SettingsRes(save::Settings::default()))
+            .insert_resource(SettingsOpen(false))
             .insert_resource(Wipe(None))
             .add_systems(OnEnter(AppState::Boot), boot_load)
             .add_systems(
                 Update,
                 (
-                    rebuild_map_if_needed,
                     player_input,
+                    rebuild_map_if_needed,
                     animate_player,
                     npc_wander,
                     sync_npc_sprites,
@@ -43,6 +46,7 @@ impl Plugin for UndersongPlugin {
                     .chain()
                     .run_if(in_state(AppState::Overworld)),
             )
+            .add_systems(OnExit(AppState::Overworld), cleanup_wipe)
             .add_systems(OnEnter(AppState::Menu), menu_open)
             .add_systems(Update, menu_input.run_if(in_state(AppState::Menu)))
             .add_systems(OnExit(AppState::Menu), despawn_tagged::<MenuUi>)
@@ -79,7 +83,12 @@ impl Theme {
 
 fn shade(color: Color, factor: f32) -> Color {
     let c = color.to_srgba();
-    Color::srgba(c.red * factor, c.green * factor, c.blue * factor, c.alpha)
+    Color::srgba(
+        (c.red * factor).min(1.0),
+        (c.green * factor).min(1.0),
+        (c.blue * factor).min(1.0),
+        c.alpha,
+    )
 }
 
 #[derive(Resource)]
@@ -88,11 +97,23 @@ struct RenderedMap(Option<undersong_core::ids::MapId>);
 #[derive(Resource)]
 struct PlayerAnim(Option<(Vec2, Vec2, f32)>);
 
+/// One-step input buffer (doc 03 §3): a tap during interpolation is
+/// remembered and fired the frame the lerp completes.
+#[derive(Resource)]
+struct BufferedDir(Option<Facing>);
+
 #[derive(Resource)]
 struct WanderTimer(Timer);
 
 #[derive(Resource)]
 struct MenuCursor(usize);
+
+/// Live settings (doc 05 §5 subset); persisted into saves.
+#[derive(Resource)]
+struct SettingsRes(save::Settings);
+
+#[derive(Resource)]
+struct SettingsOpen(bool);
 
 /// Measure-bar wipe on warps (doc 05 §6): a bar sweeps across, then
 /// fades. `t` runs 0..1.
@@ -133,7 +154,8 @@ fn boot_load(mut commands: Commands, mut next: ResMut<NextState<AppState>>) {
     let palette = data::load_palette(content).expect("palette.ron must load");
     let world = load_dev_world(content, 0x00D0_5EED).expect("dev world must load");
 
-    commands.spawn((Camera2d, Transform::from_scale(Vec3::new(0.5, 0.5, 1.0))));
+    let zoom = 1.0 / WINDOW_SCALE as f32;
+    commands.spawn((Camera2d, Transform::from_scale(Vec3::new(zoom, zoom, 1.0))));
     commands.insert_resource(Theme { palette });
     commands.insert_resource(WorldRes(world));
     next.set(AppState::Overworld);
@@ -260,16 +282,18 @@ fn pressed_direction(keys: &ButtonInput<KeyCode>) -> Option<Facing> {
     }
 }
 
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn player_input(
     keys: Res<ButtonInput<KeyCode>>,
     mut world: ResMut<WorldRes>,
     mut anim: ResMut<PlayerAnim>,
+    mut buffered: ResMut<BufferedDir>,
     mut rendered: ResMut<RenderedMap>,
     mut wipe: ResMut<Wipe>,
     mut next: ResMut<NextState<AppState>>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
 ) {
-    // Interact / advance dialogue.
+    // Interact / advance dialogue / answer choice.
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
         let events = world.0.apply(WorldInput::Interact);
         handle_events(
@@ -287,11 +311,28 @@ fn player_input(
         next.set(AppState::Menu);
         return;
     }
-    // Movement only when idle and out of dialogue.
-    if anim.0.is_some() || world.0.dialogue.is_some() {
+    // Choice cursor movement routes Up/Down into the pure core.
+    if world.0.dialogue.is_some() {
+        if let Some(dir) = pressed_direction(&keys)
+            && keys.any_just_pressed([
+                KeyCode::ArrowUp,
+                KeyCode::ArrowDown,
+                KeyCode::KeyW,
+                KeyCode::KeyS,
+            ])
+        {
+            let _ = world.0.apply(WorldInput::Step(dir));
+        }
         return;
     }
-    let Some(dir) = pressed_direction(&keys) else {
+    // Movement: buffer one step while interpolating (doc 03 §3).
+    if anim.0.is_some() {
+        if let Some(dir) = pressed_direction(&keys) {
+            buffered.0 = Some(dir);
+        }
+        return;
+    }
+    let Some(dir) = buffered.0.take().or_else(|| pressed_direction(&keys)) else {
         return;
     };
     let from = world.0.player;
@@ -341,9 +382,19 @@ fn handle_events(
                     transform.translation =
                         Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
                 }
+                // Autosave on map change (doc 03 §4).
+                autosave(&world.0);
             }
             WorldEvent::EncounterStarted { .. } => {
+                // The step that rolled the encounter never animates; keep
+                // the sprite on the logical tile so Overworld resumes in
+                // sync.
                 anim.0 = None;
+                if let Ok(mut transform) = player.single_mut() {
+                    let (x, y) = world.0.player;
+                    transform.translation =
+                        Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
+                }
                 next.set(AppState::Battle);
             }
             _ => {}
@@ -434,9 +485,29 @@ fn dialogue_ui(
                 .clone()
                 .unwrap_or((String::new(), String::new()));
             let line = format!("{who}: {key}");
+            // The choice list, when open, is appended to the text so the
+            // pure cursor is visible; the dedicated popup widget arrives
+            // with real fonts in P3 (doc 05 §4).
+            let line = match &dialogue.choice {
+                Some((_, options, cursor)) => {
+                    let rendered: Vec<String> = options
+                        .iter()
+                        .enumerate()
+                        .map(|(i, option)| {
+                            if i == *cursor {
+                                format!("> {option}")
+                            } else {
+                                format!("  {option}")
+                            }
+                        })
+                        .collect();
+                    format!("{line}\n{}", rendered.join("\n"))
+                }
+                None => line,
+            };
             if existing.is_empty() {
-                // Bottom-anchored 480×64 parchment box (doc 05 §4), with
-                // an ink rule as the border and four faint staff lines.
+                // Bottom-anchored parchment box (doc 05 §4): ink border,
+                // four faint staff lines behind the text.
                 commands
                     .spawn((
                         DialogueUi,
@@ -462,12 +533,28 @@ fn dialogue_ui(
                                 },
                                 BackgroundColor(theme.color(&theme.palette.parchment)),
                             ))
-                            .with_child((
-                                DialogueText,
-                                Text::new(line.clone()),
-                                TextFont::from_font_size(8.0),
-                                TextColor(theme.color(&theme.palette.ink)),
-                            ));
+                            .with_children(|panel| {
+                                // Four staff lines (doc 05 §4 motif).
+                                for i in 0..4 {
+                                    panel.spawn((
+                                        Node {
+                                            position_type: PositionType::Absolute,
+                                            left: Val::Px(8.0),
+                                            right: Val::Px(8.0),
+                                            top: Val::Px(14.0 + i as f32 * 11.0),
+                                            height: Val::Px(1.0),
+                                            ..default()
+                                        },
+                                        BackgroundColor(theme.color(&theme.palette.parchment_dim)),
+                                    ));
+                                }
+                                panel.spawn((
+                                    DialogueText,
+                                    Text::new(line.clone()),
+                                    TextFont::from_font_size(8.0),
+                                    TextColor(theme.color(&theme.palette.ink)),
+                                ));
+                            });
                     });
             } else if let Ok(mut existing_text) = text.single_mut()
                 && existing_text.0 != line
@@ -566,12 +653,15 @@ fn menu_open(mut commands: Commands, theme: Res<Theme>, mut cursor: ResMut<MenuC
         });
 }
 
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn menu_input(
     keys: Res<ButtonInput<KeyCode>>,
     theme: Res<Theme>,
     world: Res<WorldRes>,
     time: Res<Time>,
     mut cursor: ResMut<MenuCursor>,
+    mut settings: ResMut<SettingsRes>,
+    mut settings_ui: ResMut<SettingsOpen>,
     mut next: ResMut<NextState<AppState>>,
     mut rows: Query<(&MenuRow, &mut BackgroundColor)>,
 ) {
@@ -596,17 +686,59 @@ fn menu_input(
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
         match cursor.0 {
             1 => {
-                // Save to the autosave slot. Creation timestamp is the
-                // session clock for now; real wall-clock stamping arrives
-                // with the title/save-select flow in P3.
-                if let Some(mut backend) = save::FsBackend::platform_default() {
-                    let snapshot = world.0.to_save("dev", time.elapsed_secs() as u64, 0);
-                    let _ = save::save(&mut backend, save::SlotId::Auto, &snapshot);
+                // Manual save → slot 1 (slot picker arrives with the P3
+                // save-select screen). Playtime is the session clock;
+                // created stays 0 until the title flow stamps it.
+                match save::FsBackend::platform_default() {
+                    Some(mut backend) => {
+                        let mut snapshot = world.0.to_save("dev", time.elapsed_secs() as u64, 0);
+                        snapshot.player.settings = settings.0.clone();
+                        if let Err(error) = save::save(&mut backend, save::SlotId::Slot1, &snapshot)
+                        {
+                            bevy::log::error!("save failed: {error}");
+                        }
+                    }
+                    None => bevy::log::warn!("no platform save directory; save skipped"),
                 }
                 next.set(AppState::Overworld);
             }
-            2 => { /* settings rows arrive with P3 options screen */ }
+            2 => {
+                settings_ui.0 = !settings_ui.0;
+            }
             _ => next.set(AppState::Overworld),
+        }
+    }
+    // Settings adjustments while the panel is open: Left/Right tweak the
+    // row matching the cursor (text speed / music volume / scale).
+    if settings_ui.0 {
+        let delta: i32 = if keys.just_pressed(KeyCode::ArrowRight) {
+            1
+        } else if keys.just_pressed(KeyCode::ArrowLeft) {
+            -1
+        } else {
+            0
+        };
+        if delta != 0 {
+            match cursor.0 {
+                0 => {
+                    settings.0.text_speed = match (settings.0.text_speed, delta > 0) {
+                        (30, true) => 60,
+                        (60, true) => 0,
+                        (0, true) => 30,
+                        (30, false) => 0,
+                        (60, false) => 30,
+                        _ => 60,
+                    };
+                }
+                1 => {
+                    let volume = i32::from(settings.0.volume_music) + delta * 10;
+                    settings.0.volume_music = u8::try_from(volume.clamp(0, 100)).expect("0..=100");
+                }
+                _ => {
+                    let scale = i32::from(settings.0.screen_scale) + delta;
+                    settings.0.screen_scale = u8::try_from(scale.clamp(1, 4)).expect("1..=4");
+                }
+            }
         }
     }
 }
@@ -685,16 +817,41 @@ fn battle_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) 
                     right: Val::Px(8.0),
                     bottom: Val::Px(80.0),
                     width: Val::Px(180.0),
+                    flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(6.0)),
+                    row_gap: Val::Px(4.0),
                     ..default()
                 },
                 BackgroundColor(theme.color(&theme.palette.parchment_dim)),
             ))
-            .with_child((
-                Text::new("your side (P3)"),
-                TextFont::from_font_size(8.0),
-                TextColor(theme.color(&theme.palette.ink_soft)),
-            ));
+            .with_children(|plate| {
+                plate.spawn((
+                    Text::new("your side (P3)"),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.ink_soft)),
+                ));
+                plate
+                    .spawn(Node {
+                        flex_direction: FlexDirection::Row,
+                        column_gap: Val::Px(2.0),
+                        height: Val::Px(14.0),
+                        align_items: AlignItems::Center,
+                        ..default()
+                    })
+                    .with_children(|wave| {
+                        for i in 0..12 {
+                            let height = 6.0 + 6.0 * (1.0 + (i as f32 * 1.3).sin()) / 2.0;
+                            wave.spawn((
+                                Node {
+                                    width: Val::Px(3.0),
+                                    height: Val::Px(height),
+                                    ..default()
+                                },
+                                BackgroundColor(theme.color(&theme.palette.hp_mid)),
+                            ));
+                        }
+                    });
+            });
 
             // Move grid spike: 2×2 type-tinted buttons (doc 05 §5).
             root.spawn((
@@ -765,11 +922,36 @@ fn battle_input(
         || keys.just_pressed(KeyCode::Escape)
     {
         world.0.pending_encounter = None;
+        // Autosave post-battle (doc 03 §4).
+        autosave(&world.0);
         next.set(AppState::Overworld);
     }
 }
 
+/// Writes the rotating autosave (doc 03 §4: map change & post-battle).
+fn autosave(world: &WorldState) {
+    let Some(mut backend) = save::FsBackend::platform_default() else {
+        bevy::log::warn!("no platform save directory; autosave skipped");
+        return;
+    };
+    let snapshot = world.to_save("dev", 0, 0);
+    if let Err(error) = save::save(&mut backend, save::SlotId::Auto, &snapshot) {
+        bevy::log::error!("autosave failed: {error}");
+    }
+}
+
 // ----- helpers --------------------------------------------------------------
+
+fn cleanup_wipe(
+    mut commands: Commands,
+    mut wipe: ResMut<Wipe>,
+    bars: Query<Entity, With<WipeBar>>,
+) {
+    wipe.0 = None;
+    for entity in &bars {
+        commands.entity(entity).despawn();
+    }
+}
 
 fn despawn_tagged<T: Component>(mut commands: Commands, tagged: Query<Entity, With<T>>) {
     for entity in &tagged {

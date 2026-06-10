@@ -399,6 +399,55 @@ pub fn validate_maps(
                 ));
             }
         }
+        // Placement interactions: triggers and NPCs must sit on coherent
+        // tiles; ids and coordinates are unique per map.
+        let mut trigger_coords = BTreeSet::new();
+        for trigger in &map.triggers {
+            if !trigger_coords.insert(trigger.at) {
+                findings.push(Finding::error(
+                    "map.placement",
+                    format!("`{mid}` duplicate trigger at {:?}", trigger.at),
+                ));
+            }
+            if map.in_bounds(trigger.at.0, trigger.at.1) && map.is_solid(trigger.at.0, trigger.at.1)
+            {
+                findings.push(Finding::error(
+                    "map.placement",
+                    format!("`{mid}` trigger at {:?} sits on a solid tile", trigger.at),
+                ));
+            }
+        }
+        let mut npc_ids = BTreeSet::new();
+        let mut npc_coords = BTreeSet::new();
+        for npc in &map.npcs {
+            if !npc_ids.insert(npc.id.as_str()) {
+                findings.push(Finding::error(
+                    "map.placement",
+                    format!("`{mid}` duplicate npc id `{}`", npc.id),
+                ));
+            }
+            if !npc_coords.insert(npc.at) {
+                findings.push(Finding::error(
+                    "map.placement",
+                    format!("`{mid}` two npcs share tile {:?}", npc.at),
+                ));
+            }
+            if map.in_bounds(npc.at.0, npc.at.1) {
+                if map.is_solid(npc.at.0, npc.at.1) {
+                    findings.push(Finding::error(
+                        "map.placement",
+                        format!("`{mid}` npc `{}` spawns on a solid tile", npc.id),
+                    ));
+                }
+                if trigger_coords.contains(&npc.at) {
+                    findings.push(Finding::error(
+                        "map.placement",
+                        format!("`{mid}` npc `{}` spawns on a trigger tile", npc.id),
+                    ));
+                }
+            }
+        }
+
         if let Some(encounters) = &map.encounters {
             if encounters.slots.len() != 12 {
                 findings.push(Finding::error(
@@ -409,11 +458,24 @@ pub fn validate_maps(
                     ),
                 ));
             }
-            let weight_sum: u32 = encounters.slots.iter().map(|s| u32::from(s.3)).sum();
-            if weight_sum != 100 {
+            // The weight schedule is law, not convention (doc 02 v1.3 #2).
+            let mut weights: Vec<u8> = encounters.slots.iter().map(|s| s.3).collect();
+            weights.sort_unstable_by(|a, b| b.cmp(a));
+            if weights != [20, 20, 10, 10, 10, 10, 5, 5, 4, 4, 1, 1] {
                 findings.push(Finding::error(
                     "map.encounters",
-                    format!("`{mid}` encounter weights sum to {weight_sum}, expected 100"),
+                    format!(
+                        "`{mid}` weight multiset {weights:?} differs from doc 02 §12's fixed schedule"
+                    ),
+                ));
+            }
+            if !(1..=100).contains(&encounters.patch_rate_pct) {
+                findings.push(Finding::error(
+                    "map.encounters",
+                    format!(
+                        "`{mid}` patch_rate_pct {} outside 1..=100 (doc 02 v1.3 #2)",
+                        encounters.patch_rate_pct
+                    ),
                 ));
             }
             for (species, lo, hi, _) in &encounters.slots {

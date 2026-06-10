@@ -37,7 +37,15 @@ impl SaveBackend for FsBackend {
         // copy of a player's save.
         let tmp = self.dir.join(format!("{name}.tmp"));
         let target = self.dir.join(name);
-        std::fs::write(&tmp, contents).map_err(|e| SaveError::Io(e.to_string()))?;
+        {
+            use std::io::Write;
+            let mut file = std::fs::File::create(&tmp).map_err(|e| SaveError::Io(e.to_string()))?;
+            file.write_all(contents.as_bytes())
+                .map_err(|e| SaveError::Io(e.to_string()))?;
+            // Flush to disk before the rename so a crash can't leave the
+            // slot pointing at a half-written file.
+            file.sync_all().map_err(|e| SaveError::Io(e.to_string()))?;
+        }
         std::fs::rename(&tmp, &target).map_err(|e| SaveError::Io(e.to_string()))
     }
 

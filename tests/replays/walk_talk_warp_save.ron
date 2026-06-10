@@ -3,22 +3,24 @@
 //   cargo run -p game --features headless -- --replay tests/replays/walk_talk_warp_save.ron
 // and as the `game` crate's integration test.
 //
-// Route (debug_rehearsal, spawn (5,2) facing Down):
-//   → (7,2) → (7,4), talk to the greeter (2 lines, sets met.greeter)
-//   → back down to (6,1), south gate (6,0) warps to debug_annex (4,4)
-//   → step to (4,3), save. Reload must land on the same tile with the
-//   greeter flag intact.
+// Tap-to-turn semantics (doc 02 v1.3 #1): a direction change costs one
+// Step input that only turns. Route (debug_rehearsal, spawn (5,2),
+// facing Down):
+//   turn+walk east to (7,2), north to (7,4), talk to the greeter
+//   (2 lines, sets met.greeter), south to (7,1), west to (6,1), south
+//   through the gate (6,0) → debug_annex (4,4), one step down to (4,3)
+//   (avoiding the sentry's y=2 sight line), save.
 ReplayFile(
     seed: 0xD0_5EED,
     inputs: [
-        Step(Right), Step(Right),
+        Step(Right), Step(Right), Step(Right),
         Tick,
-        Step(Up), Step(Up),
+        Step(Up), Step(Up), Step(Up),
         Interact, Interact, Interact,
         Tick,
-        Step(Down), Step(Down), Step(Down),
-        Step(Left),
-        Step(Down),
+        Step(Down), Step(Down), Step(Down), Step(Down),
+        Step(Left), Step(Left),
+        Step(Down), Step(Down),
         Tick,
         Step(Down),
         Save,

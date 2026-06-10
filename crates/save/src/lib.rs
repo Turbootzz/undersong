@@ -211,6 +211,27 @@ mod tests {
     }
 
     #[test]
+    fn v1_fixture_remains_loadable_forever() {
+        // The committed fixture pins the v1 wire format (doc 03 §4:
+        // never break old saves). Regenerate only when first creating a
+        // NEW version's fixture: UPDATE_FIXTURES=1 cargo test -p save.
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/slot.v1.ron");
+        if std::env::var_os("UPDATE_FIXTURES").is_some() {
+            let text = ron::ser::to_string_pretty(&sample(), ron::ser::PrettyConfig::default())
+                .expect("serialize");
+            std::fs::create_dir_all(path.parent().expect("parent")).expect("mkdir");
+            std::fs::write(&path, text).expect("write fixture");
+        }
+        let text = std::fs::read_to_string(&path).expect("fixture slot.v1.ron must stay committed");
+        let loaded = migrate(&text).expect("v1 fixture loads in every future build");
+        assert_eq!(loaded.header.version, 1);
+        assert_eq!(loaded.player.name, "Junie");
+        assert_eq!(loaded.party.len(), 1);
+        assert!(loaded.flags.contains("met.fisher_old"));
+    }
+
+    #[test]
     fn fs_backend_round_trips_in_a_temp_dir() {
         let dir = std::env::temp_dir().join(format!("undersong-save-test-{}", std::process::id()));
         let mut backend = FsBackend::at(dir.clone());

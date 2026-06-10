@@ -1,0 +1,10 @@
+// DEV-ONLY sentry: exercises line-of-sight engagement (doc 02 v1.3 #3)
+// and the Choice flow in the pure core.
+[
+    Say(who: "sentry", key: "debug.sentry.spotted"),
+    Choice(key: "debug.sentry.challenge", branches: [
+        ("debug.choice.accept", [SetFlag(flag: "sentry.accepted")]),
+        ("debug.choice.decline", [SetFlag(flag: "sentry.declined")]),
+    ]),
+    End,
+]

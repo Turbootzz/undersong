@@ -25,6 +25,13 @@ MapDef(
         (at: (3, 5), kind: Warp(map: "debug_rehearsal", to: (5, 1), facing: Up)),
         (at: (4, 5), kind: Warp(map: "debug_rehearsal", to: (6, 1), facing: Up)),
     ],
-    npcs: [],
+    npcs: [
+        // Sighted sentry: stares left along y=2; stepping into the row
+        // engages once (flag engaged.debug_annex.sentry).
+        (
+            id: "sentry", at: (6, 2), facing: Left, sprite: "npc.sentry",
+            script: Some("sentry.script.ron"), behavior: Static, sight_range: 3,
+        ),
+    ],
     music: None,
 )

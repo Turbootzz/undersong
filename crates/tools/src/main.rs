@@ -177,6 +177,31 @@ fn validate(options: &Options) -> Result<bool> {
                     .exists()
             };
             findings.extend(data::validate_maps(&maps, &pool, &script_exists));
+
+            // Scripts must parse as the Cmd vocabulary, and Choice
+            // branches must not be empty (doc 03 §5).
+            for map_id in maps.keys() {
+                let scripts_dir = maps_root.join(map_id.as_str()).join("scripts");
+                let Ok(entries) = std::fs::read_dir(&scripts_dir) else {
+                    continue;
+                };
+                for entry in entries.filter_map(Result::ok) {
+                    let path = entry.path();
+                    if path.extension().is_none_or(|e| e != "ron") {
+                        continue;
+                    }
+                    let text = std::fs::read_to_string(&path)
+                        .with_context(|| format!("reading {}", path.display()))?;
+                    match ron::from_str::<Vec<script::Cmd>>(&text) {
+                        Err(error) => findings.push(data::Finding {
+                            severity: data::Severity::Error,
+                            rule: "script.parse",
+                            message: format!("{}: {error}", path.display()),
+                        }),
+                        Ok(cmds) => check_script_cmds(&cmds, &path, &mut findings),
+                    }
+                }
+            }
         }
     }
 
@@ -195,6 +220,35 @@ fn validate(options: &Options) -> Result<bool> {
     let warnings = findings.len() - errors;
     println!("validate: {errors} error(s), {warnings} warning(s)");
     Ok(errors == 0)
+}
+
+/// Recursive Choice/If sanity for script content (doc 03 §5).
+fn check_script_cmds(
+    cmds: &[script::Cmd],
+    path: &std::path::Path,
+    findings: &mut Vec<data::Finding>,
+) {
+    for cmd in cmds {
+        match cmd {
+            script::Cmd::Choice { key, branches } => {
+                if branches.is_empty() {
+                    findings.push(data::Finding {
+                        severity: data::Severity::Error,
+                        rule: "script.choice",
+                        message: format!("{}: Choice `{key}` has no branches", path.display()),
+                    });
+                }
+                for (_, branch) in branches {
+                    check_script_cmds(branch, path, findings);
+                }
+            }
+            script::Cmd::If { then, r#else, .. } => {
+                check_script_cmds(then, path, findings);
+                check_script_cmds(r#else, path, findings);
+            }
+            _ => {}
+        }
+    }
 }
 
 fn load_pool(options: &Options) -> Result<(data::SpeciesPool, data::CoreContent)> {

@@ -120,8 +120,10 @@ DialoguePlugin (script crate runner), AudioPlugin, SavePlugin, DebugPlugin`.
   editor formats at runtime. (Human edits visually; agent edits RON; both converge.)
 - Asset loading: custom `AssetLoader`s for our RON types; a `ContentRegistry`
   resource holds the loaded, validated pack (built by `data` crate).
-- `--features headless`: swaps `DefaultPlugins` for `MinimalPlugins` + asset/scene
-  logic without windowing; used by replay integration tests (§6).
+- Headless lane: the overworld core is engine-free (no Bevy types), so
+  `--replay <file>` runs it directly with no App at all; `--features headless`
+  builds a binary that refuses to open a window (CI safety). Replay
+  integration tests drive the core as plain `cargo test -p game` (§6).
 
 ### Bevy version discipline
 Training-data Bevy is probably ≤ 0.16/0.17. **0.18 has API drift.** When something
@@ -157,7 +159,7 @@ A tiny deterministic command interpreter — not a scripting language:
 ```
 Cmd: Say{who,key} | Choice{key,[branch]} | Move{npc,path} | Face{npc,dir}
    | Wait{ms} | SetFlag{f} | ClearFlag{f} | If{flag,then,else} | GiveItem{id,n}
-   | GiveMote{spec} | StartBattle{trainer_id} | Warp{map,x,y} | PlayCry{species}
+   | GiveMote{species,level} | StartBattle{trainer_id} | Warp{map,x,y} | PlayCry{species}
    | Music{track,fade} | ShakeScreen | OpenShop{table} | HealParty | End
 ```
 

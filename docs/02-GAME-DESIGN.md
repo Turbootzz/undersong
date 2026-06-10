@@ -400,3 +400,19 @@ other for regression (T3 must beat T1 ≥ 85% with equal teams).
       it, doc-first.
   13. **Content bounds (validator):** damaging-move power ≤ 250; StatStage
       deltas in −6..=+6 and nonzero; learnset levels in 1..=100.
+- v1.3, 2026-06-10 (P2 phase review) — overworld rulings.
+  1. **Tap-to-turn:** a Step input whose direction differs from the current
+     facing only turns (no tile change); a Step in the faced direction
+     moves. Held keys in the windowed game map to repeated Steps, so a hold
+     turns on its first frame and walks from the second — era-authentic.
+  2. **Encounter table weights are law, not convention:** the §12 weight
+     sequence 20,20,10,10,10,10,5,5,4,4,1,1 is validated as a multiset;
+     `patch_rate_pct` must be 1..=100.
+  3. **Trainer line-of-sight engage (§12):** after every player step, each
+     NPC with `sight_range > 0` whose facing points at the player along a
+     straight, solid-free line within range engages once: the
+     `engaged.<map>.<npc>` flag is set, the NPC's script runs. Wild-area
+     NPCs with range 0 never engage.
+  4. **NPC wander pauses during dialogue and pending encounters** — a
+     property of the world core, not the renderer.
+  5. **Wandering NPCs never end a stroll on a trigger tile.**

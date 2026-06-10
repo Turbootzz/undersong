@@ -9,7 +9,7 @@
 //!   `Warp` (fields: map String, to_x Int, to_y Int, facing String
 //!   Up/Down/Left/Right), `Script` (fields: path String), and `Npc`
 //!   (fields: sprite String, script optional String, facing String,
-//!   wander Int radius with 0 = static, sight Int).
+//!   wander Int radius with 0 = static, optional sight Int default 0).
 //! - LDtk's y axis points down; the importer flips rows so runtime maps
 //!   keep y growing upward.
 //!
@@ -59,8 +59,19 @@ fn import_level(level: &Value) -> Result<MapDef> {
         .as_array()
         .context("level missing layerInstances (enable 'save levels separately' OFF)")?;
 
+    // Dimensions come from the required `ground` layer only; any other
+    // consumed layer must agree.
     let mut width = 0u32;
     let mut height = 0u32;
+    for layer in layers {
+        if layer["__identifier"].as_str() == Some("ground") {
+            width = u32::try_from(layer["__cWid"].as_u64().unwrap_or(0)).unwrap_or(0);
+            height = u32::try_from(layer["__cHei"].as_u64().unwrap_or(0)).unwrap_or(0);
+        }
+    }
+    if width == 0 || height == 0 {
+        bail!("level {identifier}: required `ground` IntGrid layer missing or empty");
+    }
     let mut ground = Vec::new();
     let mut decor = Vec::new();
     let mut overhang = Vec::new();
@@ -73,18 +84,26 @@ fn import_level(level: &Value) -> Result<MapDef> {
         let name = layer["__identifier"].as_str().unwrap_or_default();
         let cw = u32::try_from(layer["__cWid"].as_u64().unwrap_or(0)).unwrap_or(0);
         let ch = u32::try_from(layer["__cHei"].as_u64().unwrap_or(0)).unwrap_or(0);
-        if cw > 0 {
-            width = cw;
-            height = ch;
-        }
         match layer["__type"].as_str().unwrap_or_default() {
             "IntGrid" => {
+                if (cw, ch) != (width, height) {
+                    bail!(
+                        "level {identifier}: layer `{name}` is {cw}x{ch}, ground is {width}x{height}"
+                    );
+                }
                 let csv: Vec<u16> = layer["intGridCsv"]
                     .as_array()
                     .context("IntGrid layer missing intGridCsv")?
                     .iter()
                     .map(|v| u16::try_from(v.as_u64().unwrap_or(0)).unwrap_or(0))
                     .collect();
+                if csv.len() != (cw as usize) * (ch as usize) {
+                    bail!(
+                        "level {identifier}: layer `{name}` has {} cells, expected {}",
+                        csv.len(),
+                        cw * ch
+                    );
+                }
                 let flipped = flip_rows(&csv, cw as usize, ch as usize);
                 match name {
                     "ground" => ground = flipped,
@@ -111,7 +130,13 @@ fn import_level(level: &Value) -> Result<MapDef> {
                     let grid = entity["__grid"].as_array().context("entity grid")?;
                     let gx = u32::try_from(grid[0].as_u64().unwrap_or(0)).unwrap_or(0);
                     let gy_down = u32::try_from(grid[1].as_u64().unwrap_or(0)).unwrap_or(0);
-                    let gy = ch.saturating_sub(1).saturating_sub(gy_down);
+                    if gx >= width || gy_down >= height {
+                        bail!(
+                            "level {identifier}: entity `{}` at grid ({gx},{gy_down}) is out of bounds",
+                            entity["iid"].as_str().unwrap_or(kind)
+                        );
+                    }
+                    let gy = height - 1 - gy_down;
                     let fields = FieldBag::from(entity);
                     match kind {
                         "Warp" => triggers.push(Trigger {

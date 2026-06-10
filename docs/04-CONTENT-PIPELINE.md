@@ -92,7 +92,7 @@ npcs: [
     If(flag: "story.act2.read_roster",
        then: [Say(who: "fisher_old", key: "quietcoast.fisher.recontext")],
        else: []),
-    SetFlag("met.fisher_old"), End,
+    SetFlag(flag: "met.fisher_old"), End,
 ]
 ```
 

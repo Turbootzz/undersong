@@ -4,24 +4,32 @@
 //! no Bevy app (the overworld core is engine-free; see `world.rs`).
 //! Otherwise the windowed app renders the world state.
 
+#[cfg(not(feature = "headless"))]
 mod app;
 
+use bevy::prelude::AppExit;
+#[cfg(not(feature = "headless"))]
 use bevy::prelude::*;
+#[cfg(not(feature = "headless"))]
 use bevy::window::WindowResolution;
 
 use game::replay;
 
 /// Virtual resolution (doc 05 §1): all UI authored at 480×270,
 /// integer-scaled.
+#[cfg(not(feature = "headless"))]
 const VIRTUAL_WIDTH: u32 = 480;
+#[cfg(not(feature = "headless"))]
 const VIRTUAL_HEIGHT: u32 = 270;
 /// P2 still opens at a fixed ×2; the Settings scale picker applies it
-/// for real in P3 polish.
-const WINDOW_SCALE: u32 = 2;
+/// for real in P3 polish. The UI scale and camera zoom derive from this
+/// one constant.
+pub const WINDOW_SCALE: u32 = 2;
 
 /// Top-level app states (doc 03 §3). Dialogue is an overlay in P2 (the
 /// pure world gates movement); the variant stays reserved for the P3
 /// presenter flow.
+#[cfg(not(feature = "headless"))]
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[expect(dead_code, reason = "Title/Transition wired by the P3 flow")]
 enum AppState {
@@ -60,6 +68,12 @@ fn main() -> AppExit {
         };
     }
 
+    #[cfg(feature = "headless")]
+    {
+        eprintln!("headless build: pass --replay <file> (no window will open)");
+        AppExit::error()
+    }
+    #[cfg(not(feature = "headless"))]
     App::new()
         .add_plugins(
             DefaultPlugins

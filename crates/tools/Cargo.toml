@@ -11,6 +11,7 @@ workspace = true
 [dependencies]
 undersong-core = { workspace = true }
 battle = { path = "../battle" }
+script = { path = "../script" }
 data = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }

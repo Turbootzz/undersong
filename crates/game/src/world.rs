@@ -30,14 +30,39 @@ pub enum Input {
 /// these into animation/scene work.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum WorldEvent {
-    Stepped { to: (u32, u32) },
-    Bumped { at: (u32, u32) },
+    Stepped {
+        to: (u32, u32),
+    },
+    Bumped {
+        at: (u32, u32),
+    },
     Faced(Facing),
-    Warped { map: MapId, to: (u32, u32) },
-    DialogueLine { who: String, key: String },
+    Warped {
+        map: MapId,
+        to: (u32, u32),
+    },
+    DialogueLine {
+        who: String,
+        key: String,
+    },
+    /// A choice list opened; the renderer shows options + cursor.
+    DialogueChoice {
+        key: String,
+        options: Vec<String>,
+    },
     DialogueEnded,
-    EncounterStarted { species: SpeciesId, level: u8 },
-    NpcMoved { id: String, to: (u32, u32) },
+    /// A sighted trainer NPC spotted the player (doc 02 v1.3 #3).
+    Engaged {
+        npc: String,
+    },
+    EncounterStarted {
+        species: SpeciesId,
+        level: u8,
+    },
+    NpcMoved {
+        id: String,
+        to: (u32, u32),
+    },
     Saved,
 }
 
@@ -51,6 +76,8 @@ pub struct NpcState {
     pub sprite: String,
     pub script: Option<String>,
     pub behavior: NpcBehavior,
+    /// Trainer sight range in tiles; 0 = never engages (doc 02 §12).
+    pub sight_range: u8,
 }
 
 /// Dialogue presentation state, pure: the renderer shows `current`,
@@ -59,6 +86,8 @@ pub struct NpcState {
 pub struct DialogueState {
     pub runner: ScriptRunner,
     pub current: Option<(String, String)>,
+    /// Open choice list: (prompt key, options, cursor).
+    pub choice: Option<(String, Vec<String>, usize)>,
 }
 
 pub struct WorldState {
@@ -101,6 +130,7 @@ impl WorldState {
                         sprite: n.sprite.clone(),
                         script: n.script.clone(),
                         behavior: n.behavior,
+                        sight_range: n.sight_range,
                     })
                     .collect();
                 (id.clone(), states)
@@ -137,23 +167,42 @@ impl WorldState {
     pub fn apply(&mut self, input: Input) -> Vec<WorldEvent> {
         let mut events = Vec::new();
         match input {
-            Input::Interact => self.interact(&mut events),
-            Input::Step(dir) if self.dialogue.is_none() && self.pending_encounter.is_none() => {
+            Input::Interact if self.pending_encounter.is_none() => self.interact(&mut events),
+            Input::Interact => {}
+            Input::Step(dir) if self.dialogue.is_some() => {
+                // While a choice list is open, Up/Down move the cursor.
+                if let Some(dialogue) = &mut self.dialogue
+                    && let Some((_, options, cursor)) = &mut dialogue.choice
+                {
+                    match dir {
+                        Facing::Up if *cursor > 0 => *cursor -= 1,
+                        Facing::Down if *cursor + 1 < options.len() => *cursor += 1,
+                        _ => {}
+                    }
+                }
+            }
+            Input::Step(dir) if self.pending_encounter.is_none() => {
                 self.step(dir, &mut events);
             }
             Input::Step(_) => {}
-            Input::Tick => self.tick_wander(&mut events),
+            // Wander pauses during dialogue / pending encounters — a core
+            // rule, not a renderer courtesy (doc 02 v1.3 #4).
+            Input::Tick if self.dialogue.is_none() && self.pending_encounter.is_none() => {
+                self.tick_wander(&mut events);
+            }
+            Input::Tick => {}
             Input::Save => events.push(WorldEvent::Saved),
         }
         events
     }
 
     fn step(&mut self, dir: Facing, events: &mut Vec<WorldEvent>) {
+        // Tap-to-turn (doc 02 v1.3 #1): a direction change only turns;
+        // the windowed layer's held keys become repeated Steps.
         if self.facing != dir {
             self.facing = dir;
             events.push(WorldEvent::Faced(dir));
-            // Era feel: turning and stepping are one input; the step
-            // still proceeds this tick.
+            return;
         }
         let (dx, dy) = dir.delta();
         let nx = self.player.0.checked_add_signed(dx);
@@ -199,6 +248,12 @@ impl WorldState {
             }
         }
 
+        // Line-of-sight engagement preempts encounter rolls
+        // (doc 02 v1.3 #3).
+        if self.try_engage(events) {
+            return;
+        }
+
         // Resonance patch roll (doc 02 §12): P per step, then a 12-slot
         // weighted species pick and a uniform level in the slot's range.
         if self.map().is_patch(nx, ny)
@@ -226,9 +281,65 @@ impl WorldState {
         }
     }
 
+    /// Scans for an unflagged sighted trainer whose facing covers the
+    /// player along a clear straight line (doc 02 v1.3 #3). Engages the
+    /// first match in NPC order; returns true if one engaged.
+    fn try_engage(&mut self, events: &mut Vec<WorldEvent>) -> bool {
+        let map_id = self.current_map.clone();
+        let Some(npcs) = self.npcs.get(&map_id) else {
+            return false;
+        };
+        let mut engaged: Option<usize> = None;
+        for (index, npc) in npcs.iter().enumerate() {
+            if npc.sight_range == 0 {
+                continue;
+            }
+            let flag = format!("engaged.{map_id}.{}", npc.id);
+            if self.vars.flags.contains(&flag) {
+                continue;
+            }
+            let (dx, dy) = npc.facing.delta();
+            let mut clear = true;
+            let mut seen = false;
+            let (mut cx, mut cy) = npc.at;
+            for _ in 0..npc.sight_range {
+                let (Some(nx), Some(ny)) = (cx.checked_add_signed(dx), cy.checked_add_signed(dy))
+                else {
+                    break;
+                };
+                if (nx, ny) == self.player {
+                    seen = true;
+                    break;
+                }
+                if self.maps[&map_id].is_solid(nx, ny) {
+                    clear = false;
+                    break;
+                }
+                (cx, cy) = (nx, ny);
+            }
+            if seen && clear {
+                engaged = Some(index);
+                break;
+            }
+        }
+        let Some(index) = engaged else { return false };
+        let npc = &self.npcs[&map_id][index];
+        let id = npc.id.clone();
+        let script = npc.script.clone();
+        self.vars.flags.insert(format!("engaged.{map_id}.{id}"));
+        events.push(WorldEvent::Engaged { npc: id });
+        if let Some(path) = script {
+            self.start_script(&path, events);
+        }
+        true
+    }
+
     fn interact(&mut self, events: &mut Vec<WorldEvent>) {
-        // Advancing dialogue?
-        if self.dialogue.is_some() {
+        // Advancing dialogue (or answering an open choice)?
+        if let Some(dialogue) = &mut self.dialogue {
+            if let Some((_, _, cursor)) = dialogue.choice.take() {
+                dialogue.runner.resume_choice(cursor);
+            }
             self.advance_dialogue(events);
             return;
         }
@@ -268,6 +379,7 @@ impl WorldState {
         self.dialogue = Some(DialogueState {
             runner: ScriptRunner::new(cmds),
             current: None,
+            choice: None,
         });
         self.advance_dialogue(events);
     }
@@ -286,6 +398,15 @@ impl WorldState {
                         key: key.clone(),
                     });
                     dialogue.current = Some((who, key));
+                    self.dialogue = Some(dialogue);
+                    return;
+                }
+                StepResult::Effect(SideEffectReq::AskChoice { key, options }) => {
+                    events.push(WorldEvent::DialogueChoice {
+                        key: key.clone(),
+                        options: options.clone(),
+                    });
+                    dialogue.choice = Some((key, options, 0));
                     self.dialogue = Some(dialogue);
                     return;
                 }
@@ -343,6 +464,7 @@ impl WorldState {
             let within = nx.abs_diff(npc.spawn.0) <= u32::from(radius)
                 && ny.abs_diff(npc.spawn.1) <= u32::from(radius);
             let blocked = self.maps[&map_id].is_solid(nx, ny)
+                || self.maps[&map_id].trigger_at(nx, ny).is_some()
                 || (nx, ny) == self.player
                 || self.npcs[&map_id]
                     .iter()
@@ -405,6 +527,36 @@ impl WorldState {
         self.rng = BattleRng::from_seed(file.world_seed);
         self.dialogue = None;
         self.pending_encounter = None;
+
+        // NPC positions are not persisted (wander drift is cosmetic);
+        // if a spawn coincides with the restored player tile, nudge the
+        // NPC deterministically to its first free neighbor.
+        let map_id = self.current_map.clone();
+        let player = self.player;
+        if let Some(map) = self.maps.get(&map_id).cloned()
+            && let Some(npcs) = self.npcs.get_mut(&map_id)
+        {
+            let taken: Vec<(u32, u32)> = npcs.iter().map(|n| n.at).collect();
+            for npc in npcs.iter_mut() {
+                if npc.at != player {
+                    continue;
+                }
+                for dir in [Facing::Up, Facing::Down, Facing::Left, Facing::Right] {
+                    let (dx, dy) = dir.delta();
+                    if let (Some(nx), Some(ny)) = (
+                        npc.at.0.checked_add_signed(dx),
+                        npc.at.1.checked_add_signed(dy),
+                    ) && !map.is_solid(nx, ny)
+                        && map.trigger_at(nx, ny).is_none()
+                        && (nx, ny) != player
+                        && !taken.contains(&(nx, ny))
+                    {
+                        npc.at = (nx, ny);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
 
