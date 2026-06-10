@@ -13,6 +13,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod abilities;
 pub mod actions;
 pub mod ai;
 pub mod catch;
@@ -34,4 +35,4 @@ pub use turn::step;
 /// (docs/03-ARCHITECTURE.md §2); regenerate goldens in the same commit.
 /// v2: doc 02 v1.2 — player-side-only exp awards, two-turn commitment,
 /// faint-before-switch ordering.
-pub const REPLAY_VERSION: u32 = 2;
+pub const REPLAY_VERSION: u32 = 3;

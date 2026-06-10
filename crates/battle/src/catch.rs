@@ -112,6 +112,9 @@ mod tests {
             base_exp_yield: 100,
             ev_yield: vec![],
             learnset: vec![],
+            ability: crate::abilities::Ability::None,
+            held: crate::abilities::HeldItem::None,
+            entry_boosted: false,
         }
     }
 

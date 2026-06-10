@@ -1,4 +1,4 @@
-// golden replay `chaos` — REPLAY_VERSION 2
+// golden replay `chaos` — REPLAY_VERSION 3
 // regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
 [
     TurnStarted(

@@ -75,6 +75,15 @@ pub struct BattleMote {
     pub ev_yield: Vec<(Stat, u8)>,
     /// `(level, move)` for level-up learn events.
     pub learnset: Vec<(u8, undersong_core::ids::MoveId)>,
+    /// Resolved ability (doc 02 §10); default None.
+    #[serde(default)]
+    pub ability: crate::abilities::Ability,
+    /// Held battle item (doc 02 v1.5 #1); default None.
+    #[serde(default)]
+    pub held: crate::abilities::HeldItem,
+    /// stage_fright fired already this battle (doc 02 §10: first entry).
+    #[serde(default)]
+    pub entry_boosted: bool,
 }
 
 impl BattleMote {
@@ -133,6 +142,8 @@ pub struct MoteBuilder<'a> {
     ivs: StatSpread,
     evs: StatSpread,
     moves: Vec<MoveSpec>,
+    ability: crate::abilities::Ability,
+    held: crate::abilities::HeldItem,
 }
 
 impl<'a> MoteBuilder<'a> {
@@ -144,7 +155,19 @@ impl<'a> MoteBuilder<'a> {
             ivs: ZERO_SPREAD,
             evs: ZERO_SPREAD,
             moves: Vec::new(),
+            ability: crate::abilities::Ability::None,
+            held: crate::abilities::HeldItem::None,
         }
+    }
+
+    pub fn ability(mut self, ability: crate::abilities::Ability) -> Self {
+        self.ability = ability;
+        self
+    }
+
+    pub fn held(mut self, held: crate::abilities::HeldItem) -> Self {
+        self.held = held;
+        self
     }
 
     pub fn nature(mut self, nature: u8) -> Self {
@@ -205,6 +228,9 @@ impl<'a> MoteBuilder<'a> {
                 .map(|(stat, amount)| (*stat, *amount))
                 .collect(),
             learnset: self.spec.learnset.clone(),
+            ability: self.ability,
+            held: self.held,
+            entry_boosted: false,
         }
     }
 }

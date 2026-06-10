@@ -11,6 +11,7 @@ use undersong_core::rng::BattleRng;
 use undersong_core::stats::Stat;
 use undersong_core::types::Type;
 
+use crate::abilities::{Ability, HeldItem};
 use crate::actions::{Action, TurnActions};
 use crate::catch::attune;
 use crate::damage::{DamageContext, compute_damage, crit_chance};
@@ -71,6 +72,15 @@ struct Engine {
 
 impl Engine {
     fn run_turn(&mut self, actions: &TurnActions, rng: &mut BattleRng) {
+        if self.state.turn == 0 {
+            // Battle start: leads' entry abilities, fast side first
+            // (doc 02 §10/v1.5 #4).
+            let mut order = [0u8, 1u8];
+            self.order_by_speed(&mut order, rng);
+            for side in order {
+                self.on_entry(side);
+            }
+        }
         self.state.turn += 1;
         self.events
             .push(BattleEvent::TurnStarted { n: self.state.turn });
@@ -111,7 +121,11 @@ impl Engine {
 
         // Phase c — bell use (v1.1 #1c; doc 02 §8). Player side only:
         // attunement is a trainer verb, the wild side has no bells.
-        if let Action::UseBell { bell_mod } = actions.get(0) {
+        if let Action::UseBell { mut bell_mod } = actions.get(0) {
+            // keysmith: ×2 catch-assist (doc 02 §10).
+            if self.state.side(0).active_mote().ability == Ability::Keysmith {
+                bell_mod = undersong_core::moves::Frac(bell_mod.0 * 2, bell_mod.1);
+            }
             if matches!(self.state.kind, BattleKind::Wild) {
                 let result = attune(self.state.side(1).active_mote(), bell_mod, rng);
                 self.events.push(BattleEvent::AttuneAttempt {
@@ -201,7 +215,9 @@ impl Engine {
             u32::from(mote.stats.spe),
             s.active_state.stages.get(StageStat::Spe),
         );
-        if matches!(mote.status, Some(MajorStatus::Paralysis)) {
+        if matches!(mote.status, Some(MajorStatus::Paralysis))
+            && mote.ability != Ability::MetronomeSoul
+        {
             spe /= 4;
         }
         spe
@@ -263,6 +279,73 @@ impl Engine {
         }
     }
 
+    /// Entry abilities (doc 02 §10): weather callers, dissonance,
+    /// stage_fright. Runs at battle start and on every switch-in.
+    fn on_entry(&mut self, side: SideId) {
+        let ability = self.state.side(side).active_mote().ability;
+        if let Some(kind) = ability.called_weather() {
+            // Callers never fail; replace whatever is up (v1.5 #4).
+            self.state.weather = Some((kind, 5));
+            self.events.push(BattleEvent::AbilityNote { side, ability });
+            self.events
+                .push(BattleEvent::WeatherChanged { kind: Some(kind) });
+        }
+        if ability == Ability::Dissonance {
+            let foe = 1 - side;
+            if !self.state.side(foe).active_mote().is_fainted() {
+                let foe_state = self.state.side_mut(foe);
+                let before = foe_state.active_state.stages.get(StageStat::Atk);
+                foe_state.active_state.stages.bump(StageStat::Atk, -1);
+                let after = foe_state.active_state.stages.get(StageStat::Atk);
+                if after != before {
+                    self.events.push(BattleEvent::AbilityNote { side, ability });
+                    self.events.push(BattleEvent::StatStageChanged {
+                        target: foe,
+                        stat: undersong_core::stats::Stat::Atk,
+                        delta: -1,
+                        new_stage: after,
+                    });
+                }
+            }
+        }
+        if ability == Ability::StageFright && !self.state.side(side).active_mote().entry_boosted {
+            self.state.side_mut(side).active_mote_mut().entry_boosted = true;
+            let own = self.state.side_mut(side);
+            own.active_state.stages.bump(StageStat::Spe, 1);
+            let new_stage = own.active_state.stages.get(StageStat::Spe);
+            self.events.push(BattleEvent::AbilityNote { side, ability });
+            self.events.push(BattleEvent::StatStageChanged {
+                target: side,
+                stat: undersong_core::stats::Stat::Spe,
+                delta: 1,
+                new_stage,
+            });
+        }
+    }
+
+    /// Oran Chime (doc 02 v1.5 #1): once per battle at ≤ 1/2 max HP.
+    fn check_oran(&mut self, side: SideId) {
+        let mote = self.state.side(side).active_mote();
+        if mote.is_fainted() || u32::from(mote.hp) * 2 > u32::from(mote.max_hp()) {
+            return;
+        }
+        if let HeldItem::OranChime { used: false } = mote.held {
+            let mote = self.state.side_mut(side).active_mote_mut();
+            mote.held = HeldItem::OranChime { used: true };
+            let healed = mote.heal(20);
+            if healed > 0 {
+                self.events.push(BattleEvent::ItemNote {
+                    side,
+                    item: HeldItem::OranChime { used: true },
+                });
+                self.events.push(BattleEvent::Healed {
+                    target: side,
+                    amount: healed,
+                });
+            }
+        }
+    }
+
     fn perform_switch(&mut self, side: SideId, to: u8) {
         let s = self.state.side_mut(side);
         // Toxic's counter resets on switch-out (doc 02 v1.1 #9).
@@ -277,6 +360,7 @@ impl Engine {
             slot: to,
             species,
         });
+        self.on_entry(side);
     }
 
     // ----- phase d: acting --------------------------------------------
@@ -444,7 +528,9 @@ impl Engine {
                 .active_state
                 .stages
                 .get(StageStat::Acc);
-            let eva_stage = if spec.flags.ignore_evasion {
+            let eva_stage = if spec.flags.ignore_evasion
+                || self.state.side(side).active_mote().ability == Ability::PerfectPitch
+            {
                 0
             } else {
                 self.state.side(foe).active_state.stages.get(StageStat::Eva)
@@ -454,6 +540,27 @@ impl Engine {
             let threshold = (u32::from(spec.accuracy) * acc_n * eva_d / (acc_d * eva_n)).min(100);
             if rng.below(100) >= threshold {
                 self.events.push(BattleEvent::MoveMissed { side });
+                return;
+            }
+        }
+
+        // Ability immunities (doc 02 §10): damper blanks sound moves,
+        // floating blanks stone moves — turn consumed, nothing happens.
+        {
+            let defender_ability = self.state.side(foe).active_mote().ability;
+            let blanked = (defender_ability == Ability::Damper && spec.flags.sound)
+                || (defender_ability == Ability::Floating && spec.r#type == Type::Stone);
+            if blanked && matches!(spec.target, MoveTarget::Foe) {
+                self.events.push(BattleEvent::AbilityNote {
+                    side: foe,
+                    ability: defender_ability,
+                });
+                self.events.push(BattleEvent::DamageDealt {
+                    target: foe,
+                    amount: 0,
+                    crit: false,
+                    effectiveness: undersong_core::types::Eff::Zero,
+                });
                 return;
             }
         }
@@ -481,7 +588,12 @@ impl Engine {
                 }
                 let crit_stage = u8::from(spec.flags.high_crit);
                 let (crit_n, crit_d) = crit_chance(crit_stage);
-                let crit = !typeless && rng.chance(crit_n, crit_d);
+                let crit_roll = rng.chance(crit_n, crit_d);
+                // thick_hide: the roll still consumes rng (stream-stable)
+                // but can never land (doc 02 §10).
+                let crit = !typeless
+                    && crit_roll
+                    && self.state.side(foe).active_mote().ability != Ability::ThickHide;
                 let rand_roll =
                     u8::try_from(rng.range_inclusive(85, 100)).expect("85..=100 fits u8");
 
@@ -526,6 +638,7 @@ impl Engine {
                         crit,
                         rand: rand_roll,
                         spread: false,
+                        doubles: false,
                     };
                     let outcome = compute_damage(&spec, &context).expect("damaging move");
                     (
@@ -576,6 +689,46 @@ impl Engine {
             }
             if multi && landed > 1 {
                 self.events.push(BattleEvent::MultiHit { hits: landed });
+            }
+
+            // Contact aftermath (doc 02 §10): live_wire / thorn_coat
+            // punish contacters; oran chime may trigger on the target.
+            if total_dealt > 0 {
+                self.check_oran(foe);
+            }
+            if spec.flags.contact
+                && total_dealt > 0
+                && !self.state.side(side).active_mote().is_fainted()
+            {
+                let defender_ability = self.state.side(foe).active_mote().ability;
+                if defender_ability == Ability::LiveWire
+                    && rng.chance(3, 10)
+                    && self.try_apply_status(side, Ailment::Paralysis, rng)
+                {
+                    self.events.push(BattleEvent::AbilityNote {
+                        side: foe,
+                        ability: defender_ability,
+                    });
+                }
+                if defender_ability == Ability::ThornCoat {
+                    let recoil = u32::from(self.state.side(side).active_mote().max_hp()) / 8;
+                    if recoil > 0 {
+                        let dealt = self
+                            .state
+                            .side_mut(side)
+                            .active_mote_mut()
+                            .take_damage(recoil);
+                        self.events.push(BattleEvent::AbilityNote {
+                            side: foe,
+                            ability: defender_ability,
+                        });
+                        self.events.push(BattleEvent::Recoiled {
+                            side,
+                            amount: dealt,
+                        });
+                        self.check_oran(side);
+                    }
+                }
             }
         }
 
@@ -634,6 +787,22 @@ impl Engine {
                 };
                 if self.state.side(target_side).active_mote().is_fainted() {
                     return;
+                }
+                // Drop guards (doc 02 §10): metronome_soul pins speed.
+                // (perfect_pitch's accuracy pin is structural: the
+                // StatStage effect carries core::Stat, which has no Acc
+                // variant — no launch move can lower accuracy.)
+                if *delta < 0 {
+                    let guard = self.state.side(target_side).active_mote().ability;
+                    let blocked = guard == Ability::MetronomeSoul
+                        && *stat == undersong_core::stats::Stat::Spe;
+                    if blocked {
+                        self.events.push(BattleEvent::AbilityNote {
+                            side: target_side,
+                            ability: guard,
+                        });
+                        return;
+                    }
                 }
                 let Some(stage_stat) = StageStat::from_stat(*stat) else {
                     return; // HP has no stage
@@ -709,8 +878,16 @@ impl Engine {
                 }
             }
             Effect::Flinch { chance } => {
-                if rng.chance(u32::from(*chance), 100)
+                // keysmith: +10% flinch on sound moves (doc 02 §10).
+                let mut chance = u32::from(*chance);
+                if self.state.side(side).active_mote().ability == Ability::Keysmith
+                    && spec.flags.sound
+                {
+                    chance += 10;
+                }
+                if rng.chance(chance, 100)
                     && !self.state.side(foe).active_mote().is_fainted()
+                    && self.state.side(foe).active_mote().ability != Ability::IronEar
                 {
                     self.state.side_mut(foe).active_state.flinched = true;
                 }
@@ -794,6 +971,12 @@ impl Engine {
     /// Applies a major status respecting one-at-a-time and the type
     /// immunities of doc 02 §5. Returns whether it stuck.
     fn try_apply_status(&mut self, target: SideId, ailment: Ailment, rng: &mut BattleRng) -> bool {
+        // vigor: immune to sleep (doc 02 §10).
+        if ailment == Ailment::Sleep
+            && self.state.side(target).active_mote().ability == Ability::Vigor
+        {
+            return false;
+        }
         let mote = self.state.side(target).active_mote();
         if mote.is_fainted() || mote.status.is_some() {
             return false;
@@ -933,6 +1116,26 @@ impl Engine {
         }
 
         // 4) Weather countdown.
+        // encore_heart: 1/16 max HP each turn in any weather (doc 02 §10).
+        if self.state.weather.is_some() {
+            for side in [0u8, 1u8] {
+                let mote = self.state.side(side).active_mote();
+                if !mote.is_fainted() && mote.ability == Ability::EncoreHeart {
+                    let amount = u32::from(mote.max_hp()) / 16;
+                    let healed = self.state.side_mut(side).active_mote_mut().heal(amount);
+                    if healed > 0 {
+                        self.events.push(BattleEvent::AbilityNote {
+                            side,
+                            ability: Ability::EncoreHeart,
+                        });
+                        self.events.push(BattleEvent::Healed {
+                            target: side,
+                            amount: healed,
+                        });
+                    }
+                }
+            }
+        }
         if let Some((kind, turns)) = self.state.weather {
             let turns = turns.saturating_sub(1);
             if turns == 0 {

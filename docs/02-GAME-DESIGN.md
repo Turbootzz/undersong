@@ -441,3 +441,34 @@ P3 review rulings; each was unspecified or contradicted by code. Doc is law.
    dialogue, or open shop along with the warp to the rest point; defeat
    re-walks the script from its trigger, so one-time fights must guard
    with their defeat flag rather than a fire-once trigger.
+
+### v1.5 — 2026-06-10 (P4 system specs)
+
+Specifications P4 needs that earlier sections left open. Doc is law.
+
+1. **Held items (launch set).** Framework hooks: on-entry, pre-damage,
+   post-damage, end-of-turn, on-exp. Launch items: **Oran Chime** (held:
+   once per battle, when the holder first drops to ≤ 1/2 max HP, restore
+   20 HP, consumed for the battle but not from inventory), **Exp Share**
+   (held: §9 — non-participants holding it gain 50% unsplit). Further
+   held items arrive with content phases, each legislated here first.
+2. **Doubles targeting.** All launch moves are single-target in doubles;
+   the actor declares a target slot. If the declared target has fainted
+   by execution, the move retargets to the surviving foe slot, else
+   fizzles. Allies cannot be targeted at launch. `understudy` triggers
+   per ally faint; `soloist`/`chorister` read the format flag.
+3. **AI T3 (2-ply expectimax).** For each of the actor's legal actions,
+   assume each opposing response in turn (uniform weights), simulate one
+   full turn on a cloned state with a fixed-seed probe rng (deterministic
+   across runs), and score `Δ(own team HP%) − Δ(foe team HP%)` plus 10
+   per foe KO and −10 per own KO. Pick the max-min action; ties break
+   toward the lower move slot, then Move over Switch.
+4. **Weather setters.** Move effect `SetWeather(w)` (5 turns, replaces
+   current weather, fails — turn consumed — if that weather is already
+   up); on-entry abilities set the same way but never fail. The four
+   caller abilities map heat_haze→heatwave, rain_caller→downpour,
+   flurry_caller→flurry, dust_caller→dustchord.
+5. **Friendship counter.** Starts at the species' base (70 launch-wide);
+   +2 per level-up, +1 per badge won while in party, +5 per vitamin,
+   −5 per faint; clamps 0–255. Friendship evolutions check ≥ 220 at
+   level-up (v1.4 #2 timing).

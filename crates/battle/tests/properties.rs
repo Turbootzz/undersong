@@ -371,6 +371,7 @@ proptest! {
             crit: false,
             rand: rand_roll,
             spread: false,
+            doubles: false,
         };
         let outcome = compute_damage(&spec, &context).expect("damaging");
         if outcome.type_product.0 > 0 {

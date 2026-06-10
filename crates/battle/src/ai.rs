@@ -74,6 +74,7 @@ fn expected_damage(state: &BattleState, side: SideId, slot: u8) -> u32 {
         crit: false,
         rand: 92,
         spread: false,
+        doubles: false,
     };
     compute_damage(spec, &context).map_or(0, |outcome| outcome.amount)
 }

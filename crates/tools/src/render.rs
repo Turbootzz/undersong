@@ -104,6 +104,12 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::SeededDrain { from, amount } => {
             format!("  seed saps {amount} from {}", side_tag(*from))
         }
+        BattleEvent::AbilityNote { side, ability } => {
+            format!("{} ability: {ability:?}", side_tag(*side))
+        }
+        BattleEvent::ItemNote { side, item } => {
+            format!("{} item: {item:?}", side_tag(*side))
+        }
         BattleEvent::WeatherChanged { kind } => match kind {
             Some(kind) => format!("  the air shifts: {kind:?}"),
             None => "  the weather settles".to_string(),

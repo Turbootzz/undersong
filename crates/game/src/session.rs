@@ -74,11 +74,30 @@ impl Registry {
             .iter()
             .filter_map(|m| self.moves.get(&m.id).cloned())
             .collect();
+        // Ability: slot 0/1 from the species list, or the hidden one.
+        let ability_id = if individual.uses_hidden_ability {
+            spec.hidden_ability.clone()
+        } else {
+            spec.abilities
+                .get(usize::from(individual.ability_slot))
+                .or_else(|| spec.abilities.first())
+                .cloned()
+        };
+        let ability = ability_id
+            .map(|id| battle::abilities::Ability::from_id(id.as_str()))
+            .unwrap_or_default();
+        let held = individual
+            .held_item
+            .as_ref()
+            .map(|id| battle::abilities::HeldItem::from_id(id.as_str()))
+            .unwrap_or_default();
         let mut mote = MoteBuilder::new(spec, individual.level)
             .ivs(individual.ivs)
             .evs(individual.evs)
             .nature(individual.nature)
             .moves(moves)
+            .ability(ability)
+            .held(held)
             .build();
         mote.exp = individual.exp.max(mote.exp);
         // Carry persistent HP/PP/status; PP matches by move id so a

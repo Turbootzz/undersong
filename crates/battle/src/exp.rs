@@ -90,6 +90,9 @@ mod tests {
             base_exp_yield: 100,
             ev_yield: vec![],
             learnset: vec![(6, "dampen".into()), (7, "gale_riff".into())],
+            ability: crate::abilities::Ability::None,
+            held: crate::abilities::HeldItem::None,
+            entry_boosted: false,
         };
         mote.recompute_stats();
         mote.hp = mote.max_hp();

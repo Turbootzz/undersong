@@ -78,6 +78,16 @@ pub enum BattleEvent {
         target: SideId,
         status: Ailment,
     },
+    /// An ability visibly acted (presenter shows its name).
+    AbilityNote {
+        side: SideId,
+        ability: crate::abilities::Ability,
+    },
+    /// A held item visibly acted (Oran Chime chimes…).
+    ItemNote {
+        side: SideId,
+        item: crate::abilities::HeldItem,
+    },
     StatusTicked {
         target: SideId,
         status: Ailment,

@@ -5,6 +5,7 @@ use undersong_core::chart::TypeChart;
 use undersong_core::moves::{MoveCategory, MoveSpec, WeatherKind};
 use undersong_core::types::{Eff, Type};
 
+use crate::abilities::Ability;
 use crate::mote::{BattleMote, MajorStatus};
 use crate::stats::{StageStat, Stages, stage_multiplied};
 
@@ -19,9 +20,11 @@ pub struct DamageContext<'a> {
     pub crit: bool,
     /// Uniform 85..=100 (doc 02 §4), rolled by the caller.
     pub rand: u8,
-    /// In doubles, a spread move hitting ≥2 targets takes ×0.75; always
-    /// false until P4.
+    /// In doubles, a spread move hitting ≥2 targets takes ×0.75; launch
+    /// moves are single-target, so this stays false (doc 02 v1.5 #2).
     pub spread: bool,
+    /// Format flag for soloist/chorister (doc 02 §10).
+    pub doubles: bool,
 }
 
 pub struct DamageOutcome {
@@ -44,7 +47,16 @@ pub fn compute_damage(spec: &MoveSpec, ctx: &DamageContext<'_>) -> Option<Damage
         return None;
     }
 
-    let type_product = ctx.chart.product(spec.r#type, &ctx.defender.types);
+    // tuning_fork (doc 02 §10): feral moves strike as resonant, ×1.2
+    // (applied at the ability step below). Type shift affects the chart
+    // product and STAB.
+    let move_type = if ctx.attacker.ability == Ability::TuningFork && spec.r#type == Type::Feral {
+        Type::Resonant
+    } else {
+        spec.r#type
+    };
+
+    let type_product = ctx.chart.product(move_type, &ctx.defender.types);
     let effectiveness = classify(type_product);
 
     // A/D: physical → atk/def, special → spa/spd; stage-modified, with
@@ -93,7 +105,7 @@ pub fn compute_damage(spec: &MoveSpec, ctx: &DamageContext<'_>) -> Option<Damage
     }
     // × weather (doc 02 §7: heatwave/downpour boost or hinder ember/tide)
     if let Some(weather) = ctx.weather {
-        let factor = weather_factor(weather, spec.r#type);
+        let factor = weather_factor(weather, move_type);
         damage = mul(damage, factor.0, factor.1);
     }
     // × crit 2.0
@@ -104,7 +116,7 @@ pub fn compute_damage(spec: &MoveSpec, ctx: &DamageContext<'_>) -> Option<Damage
     debug_assert!((85..=100).contains(&ctx.rand));
     damage = mul(damage, u64::from(ctx.rand), 100);
     // × stab 1.5
-    if ctx.attacker.types.contains(&spec.r#type) {
+    if ctx.attacker.types.contains(&move_type) {
         damage = mul(damage, 3, 2);
     }
     // × type1 × type2
@@ -115,7 +127,32 @@ pub fn compute_damage(spec: &MoveSpec, ctx: &DamageContext<'_>) -> Option<Damage
     {
         damage = mul(damage, 1, 2);
     }
-    // × other (ability/item/screen modifiers) — none exist until P4.
+    // × other: ability modifiers (doc 02 §10), one rational at a time.
+    match ctx.attacker.ability {
+        Ability::Amplify if spec.flags.sound => damage = mul(damage, 13, 10),
+        Ability::Soloist => {
+            damage = if ctx.doubles {
+                mul(damage, 9, 10)
+            } else {
+                mul(damage, 13, 10)
+            };
+        }
+        Ability::Chorister if ctx.doubles => damage = mul(damage, 6, 5),
+        Ability::TuningFork if spec.r#type == Type::Feral => damage = mul(damage, 6, 5),
+        _ => {}
+    }
+    let crescendo_type = match ctx.attacker.ability {
+        Ability::CrescendoEmber => Some(Type::Ember),
+        Ability::CrescendoTide => Some(Type::Tide),
+        Ability::CrescendoBloom => Some(Type::Bloom),
+        _ => None,
+    };
+    if let Some(element) = crescendo_type
+        && move_type == element
+        && u32::from(ctx.attacker.hp) * 3 <= u32::from(ctx.attacker.max_hp())
+    {
+        damage = mul(damage, 3, 2);
+    }
 
     // minimum 1 if the type product is > 0
     if type_product.0 > 0 {
@@ -214,6 +251,9 @@ mod tests {
             base_exp_yield: 100,
             ev_yield: vec![],
             learnset: vec![],
+            ability: crate::abilities::Ability::None,
+            held: crate::abilities::HeldItem::None,
+            entry_boosted: false,
         }
     }
 
@@ -251,6 +291,7 @@ mod tests {
             crit,
             rand,
             spread: false,
+            doubles: false,
         }
     }
 
