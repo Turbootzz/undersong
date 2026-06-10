@@ -141,6 +141,14 @@ fn speed_orders_equal_priority_and_paralysis_quarters_speed() {
         matches!(events[first], BattleEvent::MoveUsed { side: 0, .. }),
         "paralysis quarters effective speed"
     );
+    // Guard against a vacuous pass: the paralyzed side must still have
+    // acted this turn (the seed avoids the 25% full stop).
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveUsed { side: 1, .. })),
+        "both sides moved — ordering was actually exercised"
+    );
 }
 
 #[test]
@@ -782,4 +790,246 @@ fn turn_limit_forces_draw() {
             outcome: Outcome::Drawn
         }
     )));
+}
+
+#[test]
+fn two_turn_charges_once_commits_slot_and_costs_one_pp() {
+    let sp = species("breather", &[Type::Feral], 80);
+    let mut big_breath = move_spec("big_breath", Type::Feral, MoveCategory::Physical, 90, 0);
+    big_breath.pp = 5;
+    big_breath.effects = vec![Effect::TwoTurn {
+        charge_text: "draws breath".into(),
+    }];
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+
+    let state = trainer_state(
+        vec![mote(&sp, 20, vec![big_breath, tackle.clone()])],
+        vec![mote(&sp, 20, vec![tackle.clone()])],
+    );
+    let mut rng = BattleRng::from_seed(21);
+
+    // Turn 1: charge — MoveUsed + ChargeStarted, 1 PP, no damage from us.
+    let (mid, events1) = step(&state, &both_move(0, 0), &mut rng);
+    assert!(
+        events1
+            .iter()
+            .any(|e| matches!(e, BattleEvent::ChargeStarted { side: 0 }))
+    );
+    assert!(
+        !events1
+            .iter()
+            .any(|e| matches!(e, BattleEvent::DamageDealt { target: 1, .. })),
+        "no strike on the charge turn"
+    );
+    assert_eq!(mid.sides[0].party[0].moves[0].pp, 4, "1 PP at charge");
+    assert_eq!(mid.sides[0].active_state.charging, Some(0));
+
+    // Turn 2: submit the OTHER slot — the committed slot strikes anyway,
+    // no second PP cost, no second MoveUsed (doc 02 v1.2 #5).
+    let (after, events2) = step(&mid, &both_move(1, 0), &mut rng);
+    assert!(
+        events2
+            .iter()
+            .any(|e| matches!(e, BattleEvent::DamageDealt { target: 1, .. })),
+        "release strikes"
+    );
+    assert!(
+        !events2
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveUsed { side: 0, .. })),
+        "no second MoveUsed on release"
+    );
+    assert_eq!(after.sides[0].party[0].moves[0].pp, 4, "no second PP cost");
+    assert_eq!(
+        after.sides[0].party[0].moves[1].pp, tackle.pp,
+        "tackle untouched"
+    );
+    assert_eq!(after.sides[0].active_state.charging, None);
+}
+
+#[test]
+fn two_turn_switch_cancels_the_charge() {
+    let sp = species("breather", &[Type::Feral], 80);
+    let mut big_breath = move_spec("big_breath", Type::Feral, MoveCategory::Physical, 90, 0);
+    big_breath.effects = vec![Effect::TwoTurn {
+        charge_text: "draws breath".into(),
+    }];
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+
+    let state = trainer_state(
+        vec![
+            mote(&sp, 20, vec![big_breath]),
+            mote(&sp, 20, vec![tackle.clone()]),
+        ],
+        vec![mote(&sp, 20, vec![tackle.clone()])],
+    );
+    let mut rng = BattleRng::from_seed(22);
+    let (mid, _) = step(&state, &both_move(0, 0), &mut rng);
+    assert_eq!(mid.sides[0].active_state.charging, Some(0));
+
+    let (after, events) = step(
+        &mid,
+        &TurnActions::new(Action::Switch { to: 1 }, Action::Move { slot: 0 }),
+        &mut rng,
+    );
+    assert_eq!(
+        after.sides[0].active_state.charging, None,
+        "volatiles clear on exit"
+    );
+    assert!(
+        !events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::DamageDealt { target: 1, .. })),
+        "no phantom strike after switching out"
+    );
+}
+
+#[test]
+fn force_switch_does_not_eclipse_a_faint() {
+    let strong = species("dragger", &[Type::Feral], 90);
+    let weak = species("dragged", &[Type::Feral], 30);
+    let mut roar_smash = move_spec("roar_smash", Type::Feral, MoveCategory::Physical, 120, 0);
+    roar_smash.effects = vec![Effect::ForceSwitch];
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+
+    let mut state = trainer_state(
+        vec![mote(&strong, 30, vec![roar_smash])],
+        vec![
+            mote(&weak, 20, vec![tackle.clone()]),
+            mote(&weak, 20, vec![tackle.clone()]),
+        ],
+    );
+    state.sides[1].party[0].hp = 1;
+
+    let mut rng = BattleRng::from_seed(23);
+    let (next, events) = step(&state, &both_move(0, 0), &mut rng);
+
+    let faint = position(&events, |e| matches!(e, BattleEvent::Fainted { target: 1 }))
+        .expect("the KO is visible in the stream");
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::ExpGained { side: 0, .. })),
+        "the victor is awarded"
+    );
+    // The replacement arrives via auto-replace, after the faint.
+    let switched = position(&events, |e| {
+        matches!(e, BattleEvent::SwitchedIn { side: 1, .. })
+    })
+    .expect("replacement arrives");
+    assert!(faint < switched);
+    assert_eq!(next.sides[1].active, 1);
+}
+
+#[test]
+fn self_switch_after_lethal_recoil_faints_the_user() {
+    let frail = species("kamikaze", &[Type::Feral], 90);
+    let tank = species("tank", &[Type::Feral], 30);
+    let mut crash_out = move_spec("crash_out", Type::Feral, MoveCategory::Physical, 80, 0);
+    crash_out.effects = vec![Effect::Recoil { frac: Frac(1, 1) }, Effect::SelfSwitch];
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+
+    let mut state = trainer_state(
+        vec![
+            mote(&frail, 25, vec![crash_out]),
+            mote(&frail, 25, vec![tackle.clone()]),
+        ],
+        vec![mote(&tank, 40, vec![tackle.clone()])],
+    );
+    state.sides[0].party[0].hp = 1;
+
+    let mut rng = BattleRng::from_seed(24);
+    let (_, events) = step(&state, &both_move(0, 0), &mut rng);
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::Fainted { target: 0 })),
+        "recoil faint is visible, not hidden by the self-switch"
+    );
+}
+
+#[test]
+fn failed_escape_consumes_the_action_and_escalates() {
+    let snail = species("snail", &[Type::Feral], 1);
+    let cheetah = species("cheetah", &[Type::Feral], 250);
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+    let state = wild_state(
+        vec![mote(&snail, 10, vec![tackle.clone()])],
+        vec![mote(&cheetah, 40, vec![tackle.clone()])],
+    );
+    // A = 5 (snail spe at L10), B = 205 (cheetah at L40):
+    // F = floor(5·32/205) + 30·0 = 0 → guaranteed failure.
+    let mut rng = BattleRng::from_seed(25);
+    let (next, events) = step(
+        &state,
+        &TurnActions::new(Action::Run, Action::Move { slot: 0 }),
+        &mut rng,
+    );
+    assert!(events.iter().any(|e| matches!(
+        e,
+        BattleEvent::EscapeAttempt {
+            side: 0,
+            fled: false
+        }
+    )));
+    assert_eq!(next.escape_attempts, 1, "doc 02 §12: +30 per prior failure");
+    assert!(
+        !events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveUsed { side: 0, .. })),
+        "a failed escape consumes the action (v1.1 #1a)"
+    );
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveUsed { side: 1, .. })),
+        "the wild still acts"
+    );
+    // (The wild may well KO the snail afterwards — irrelevant here.)
+}
+
+#[test]
+fn flurry_makes_frost_moves_skip_the_accuracy_roll() {
+    let caster = species("rimecaller", &[Type::Feral], 80);
+    let target = species("dodger", &[Type::Feral], 40);
+    // 30% accuracy frost move: without flurry it usually misses; under
+    // flurry it must never miss (doc 02 §7 / v1.2 #9).
+    let mut rime_dart = move_spec("rime_dart", Type::Frost, MoveCategory::Special, 40, 0);
+    rime_dart.accuracy = 30;
+    let tackle = move_spec("tackle", Type::Feral, MoveCategory::Physical, 40, 0);
+
+    let mut flurry_state = trainer_state(
+        vec![mote(&caster, 20, vec![rime_dart.clone()])],
+        vec![mote(&target, 20, vec![tackle.clone()])],
+    );
+    flurry_state.weather = Some((undersong_core::moves::WeatherKind::Flurry, 5));
+
+    let mut misses_under_flurry = 0;
+    let mut misses_dry = 0;
+    for seed in 100..150u64 {
+        let mut rng = BattleRng::from_seed(seed);
+        let (_, events) = step(&flurry_state, &both_move(0, 0), &mut rng);
+        if events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveMissed { side: 0 }))
+        {
+            misses_under_flurry += 1;
+        }
+
+        let mut dry = flurry_state.clone();
+        dry.weather = None;
+        let mut rng = BattleRng::from_seed(seed);
+        let (_, events) = step(&dry, &both_move(0, 0), &mut rng);
+        if events
+            .iter()
+            .any(|e| matches!(e, BattleEvent::MoveMissed { side: 0 }))
+        {
+            misses_dry += 1;
+        }
+    }
+    assert_eq!(misses_under_flurry, 0, "frost never misses in flurry");
+    assert!(
+        misses_dry > 10,
+        "the 30%-accuracy control actually misses dry"
+    );
 }

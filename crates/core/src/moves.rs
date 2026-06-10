@@ -159,16 +159,6 @@ pub struct MoveSpec {
     pub effects: Vec<Effect>,
 }
 
-impl MoveSpec {
-    pub fn is_damaging(&self) -> bool {
-        self.power > 0
-            || matches!(
-                self.category,
-                MoveCategory::Physical | MoveCategory::Special
-            )
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -57,10 +57,13 @@ impl Default for Options {
     }
 }
 
-fn parse_options(args: impl Iterator<Item = String>) -> Result<Options> {
+fn parse_options(args: impl Iterator<Item = String>, allowed: &[&str]) -> Result<Options> {
     let mut options = Options::default();
     let mut args = args.peekable();
     while let Some(arg) = args.next() {
+        if !allowed.contains(&arg.as_str()) {
+            bail!("unknown argument `{arg}` for this command\n{USAGE}");
+        }
         let mut value = |name: &str| {
             args.next()
                 .with_context(|| format!("{name} needs a value\n{USAGE}"))
@@ -68,9 +71,25 @@ fn parse_options(args: impl Iterator<Item = String>) -> Result<Options> {
         match arg.as_str() {
             "--content" => options.content = PathBuf::from(value("--content")?),
             "--pool" => options.pool = PathBuf::from(value("--pool")?),
-            "--battles" => options.battles = value("--battles")?.parse()?,
-            "--level" => options.level = value("--level")?.parse()?,
-            "--seed" => options.seed = Some(parse_seed(&value("--seed")?)?),
+            "--battles" => {
+                let raw = value("--battles")?;
+                options.battles = raw
+                    .parse()
+                    .with_context(|| format!("--battles expects a number, got `{raw}`"))?;
+            }
+            "--level" => {
+                let raw = value("--level")?;
+                options.level = raw
+                    .parse()
+                    .with_context(|| format!("--level expects a number, got `{raw}`"))?;
+            }
+            "--seed" => {
+                let raw = value("--seed")?;
+                options.seed = Some(
+                    parse_seed(&raw)
+                        .with_context(|| format!("--seed expects a number, got `{raw}`"))?,
+                );
+            }
             other => bail!("unknown argument `{other}`\n{USAGE}"),
         }
     }
@@ -90,15 +109,18 @@ fn run() -> Result<bool> {
     let mut args = std::env::args().skip(1);
     match args.next().as_deref() {
         Some("validate") => {
-            let options = parse_options(args)?;
+            let options = parse_options(args, &["--content"])?;
             validate(&options)
         }
         Some("simulate") => {
-            let options = parse_options(args)?;
+            let options = parse_options(
+                args,
+                &["--battles", "--pool", "--level", "--seed", "--content"],
+            )?;
             simulate(&options)
         }
         Some("battle") => {
-            let options = parse_options(args)?;
+            let options = parse_options(args, &["--seed", "--pool", "--level", "--content"])?;
             run_battle(&options)
         }
         Some(other) => bail!("unknown command `{other}`\n{USAGE}"),
@@ -170,7 +192,7 @@ fn simulate(options: &Options) -> Result<bool> {
     );
     let report = sim::simulate(&pool, &content.moves, &content.typechart, &config);
     print!("{}", report.render());
-    // The doc 02 §14 regression: T2 must beat T0 ≥ 90% with equal teams.
+    // Gate P1 (docs/06-ROADMAP.md): T2 must beat T0 ≥ 90% with equal teams.
     Ok(report.t2_rate_percent() >= 90.0)
 }
 

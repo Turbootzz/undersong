@@ -32,4 +32,6 @@ pub use turn::step;
 
 /// Bump consciously when a rule change breaks golden replays
 /// (docs/03-ARCHITECTURE.md §2); regenerate goldens in the same commit.
-pub const REPLAY_VERSION: u32 = 1;
+/// v2: doc 02 v1.2 — player-side-only exp awards, two-turn commitment,
+/// faint-before-switch ordering.
+pub const REPLAY_VERSION: u32 = 2;

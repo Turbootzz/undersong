@@ -95,7 +95,7 @@ impl BattleMote {
 
     /// Heals up to max HP. Returns the amount actually healed.
     pub fn heal(&mut self, amount: u32) -> u16 {
-        let room = u32::from(self.max_hp() - self.hp);
+        let room = u32::from(self.max_hp().saturating_sub(self.hp));
         let healed = u16::try_from(amount.min(room)).expect("clamped");
         self.hp += healed;
         healed

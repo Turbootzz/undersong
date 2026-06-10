@@ -98,6 +98,30 @@ fn random_move(id: u32, rng: &mut BattleRng) -> MoveSpec {
         }),
         5 if power > 0 => effects.push(Effect::MultiHit),
         6 => effects.push(Effect::Heal { frac: Frac(1, 4) }),
+        7 => effects.push(match rng.below(7) {
+            0 => Effect::TwoTurn {
+                charge_text: "charging".into(),
+            },
+            1 => Effect::Protect,
+            2 => Effect::Weather {
+                kind: match rng.below(4) {
+                    0 => undersong_core::moves::WeatherKind::Heatwave,
+                    1 => undersong_core::moves::WeatherKind::Downpour,
+                    2 => undersong_core::moves::WeatherKind::Flurry,
+                    _ => undersong_core::moves::WeatherKind::Dustchord,
+                },
+            },
+            3 => Effect::ForceSwitch,
+            4 => Effect::SelfSwitch,
+            5 => Effect::Ohko,
+            _ => Effect::FixedDamage {
+                amount: if rng.chance(1, 2) {
+                    undersong_core::moves::FixedAmount::UserLevel
+                } else {
+                    undersong_core::moves::FixedAmount::Amount(20)
+                },
+            },
+        }),
         _ => {}
     }
     MoveSpec {
@@ -276,9 +300,16 @@ proptest! {
         let run = |seed: u64| {
             let mut rng = BattleRng::from_seed(seed);
             let chart = random_chart(&mut rng);
+            // Half the runs are wild so the run/bell/catch rng paths fall
+            // under the byte-identical-stream property too.
+            let kind = if seed.is_multiple_of(2) {
+                BattleKind::Trainer
+            } else {
+                BattleKind::Wild
+            };
             let side0 = vec![random_battle_mote(0, &mut rng)];
             let side1 = vec![random_battle_mote(1, &mut rng)];
-            let mut state = BattleState::new(BattleKind::Trainer, side0, side1, chart);
+            let mut state = BattleState::new(kind, side0, side1, chart);
             let mut events = Vec::new();
             while state.outcome.is_none() {
                 let actions = TurnActions::new(

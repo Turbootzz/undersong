@@ -353,3 +353,50 @@ other for regression (T3 must beat T1 ≥ 85% with equal teams).
   18. **Accuracy stages** apply per §3 (acc/eva 3-based table); `resonate`'s
       "ignores eva stages" flag zeroes the target's evasion stage in the §4
       accuracy formula only.
+- v1.2, 2026-06-10 (P1 phase review) — rulings forced by review findings;
+  each either legislates an implementation decision or pins an ambiguity.
+  1. **Exp/EV awards are player-side only.** Only side 0 (the player side)
+     receives exp, EVs, and level-ups from faints; `Fainted` events are
+     emitted for every faint regardless. v1.1 #13's side-neutral wording is
+     superseded. Opposing trainers' and wild Motes' progression never
+     mutates mid-battle.
+  2. **Exp order: split, then multiply.** The participant split (integer
+     division) happens first; the ×1.5 trainer and ×1.5 traded multipliers
+     apply to each share afterwards. Where §9's prose reads otherwise, this
+     clause wins.
+  3. **A fainted participant receives nothing.** If the would-be victor's
+     active Mote is itself fainted at award time (recoil, etc.), the award
+     is skipped entirely.
+  4. **EVs take effect at the next stat recompute** (level-up per #11), not
+     the instant they are awarded; no mid-battle stat bump or heal from an
+     EV award.
+  5. **Two-turn moves:** the charge turn spends the action and 1 PP, emits
+     `MoveUsed` + `ChargeStarted`, and commits the slot. The release turn is
+     forced to the committed slot regardless of the submitted action, spends
+     no PP, emits no second `MoveUsed`, and strikes. Leaving the field for
+     any reason cancels the charge (volatiles clear on exit, §5).
+  6. **The dual-type product is one pipeline step**: `× type1 × type2` in §4
+     is computed as a single exact rational (order-independent), then
+     floored once — consistent with doc 03 §2's "multipliers are rational
+     pairs applied in pipeline order".
+  7. **End-of-turn fraction damage has a 1 HP minimum** (burn, poison,
+     toxic, weather chip, seeded drain).
+  8. **Confusion self-hit uses unstaged atk/def** (raw computed stats); #4's
+     "own atk vs own def" is pinned to mean stage-free.
+  9. **Weather secondary effects (§7) pipeline positions:** flurry's "frost
+     moves never miss" skips the §4 accuracy roll entirely for frost-type
+     moves; dustchord's "spa-def ×1.5" multiplies the stone-type defender's
+     effective (stage-modified) spd by 3/2 inside D for special moves.
+  10. **ForceSwitch consumes the displaced side's pending action**: a Mote
+      dragged in mid-turn does not act with its predecessor's queued move.
+  11. **AI clarifications:** #15's candidate set excludes moves whose
+      expected damage is 0 (an all-immune mover falls back to slot 0).
+      #16's "major-status move" means a Status-category move carrying a
+      100%-chance `Status` effect.
+  12. **Confusion infliction is deferred**: the §6 Effect enum (the law)
+      has no confuse variant, so no content can inflict confusion yet; the
+      engine mechanics (§5 volatile, #4 self-hit) exist and are tested
+      directly. An inflict effect arrives with the content phase that needs
+      it, doc-first.
+  13. **Content bounds (validator):** damaging-move power ≤ 250; StatStage
+      deltas in −6..=+6 and nonzero; learnset levels in 1..=100.

@@ -132,8 +132,9 @@ impl SimReport {
         }
         out.push_str("\nper-type aggregate win rates:\n");
         for (ty, (wins, total)) in &self.type_results {
+            let name = format!("{ty:?}");
             out.push_str(&format!(
-                "  {ty:<10?} {:>5.1}%  ({wins}/{total})\n",
+                "  {name:<10} {:>5.1}%  ({wins}/{total})\n",
                 f64::from(*wins) * 100.0 / f64::from((*total).max(1))
             ));
         }
@@ -172,7 +173,8 @@ pub fn simulate(
 
     // Balance pass: random teams, T2 both sides.
     for _ in 0..config.battles {
-        let mut rng = BattleRng::from_seed(u64::from(master.next_u32()));
+        let seed = (u64::from(master.next_u32()) << 32) | u64::from(master.next_u32());
+        let mut rng = BattleRng::from_seed(seed);
         let team0 = random_team(pool, config.team_size, config.level, moves, &mut rng);
         let team1 = random_team(pool, config.team_size, config.level, moves, &mut rng);
         let roster0: Vec<String> = team0.iter().map(|m| m.species.to_string()).collect();
@@ -212,7 +214,8 @@ pub fn simulate(
 
     // Tier regression: identical teams, T2 (side 0) vs T0 (side 1).
     for _ in 0..config.battles {
-        let mut rng = BattleRng::from_seed(u64::from(master.next_u32()));
+        let seed = (u64::from(master.next_u32()) << 32) | u64::from(master.next_u32());
+        let mut rng = BattleRng::from_seed(seed);
         let team = random_team(pool, config.team_size, config.level, moves, &mut rng);
         let state = BattleState::new(BattleKind::Trainer, team.clone(), team, chart.clone());
         let (outcome, _) = play_out(state, [AiTier::T2, AiTier::T0], &mut rng);

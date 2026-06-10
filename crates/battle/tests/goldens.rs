@@ -214,6 +214,7 @@ fn scenarios() -> Vec<Scenario> {
             ),
             script: vec![
                 TurnActions::new(Action::Move { slot: 0 }, Action::Move { slot: 0 }),
+                TurnActions::new(Action::Run, Action::Move { slot: 0 }),
                 TurnActions::new(
                     Action::UseBell {
                         bell_mod: Frac(1, 1),

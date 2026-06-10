@@ -151,9 +151,9 @@ mod tests {
                 caught += 1;
             }
         }
-        // a = floor(600·3/600) = 3 → b = 1048560/isqrt(isqrt(5570560))
-        //   isqrt(5570560)=2360, isqrt(2360)=48 → b = 21845
-        // P(one check) = 21845/65536 ≈ 1/3 → P(catch) ≈ 1.2%.
+        // a = floor((600−400)·3/600) = 1 → b = 1048560/isqrt(isqrt(16711680))
+        //   isqrt(16711680)=4087, isqrt(4087)=63 → b = 16643
+        // P(one check) = 16643/65536 ≈ 25.4% → P(catch) ≈ 0.42%.
         assert!(caught < 100, "caught {caught} of 2000 — formula drifted?");
     }
 

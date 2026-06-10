@@ -50,7 +50,10 @@ impl Stages {
     /// not move.
     pub fn bump(&mut self, stat: StageStat, delta: i8) -> (i8, bool) {
         let old = self.0[stat.index()];
-        let new = (old + delta).clamp(-6, 6);
+        // i16 intermediate: i8 addition could overflow on extreme deltas
+        // before the clamp ever ran.
+        let new =
+            i8::try_from((i16::from(old) + i16::from(delta)).clamp(-6, 6)).expect("clamped to ±6");
         self.0[stat.index()] = new;
         (new, new == old)
     }

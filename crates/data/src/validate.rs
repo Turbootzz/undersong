@@ -140,6 +140,12 @@ fn check_moves(content: &CoreContent, findings: &mut Vec<Finding>) {
                 format!("`{id}` accuracy {} outside 0..=100", spec.accuracy),
             ));
         }
+        if spec.power > 250 {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` power {} above 250 (doc 02 v1.2 #13)", spec.power),
+            ));
+        }
         if !(5..=40).contains(&spec.pp) {
             findings.push(Finding::error(
                 "moves.ranges",
@@ -166,6 +172,16 @@ fn check_moves(content: &CoreContent, findings: &mut Vec<Finding>) {
                 findings.push(Finding::error(
                     "moves.ranges",
                     format!("`{id}` effect chance {chance} outside 1..=100"),
+                ));
+            }
+            if let Effect::StatStage { delta, .. } = effect
+                && (*delta == 0 || !(-6..=6).contains(delta))
+            {
+                findings.push(Finding::error(
+                    "moves.ranges",
+                    format!(
+                        "`{id}` StatStage delta {delta} outside nonzero −6..=6 (doc 02 v1.2 #13)"
+                    ),
                 ));
             }
         }
@@ -215,6 +231,12 @@ pub fn validate_species_pool(
         let mut last_level = 0u8;
         let mut damaging_by_5 = false;
         for (level, move_id) in &spec.learnset {
+            if !(1..=100).contains(level) {
+                findings.push(Finding::error(
+                    "species.learnset_level",
+                    format!("`{id}` learnset level {level} outside 1..=100 (doc 02 v1.2 #13)"),
+                ));
+            }
             if *level < last_level {
                 findings.push(Finding::error(
                     "species.learnset_order",

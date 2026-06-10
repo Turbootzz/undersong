@@ -1,4 +1,4 @@
-// golden replay `chaos` — REPLAY_VERSION 1
+// golden replay `chaos` — REPLAY_VERSION 2
 // regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
 [
     TurnStarted(
@@ -129,11 +129,6 @@
     ),
     Fainted(
         target: 0,
-    ),
-    ExpGained(
-        side: 1,
-        slot: 0,
-        amount: 693,
     ),
     BattleEnded(
         outcome: Won(

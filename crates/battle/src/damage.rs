@@ -72,7 +72,16 @@ pub fn compute_damage(spec: &MoveSpec, ctx: &DamageContext<'_>) -> Option<Damage
         def_stage = def_stage.min(0);
     }
     let a = u64::from(stage_multiplied(u32::from(atk_stat), atk_stage));
-    let d = u64::from(stage_multiplied(u32::from(def_stat), def_stage)).max(1);
+    let mut d = u64::from(stage_multiplied(u32::from(def_stat), def_stage));
+    // Dustchord: stone-type defenders take special hits at spd ×3/2
+    // (doc 02 §7, pipeline position pinned by v1.2 #9).
+    if matches!(spec.category, MoveCategory::Special)
+        && matches!(ctx.weather, Some(WeatherKind::Dustchord))
+        && ctx.defender.types.contains(&Type::Stone)
+    {
+        d = d * 3 / 2;
+    }
+    let d = d.max(1);
 
     // base = floor(floor(floor(2·Level/5 + 2) · Power · A/D) / 50) + 2
     let level_term = 2 * u64::from(ctx.attacker.level) / 5 + 2;
@@ -282,10 +291,10 @@ mod tests {
         assert_eq!(out.amount, 68);
     }
 
-    /// Crit doubles before rand: base 28 → crit 56 → rand 85 →
-    /// floor(56·85/100)=47 → STAB 70 → 2× → 140. Order matters: crit
-    /// before rand per §4; (28·85/100)·2 would give 46→… a different
-    /// number (139 vs 140 path checks the floor order).
+    /// Crit doubles before rand (doc 02 §4 order): 28 → 56 (crit) →
+    /// floor(56·85/100)=47 (rand) → 70 (STAB) → 140 (2×). The reversed
+    /// order would give 28 → 23 (rand) → 46 (crit) → 69 → 138, so
+    /// asserting exactly 140 pins the law's floor order.
     #[test]
     fn pipeline_crit_applies_before_rand() {
         let attacker = dummy(&[Type::Ember], 50, 50, 120, 50, 50);
@@ -472,6 +481,55 @@ mod tests {
         assert_eq!(dry, 42);
         assert_eq!(boosted, 63);
         assert_eq!(dampened, 21);
+    }
+
+    #[test]
+    fn dustchord_boosts_stone_defender_special_defense() {
+        // v1.2 #9: special hits vs stone types under dustchord use
+        // spd ×3/2 inside D. spa 120 vs spd 80: dry D=80 → base
+        // floor(22·40·120/80/50)+2 = 28; dustchord D=120 → base
+        // floor(22·40·120/120/50)+2 = floor(880/50)+2 = 19.
+        let attacker = dummy(&[Type::Ember], 50, 50, 120, 50, 50);
+        let defender = dummy(&[Type::Stone], 50, 50, 50, 80, 50);
+        let mut chart_text = String::from("TypeChart(entries: {");
+        for a in Type::ALL {
+            chart_text.push_str(&format!("{a:?}: {{"));
+            for d in Type::ALL {
+                chart_text.push_str(&format!("{d:?}: Neutral,"));
+            }
+            chart_text.push_str("},");
+        }
+        chart_text.push_str("})");
+        let chart: TypeChart = ron::from_str(&chart_text).expect("chart");
+        let stages = (Stages::default(), Stages::default());
+        let mut context = ctx(&attacker, &defender, &stages, &chart, false, 100);
+
+        let dry = compute_damage(&ember_note(), &context).expect("dmg").amount;
+        context.weather = Some(WeatherKind::Dustchord);
+        let walled = compute_damage(&ember_note(), &context).expect("dmg").amount;
+        // STAB applies to both (Ember attacker): 28→42 dry, 19→28 walled.
+        assert_eq!(dry, 42);
+        assert_eq!(walled, 28);
+
+        // Physical hits are unaffected by dustchord.
+        let physical = MoveSpec {
+            id: "shove".into(),
+            name_key: "move.shove".into(),
+            r#type: Type::Feral,
+            category: MoveCategory::Physical,
+            power: 40,
+            accuracy: 100,
+            pp: 30,
+            priority: 0,
+            target: MoveTarget::Foe,
+            flags: MoveFlags::default(),
+            effects: vec![],
+        };
+        context.weather = None;
+        let dry_physical = compute_damage(&physical, &context).expect("dmg").amount;
+        context.weather = Some(WeatherKind::Dustchord);
+        let dust_physical = compute_damage(&physical, &context).expect("dmg").amount;
+        assert_eq!(dry_physical, dust_physical);
     }
 
     #[test]

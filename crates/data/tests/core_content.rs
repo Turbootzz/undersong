@@ -217,6 +217,51 @@ fn canon_moves_match_design_doc_table() {
         }]
     );
     assert_eq!(
+        get("flare_brass").effects,
+        vec![Effect::Status {
+            ailment: Ailment::Burn,
+            chance: 10
+        }]
+    );
+    // Absence is law too: the doc's effect-free rows must stay empty, and
+    // the sound-move set must match the doc exactly (no stray flags).
+    for effect_free in [
+        "tackle",
+        "quick_step",
+        "ripple",
+        "leaf_pick",
+        "gale_riff",
+        "stone_toll",
+        "phantom_rest",
+        "resonate",
+    ] {
+        assert!(
+            get(effect_free).effects.is_empty(),
+            "{effect_free} must carry no effects per doc 02 §6"
+        );
+    }
+    let doc_sound: std::collections::BTreeSet<&str> = [
+        "ember_note",
+        "flare_brass",
+        "gale_riff",
+        "venom_trill",
+        "alloy_clang",
+        "frost_lull",
+        "resonate",
+        "dampen",
+    ]
+    .into();
+    let actual_sound: std::collections::BTreeSet<&str> = moves
+        .moves
+        .iter()
+        .filter(|m| m.flags.sound)
+        .map(|m| m.id.as_str())
+        .collect();
+    assert_eq!(
+        actual_sound, doc_sound,
+        "sound flag set matches the doc table"
+    );
+    assert_eq!(
         get("undertow").effects,
         vec![Effect::StatStage {
             target: EffectTarget::Target,

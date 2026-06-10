@@ -52,6 +52,7 @@ pub fn step(
     let mut engine = Engine {
         state: state.clone(),
         events: Vec::new(),
+        cancelled: [false; 2],
     };
     if engine.state.is_over() {
         return (engine.state, engine.events);
@@ -63,6 +64,9 @@ pub fn step(
 struct Engine {
     state: BattleState,
     events: Vec<BattleEvent>,
+    /// Set when a side's pending action is consumed mid-turn
+    /// (ForceSwitch drag, doc 02 v1.2 #10).
+    cancelled: [bool; 2],
 }
 
 impl Engine {
@@ -156,7 +160,8 @@ impl Engine {
             if self.state.is_over() {
                 return;
             }
-            if self.state.side(side).active_mote().is_fainted() {
+            if self.state.side(side).active_mote().is_fainted() || self.cancelled[usize::from(side)]
+            {
                 continue;
             }
             self.act(side, slot, rng);
@@ -375,42 +380,48 @@ impl Engine {
             }
         }
 
-        // Resolve the move (or the no-PP fallback).
-        let resolved = self.resolve_slot(side, slot);
-        let (spec, typeless) = match resolved {
-            Some(s) => {
-                let battle_move =
-                    &mut self.state.side_mut(side).active_mote_mut().moves[usize::from(s)];
-                battle_move.pp -= 1;
-                let spec = battle_move.spec.clone();
-                self.events.push(BattleEvent::MoveUsed {
-                    side,
-                    move_id: spec.id.clone(),
-                });
-                (spec, false)
-            }
-            None => {
-                self.events.push(BattleEvent::LastResortUsed { side });
-                (last_resort_spec(), true)
+        // Resolve the move. A committed charge (doc 02 v1.2 #5) forces the
+        // stored slot: no second PP cost, no second MoveUsed. Otherwise
+        // resolve the submitted slot (or the no-PP fallback), and a
+        // two-turn move's first use charges: 1 PP, MoveUsed +
+        // ChargeStarted, action over.
+        let committed = self.state.side(side).active_state.charging;
+        let (spec, typeless) = if let Some(committed_slot) = committed {
+            self.state.side_mut(side).active_state.charging = None;
+            let spec = self.state.side(side).active_mote().moves[usize::from(committed_slot)]
+                .spec
+                .clone();
+            (spec, false)
+        } else {
+            match self.resolve_slot(side, slot) {
+                Some(s) => {
+                    let battle_move =
+                        &mut self.state.side_mut(side).active_mote_mut().moves[usize::from(s)];
+                    battle_move.pp -= 1;
+                    let spec = battle_move.spec.clone();
+                    self.events.push(BattleEvent::MoveUsed {
+                        side,
+                        move_id: spec.id.clone(),
+                    });
+                    if spec
+                        .effects
+                        .iter()
+                        .any(|e| matches!(e, Effect::TwoTurn { .. }))
+                    {
+                        self.state.side_mut(side).active_state.charging = Some(s);
+                        self.events.push(BattleEvent::ChargeStarted { side });
+                        return;
+                    }
+                    (spec, false)
+                }
+                None => {
+                    self.events.push(BattleEvent::LastResortUsed { side });
+                    (last_resort_spec(), true)
+                }
             }
         };
 
         let foe: SideId = 1 - side;
-
-        // Two-turn moves: first call charges, second strikes.
-        let charging = self.state.side(side).active_state.charging;
-        let is_two_turn = spec
-            .effects
-            .iter()
-            .any(|e| matches!(e, Effect::TwoTurn { .. }));
-        if is_two_turn && charging.is_none() {
-            self.state.side_mut(side).active_state.charging = resolved;
-            self.events.push(BattleEvent::ChargeStarted { side });
-            return;
-        }
-        if charging.is_some() {
-            self.state.side_mut(side).active_state.charging = None;
-        }
 
         // Protect (engine support; no canon P1 move sets it).
         if spec.flags.protectable && self.state.side(foe).active_state.protected {
@@ -419,8 +430,14 @@ impl Engine {
         }
 
         // Accuracy (doc 02 §4): acc 0 never misses; stages per §3, with
-        // resonate-style evasion bypass (v1.1 #18).
-        if spec.accuracy > 0 && matches!(spec.target, MoveTarget::Foe) {
+        // resonate-style evasion bypass (v1.1 #18). Flurry makes frost
+        // moves skip the roll entirely (doc 02 §7, v1.2 #9).
+        let flurry_frost = spec.r#type == Type::Frost
+            && matches!(
+                self.state.weather,
+                Some((undersong_core::moves::WeatherKind::Flurry, _))
+            );
+        if spec.accuracy > 0 && matches!(spec.target, MoveTarget::Foe) && !flurry_frost {
             let user_stage = self
                 .state
                 .side(side)
@@ -707,6 +724,13 @@ impl Engine {
                 self.state.side_mut(side).active_state.protected = true;
             }
             Effect::ForceSwitch => {
+                // A KO from this same move wins over the drag: the faint
+                // must reach the event stream before any switch could
+                // hide it (doc 03 §2; v1.2 #1/#3 award rules).
+                self.faint_check(foe);
+                if self.state.side(foe).active_mote().is_fainted() {
+                    return;
+                }
                 let bench: Vec<u8> = {
                     let s = self.state.side(foe);
                     s.party
@@ -721,9 +745,17 @@ impl Engine {
                         bench[usize::try_from(rng.below(u32::try_from(bench.len()).expect("≤ 6")))
                             .expect("index")];
                     self.perform_switch(foe, pick);
+                    // v1.2 #10: the dragged-in Mote does not act with its
+                    // predecessor's queued action.
+                    self.cancelled[usize::from(foe)] = true;
                 }
             }
             Effect::SelfSwitch => {
+                // Same faint-before-switch rule as ForceSwitch.
+                self.faint_check(side);
+                if self.state.side(side).active_mote().is_fainted() {
+                    return;
+                }
                 if let Some(replacement) = self.state.side(side).first_replacement() {
                     self.perform_switch(side, replacement);
                 }
@@ -801,7 +833,8 @@ impl Engine {
     fn end_of_turn(&mut self, _rng: &mut BattleRng) {
         use undersong_core::moves::WeatherKind;
 
-        // 1) Weather chip (v1.1 #2.1), side 0's active first.
+        // 1) Weather chip (v1.1 #2.1), side 0's active first. All EOT
+        // fraction damage has a 1 HP minimum (v1.2 #7).
         if let Some((kind, _)) = self.state.weather {
             for side in 0..2u8 {
                 let mote = self.state.side(side).active_mote();
@@ -946,6 +979,11 @@ impl Engine {
         self.events.push(BattleEvent::Fainted { target: side });
 
         let victor: SideId = 1 - side;
+        // Exp/EV awards are player-side only (doc 02 v1.2 #1); the Fainted
+        // event above is unconditional.
+        if victor != 0 {
+            return;
+        }
         let (yield_base, level, ev_yield) = {
             let fainted = self.state.side(side).active_mote();
             (
@@ -982,7 +1020,8 @@ impl Engine {
                 Stat::Spe => victor_mote.evs.spe = new,
             }
         }
-        victor_mote.recompute_stats();
+        // EVs take effect at the next level-up recompute (v1.2 #4); no
+        // mid-battle stat bump from the award itself.
 
         let gained = exp_gain(yield_base, level, 1, trainer, false);
         if gained > 0 {

@@ -15,8 +15,9 @@ pub enum Action {
     UseBell { bell_mod: Frac },
     /// Attempt to flee (wild battles only; doc 02 §12 formula).
     Run,
-    /// Forced replacement after a faint (engine-internal: the game layer
-    /// submits this when prompted; identical legality to Switch).
+    /// Explicit pass: the side takes no action this turn. (Replacement
+    /// choice after a faint is engine auto-replace until the presenter
+    /// adds a prompt flow in P2 — see turn.rs.)
     None,
 }
 
@@ -34,6 +35,7 @@ impl TurnActions {
     }
 
     pub fn get(&self, side: u8) -> Action {
+        assert!(side < 2, "side must be 0 or 1");
         self.actions[usize::from(side)]
     }
 }
