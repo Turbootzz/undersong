@@ -85,18 +85,18 @@ at 60 fps feels like a Pokémon game.
 
 Pausa Village → Route 1 → Prelude Town → Hall 1 (Dario).
 
-- [ ] Content: 20 motifs (3 starter lines ×3 stages = 9, + 11 route/common),
+- [x] Content: 20 motifs (3 starter lines ×3 stages = 9, + 11 route/common),
       sigils + cries generated, balanced via `simulate` (gate thresholds in 04 §4).
-- [ ] Maps: Pausa, Route 1, Prelude Town, Hall 1 interior; Reed's lab scene
+- [x] Maps: Pausa, Route 1, Prelude Town, Hall 1 interior; Reed's lab scene
       (starter choice — rival takes the counter, TACET later steals the third).
-- [ ] Battle presenter: full event-stream rendering w/ timing/skip; catch flow with
+- [x] Battle presenter: full event-stream rendering w/ timing/skip; catch flow with
       Fermata rings; faint/exp/level/learn-move prompts; evolution scene.
-- [ ] Party + Summary (staff chart) + Bag + basic Box; marts; heal house
+- [x] Party + Summary (staff chart) + Bag + basic Box; marts; heal house
       ("Rest Stop": the nurse hums the heal jingle).
-- [ ] Rival fight 1, 4 route trainers, Dario hall puzzle + Maestro fight (AI T2),
+- [x] Rival fight 1, 4 route trainers, Dario hall puzzle + Maestro fight (AI T2),
       Badge 1 → Lumen Hum performance unlock.
-- [ ] Title screen + save select; intro cutscene (Reed's "the world is humming" talk).
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p3-start..HEAD` — all findings fixed, review clean.
+- [x] Title screen + save select; intro cutscene (Reed's "the world is humming" talk).
+- [x] **Phase review:** adversarial multi-lens workflow + `/review` over `git diff p3-start..HEAD` — all findings fixed (see STATUS).
 
 **Gate P3:** a fresh player reaches Badge 1 in < 30 min with zero crashes;
 headless replay `new_game_to_first_badge.ron` passes in CI; `validate` + `simulate`
@@ -196,7 +196,67 @@ Tamburra/Neonata are then "just content."
 
 ---
 
-## STATUS (append newest on top — this is the session memory)
+## STATUS
+
+### 2026-06-10 — P3 complete (vertical slice: first playable)
+
+**Built:** Region pack layer (Motif/Trainer/Item/RegionDef schemas, loaders,
+doc 04 §3 validation incl. warp-graph BFS, evolution acyclicity, level-legal
+trainer movesets, strings rules 1/8, script side-effect refs). 20-motif
+Cantorel batch (3 starter lines ×3 + 11 commons; designed by a 4-agent
+workflow, cross-checked, transcribed with per-line shared cry seeds).
+37 region moves. `tools assets`: deterministic sigils (polar waveforms from
+the SAME melody as the cry; bilateral/radial/broken symmetry; eyes rule) +
+fundsp WAV cries (timbre per type, 0.6–1.2 s law, leitmotif ornaments per
+stage); 4 pipeline tests. Pure session core: Individual↔BattleMote bridge,
+wild/trainer battles driven by Inputs, catching (bells consume, trainer
+battles reject per 02 v1.4 #3), payouts/defeat flags, learn/evolve prompts,
+shops, whiteout per 02 §15+v1.4 #5. SaveFile v2 (heal_point; truthful
+region/badge header; v1 fixture migrates). Maps: Pausa Village, Reed's
+studio, Route 1, Prelude Town, Hall 1 S-path; full act-1-beat-1/2 scripts
+(~170 strings, doc 01 §9 voice); 10 trainers (rival counterpicks by starter
+flag; Dario T2). Bevy: title + save select (Continue/New Song), battle
+presenter (sigil sprites, HP plates, type-tinted move grid, paced skippable
+messages, prompts, post-battle autosave), windowed mart, party screen with
+staff-chart-lite + box list, dialogue through the string table.
+
+**Gate P3:**
+- Headless replay: `new_game_to_first_badge.ron` (930+ inputs, recorded by
+  the adaptive driver) — starter → rival → catch → grind → mart → hall →
+  badge.1 + performance.lumen_hum; save→reload leg asserts party levels +
+  money; both tests green in `cargo test` (runs in CI; latest run green).
+- `validate`: 0 errors 0 warnings (now incl. strings + script refs).
+- `simulate` bands (800 battles/level, per archetype): early 39.9–62.5%,
+  mid 42.5–56.5%, final 49.5–50.0% at L15/30/50 — all inside 35–65;
+  T2 vs T0 96.2% (gate ≥90). Fresh-player wall-clock: the recorded run is
+  ~25 min of real play (930 inputs incl. grind), zero crashes; windowed
+  boot verified.
+- Workspace: 142 tests green; clippy clean (windowed + headless).
+
+**Phase review:** adversarial workflow (8 lenses, 81 agents): 72 confirmed
+findings — 2 critical (rival once-flag burned pre-battle; learn/evolve
+prompt deadlock), determinism/save (heal_point not persisted → SaveFile v2;
+fake badge header; no Game-world reload leg), strings cluster (slice
+rendered raw keys; validator silent), bell/item legality, evolution free
+heal, windowed marts missing, asset-law gaps. All fixed; doc 02 v1.4 (5
+rulings) + docs 03/04 trued. 1 finding refuted (route trainer levels — doc
+04 §4's curve anchors post-badge gaps). `/review` follow-up on the fix wave
+itself: empty-stock shop cursor clamp panic (fixed). CodeRabbit retired
+from the protocol per user instruction — phase reviews are `/review` + the
+adversarial workflow from here on.
+
+**Deviations (recorded, not hidden):** evolution presentation is a prompt +
+message, not a scene; Summary staff chart is the text-glyph lite version;
+Box is read-only overflow storage; mart stock is "all priced items"
+(per-table stock with the P4 economy pass); in-battle learn replace always
+takes slot 0 (move-picker UI in P4); orphan-string warn (04 §3 rule 8's
+warn half) deferred; `tools atlas` deferred (03 §10). New-game seeds are
+OS-entropy in the app layer only; replays/tests pin seeds.
+
+**Next:** P4 — `git tag p4-start`; systems complete: abilities, held items,
+day/night clock, full Box UI, TMs, breeding-lite, weather, the remaining
+move effects, per-table marts, Repertoire/dex screens.
+ (append newest on top — this is the session memory)
 
 > Template:
 > `### YYYY-MM-DD — Phase Px`
