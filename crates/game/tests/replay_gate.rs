@@ -51,7 +51,7 @@ fn encounters_roll_deterministically_on_patches() {
             Input::Step(Down), // turn
         ];
         'outer: for _ in 0..60 {
-            for input in cycle {
+            for input in cycle.clone() {
                 for event in world.apply(input) {
                     if let WorldEvent::EncounterStarted { species, level } = event {
                         hits.push((species.to_string(), level, steps));

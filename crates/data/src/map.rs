@@ -147,6 +147,15 @@ impl MapDef {
         !self.in_bounds(x, y) || self.collision[self.index(x, y)] != 0
     }
 
+    /// Ground tile id at a tile (id 5 = water by convention, doc 02 §11
+    /// Ferry Song).
+    pub fn ground_at(&self, x: u32, y: u32) -> Option<u16> {
+        if !self.in_bounds(x, y) {
+            return None;
+        }
+        self.ground.get(self.index(x, y)).copied()
+    }
+
     pub fn is_patch(&self, x: u32, y: u32) -> bool {
         self.in_bounds(x, y) && self.patches.get(self.index(x, y)).is_some_and(|&p| p != 0)
     }

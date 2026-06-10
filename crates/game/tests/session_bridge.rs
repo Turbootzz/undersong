@@ -184,6 +184,7 @@ fn trainer_battle_pays_out_and_sets_flag() {
             held_item: None,
         }],
         defeat_flag: "rival.1.defeated".into(),
+        rematch: false,
         reward_items: vec![],
         intro_key: "battle.rival.intro".into(),
         defeat_key: "battle.rival.defeat".into(),

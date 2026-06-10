@@ -120,6 +120,9 @@ pub struct Trainer {
     pub double_battle: bool,
     pub party: Vec<TrainerMote>,
     pub defeat_flag: String,
+    /// Re-challengeable after defeat (doc 06 P4 rematch support).
+    #[serde(default)]
+    pub rematch: bool,
     #[serde(default)]
     pub reward_items: Vec<(ItemId, u32)>,
     pub intro_key: String,

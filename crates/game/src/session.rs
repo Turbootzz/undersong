@@ -28,6 +28,10 @@ pub struct Registry {
     pub trainers: BTreeMap<TrainerId, data::Trainer>,
     /// Evolution edges: species → (method level, target) for Level method.
     pub evolutions: BTreeMap<SpeciesId, (u8, SpeciesId)>,
+    /// Every evolution edge with its method (doc 02 §9 all four).
+    pub all_evolutions: BTreeMap<SpeciesId, Vec<(data::EvolutionMethod, SpeciesId)>>,
+    /// TM teachability: species → TM item ids (doc 02 v1.6 #2).
+    pub tm_sets: BTreeMap<SpeciesId, Vec<undersong_core::ids::ItemId>>,
 }
 
 impl Registry {
@@ -41,11 +45,24 @@ impl Registry {
             moves.insert(spec.id.clone(), spec.clone());
         }
         let mut evolutions = BTreeMap::new();
+        let mut all_evolutions: BTreeMap<SpeciesId, Vec<(data::EvolutionMethod, SpeciesId)>> =
+            BTreeMap::new();
+        let mut tm_sets = BTreeMap::new();
         for motif in pack.motifs.values() {
-            if let Some(evolution) = &motif.evolution
-                && let data::EvolutionMethod::Level(level) = &evolution.method
-            {
-                evolutions.insert(motif.id.clone(), (*level, evolution.target.clone()));
+            if let Some(evolution) = &motif.evolution {
+                all_evolutions
+                    .entry(motif.id.clone())
+                    .or_default()
+                    .push((evolution.method.clone(), evolution.target.clone()));
+                if let data::EvolutionMethod::Level(level) = &evolution.method {
+                    evolutions.insert(motif.id.clone(), (*level, evolution.target.clone()));
+                }
+            }
+            if !motif.tm_set.is_empty() {
+                tm_sets.insert(
+                    motif.id.clone(),
+                    motif.tm_set.iter().map(|tm| tm.as_str().into()).collect(),
+                );
             }
         }
         Self {
@@ -63,6 +80,8 @@ impl Registry {
                 .collect(),
             trainers: pack.trainers.clone().into_iter().collect(),
             evolutions,
+            all_evolutions,
+            tm_sets,
         }
     }
 
@@ -229,6 +248,8 @@ pub struct BattleSession {
     pub pending_learn: Vec<(usize, undersong_core::ids::MoveId)>,
     /// Every event across the whole battle (level-up tracking).
     pub last_events_all: Vec<battle::BattleEvent>,
+    /// Overworld night at battle start (Vesper Bell, doc 02 v1.6 #4).
+    pub night: bool,
 }
 
 /// Player battle intentions (replay vocabulary).
@@ -272,6 +293,7 @@ impl BattleSession {
             foe_tier: AiTier::T0,
             pending_learn: Vec::new(),
             last_events_all: Vec::new(),
+            night: false,
         })
     }
 
@@ -323,6 +345,7 @@ impl BattleSession {
             foe_tier: tier,
             pending_learn: Vec::new(),
             last_events_all: Vec::new(),
+            night: false,
         })
     }
 

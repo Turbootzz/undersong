@@ -23,7 +23,7 @@ struct Driver {
 
 impl Driver {
     fn input(&mut self, input: Input) -> Vec<WorldEvent> {
-        self.log.push(input);
+        self.log.push(input.clone());
         let events = self.world.apply(input);
         for event in &events {
             if matches!(event, WorldEvent::DialogueLine { .. }) {

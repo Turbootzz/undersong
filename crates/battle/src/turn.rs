@@ -52,6 +52,23 @@ fn last_resort_spec() -> MoveSpec {
     }
 }
 
+/// Era "Shift" rule: after a foe trainer's replacement enters, the
+/// player may switch for free (no turn passes, no rng consumed beyond
+/// none — entry abilities fire). Pure helper for the session layer.
+pub fn free_switch(
+    state: &BattleState,
+    side: crate::events::SideId,
+    to: u8,
+) -> (BattleState, Vec<crate::events::BattleEvent>) {
+    let mut engine = Engine {
+        state: state.clone(),
+        events: Vec::new(),
+        cancelled: [[false; 2]; 2],
+    };
+    engine.perform_switch_public(side, to);
+    (engine.state, engine.events)
+}
+
 pub fn step(
     state: &BattleState,
     actions: &TurnActions,
@@ -486,6 +503,18 @@ impl Engine {
                     amount: healed,
                 });
             }
+        }
+    }
+
+    fn perform_switch_public(&mut self, side: SideId, to: u8) {
+        // Validity: bench, conscious, not already fielded.
+        let side_state = self.state.side(side);
+        let fielded: Vec<u8> = side_state.positions.iter().map(|p| p.party_index).collect();
+        let valid = usize::from(to) < side_state.party.len()
+            && !side_state.party[usize::from(to)].is_fainted()
+            && !fielded.contains(&to);
+        if valid {
+            self.perform_switch(Slot { side, pos: 0 }, to);
         }
     }
 

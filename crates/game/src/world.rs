@@ -16,7 +16,7 @@ use undersong_core::world::Facing;
 use crate::session::{BattleCmd, BattleContext, BattleSession, Registry};
 
 /// Replay-file input vocabulary (tests/replays/*.ron).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Input {
     /// Face the direction; step onto the next tile if walkable.
     Step(Facing),
@@ -41,6 +41,18 @@ pub enum Input {
     ShopCursor(i8),
     ShopBuy,
     ShopClose,
+    /// Use a bag item on a party member (potion/status/vitamin/stone) or
+    /// the field (mute charm); TMs pass the replace slot.
+    UseItem {
+        item: ItemId,
+        target: u8,
+        slot: Option<u8>,
+    },
+    /// Answer an open Shift offer: switch to this bench index, or
+    /// decline (None). Free — no battle turn passes (era Shift rule).
+    Shift(Option<u8>),
+    /// Fly to a visited town (Skybridge Aria, badge 6 + performer.sky).
+    FlyTo(MapId),
 }
 
 /// What happened during one input application; the Bevy layer turns
@@ -123,6 +135,20 @@ pub enum WorldEvent {
     ActionRejected {
         reason_key: String,
     },
+    ItemUsed {
+        item: ItemId,
+        message_key: String,
+    },
+    /// Night fell / morning came (clock threshold crossings).
+    ClockPhase {
+        night: bool,
+    },
+    /// A Performance fired (key = ui.perform.*).
+    Performed {
+        performance: String,
+    },
+    /// The foe sent a replacement and Shift is on offer.
+    ShiftOffered,
 }
 
 /// A live NPC (positions can drift from the map definition via wander).
@@ -181,6 +207,18 @@ pub struct WorldState {
     pub pending_learn_queue: Vec<(usize, undersong_core::ids::MoveId)>,
     /// Respawn point after a whiteout (map, position).
     pub heal_point: (MapId, (u32, u32)),
+    /// Overworld clock in ticks; 1 step = 1 tick, 1200 = a day, night =
+    /// the last third (doc 02 v1.6 #5).
+    pub clock_ticks: u64,
+    /// Mute Charm steps remaining (doc 02 v1.6 #3).
+    pub mute_steps: u16,
+    /// Ferry Song state: currently riding water tiles.
+    pub surfing: bool,
+    /// Era Shift rule: a free switch is on offer (doc 06 P4 Set/Shift;
+    /// the presenter decides whether to surface it per settings).
+    pub pending_shift: bool,
+    /// Cached badge count for the +1 friendship-per-badge hook.
+    badge_count: u8,
     /// Merged string table (core + region), golden rule 6's flavored face.
     pub strings: undersong_core::collections::UniqueMap<String, String>,
     /// Region id for saves and asset paths ("dev" in the testbed).
@@ -240,6 +278,11 @@ impl WorldState {
             heal_point: (start_map, start),
             strings: std::collections::BTreeMap::new().into(),
             region_id: "dev".into(),
+            clock_ticks: 0,
+            mute_steps: 0,
+            surfing: false,
+            pending_shift: false,
+            badge_count: 0,
         }
     }
 
@@ -259,8 +302,10 @@ impl WorldState {
         let mut events = Vec::new();
         // Battle mode captures its own vocabulary first.
         if self.battle.is_some() {
-            if let Input::Battle(command) = input {
-                self.battle_turn(command, &mut events);
+            match input {
+                Input::Battle(command) => self.battle_turn(command, &mut events),
+                Input::Shift(choice) => self.answer_shift(choice, &mut events),
+                _ => {}
             }
             return events;
         }
@@ -321,6 +366,12 @@ impl WorldState {
             }
             Input::Tick => {}
             Input::Save => events.push(WorldEvent::Saved),
+            Input::UseItem { item, target, slot } => {
+                self.use_item(&item, target, slot, &mut events);
+            }
+            Input::FlyTo(destination) => {
+                self.fly_to(&destination, &mut events);
+            }
             Input::Learn { replace } => {
                 let mut learn_events = Vec::new();
                 self.answer_learn(replace, &mut learn_events);
@@ -328,6 +379,17 @@ impl WorldState {
             }
             // Battle/shop/prompt vocabulary outside its mode: no-op.
             _ => {}
+        }
+        // Badge friendship hook (doc 02 v1.5 #5): +1 to the whole party
+        // per badge earned while in it.
+        let badges = (1..=8u8)
+            .filter(|n| self.vars.flags.contains(&format!("badge.{n}")))
+            .count() as u8;
+        if badges > self.badge_count {
+            for member in &mut self.party {
+                member.friendship = member.friendship.saturating_add(1).min(255);
+            }
+            self.badge_count = badges;
         }
         events
     }
@@ -351,6 +413,27 @@ impl WorldState {
             events.push(WorldEvent::Bumped { at: (nx, ny) });
             return;
         }
+        // Performance obstacles block until cleared (doc 02 §11).
+        if self.obstacle_at(nx, ny).is_some() {
+            events.push(WorldEvent::Bumped { at: (nx, ny) });
+            return;
+        }
+        // Water (ground id 5): Ferry Song surfs it, land walks end it.
+        let entering_water = self.map().ground_at(nx, ny) == Some(5);
+        if entering_water && !self.surfing {
+            if self.vars.flags.contains("badge.4") && self.party_has_tag("performer.ferry") {
+                self.surfing = true;
+                events.push(WorldEvent::Performed {
+                    performance: "ui.perform.ferry_song".into(),
+                });
+            } else {
+                events.push(WorldEvent::Bumped { at: (nx, ny) });
+                return;
+            }
+        }
+        if !entering_water && self.surfing {
+            self.surfing = false;
+        }
         self.player = (nx, ny);
         self.steps += 1;
         events.push(WorldEvent::Stepped { to: (nx, ny) });
@@ -367,6 +450,10 @@ impl WorldState {
                         if let Some(flag) = trigger.once_flag {
                             self.vars.flags.insert(flag);
                         }
+                        // Visited registry for Skybridge Aria (§11).
+                        self.vars.flags.insert(format!("visited.{map}"));
+                        self.vars.vars.insert(format!("spawn.{map}.x"), to.0 as i32);
+                        self.vars.vars.insert(format!("spawn.{map}.y"), to.1 as i32);
                         self.current_map = map.clone();
                         self.player = to;
                         self.facing = facing;
@@ -390,10 +477,33 @@ impl WorldState {
             return;
         }
 
+        // Clock (doc 02 v1.6 #5): one tick per step; surface phase
+        // crossings so the presenter can tint.
+        let was_night = self.is_night();
+        self.clock_ticks += 1;
+        if self.is_night() != was_night {
+            events.push(WorldEvent::ClockPhase {
+                night: self.is_night(),
+            });
+        }
+        // Mute Charm (v1.6 #3) burns a step regardless of patches.
+        if self.mute_steps > 0 {
+            self.mute_steps -= 1;
+        }
+
         // Resonance patch roll (doc 02 §12): P per step, then a 12-slot
         // weighted species pick and a uniform level in the slot's range.
+        // Night uses the map's night table when present (v1.6 #5).
+        let table = if self.is_night() {
+            self.map()
+                .night_encounters
+                .clone()
+                .or_else(|| self.map().encounters.clone())
+        } else {
+            self.map().encounters.clone()
+        };
         if self.map().is_patch(nx, ny)
-            && let Some(encounters) = self.map().encounters.clone()
+            && let Some(encounters) = table
             && self.rng.chance(u32::from(encounters.patch_rate_pct), 100)
         {
             let roll = self.rng.below(100);
@@ -406,6 +516,12 @@ impl WorldState {
                             .range_inclusive(u32::from(*lo), u32::from(*hi.max(lo))),
                     )
                     .expect("level fits u8");
+                    // Mute Charm: no engagement below the lead's level
+                    // (doc 02 §12; rng already consumed — stream-stable).
+                    let lead_level = self.party.first().map(|p| p.level).unwrap_or(0);
+                    if self.mute_steps > 0 && level < lead_level {
+                        break;
+                    }
                     self.pending_encounter = Some((species.clone(), level));
                     events.push(WorldEvent::EncounterStarted {
                         species: species.clone(),
@@ -471,6 +587,96 @@ impl WorldState {
         true
     }
 
+    /// The uncleared obstacle on a tile, if any (cleared ones persist
+    /// as namespaced flags so saves carry them).
+    fn obstacle_at(&self, x: u32, y: u32) -> Option<data::ObstacleKind> {
+        let map_id = self.current_map.clone();
+        self.maps[&map_id]
+            .obstacles
+            .iter()
+            .find(|o| o.at == (x, y))
+            .map(|o| o.kind)
+            .filter(|_| {
+                !self
+                    .vars
+                    .flags
+                    .contains(&format!("cleared.{map_id}.{x}.{y}"))
+            })
+    }
+
+    /// Facing-tile Performance interactions (doc 02 §11).
+    fn try_perform(&mut self, events: &mut Vec<WorldEvent>) -> bool {
+        let (dx, dy) = self.facing.delta();
+        let Some(tx) = self.player.0.checked_add_signed(dx) else {
+            return false;
+        };
+        let Some(ty) = self.player.1.checked_add_signed(dy) else {
+            return false;
+        };
+        let Some(kind) = self.obstacle_at(tx, ty) else {
+            return false;
+        };
+        let (badge, tag, key) = match kind {
+            data::ObstacleKind::Brush => {
+                ("badge.2", "performer.clear", "ui.perform.clearing_chord")
+            }
+            data::ObstacleKind::CrackedRock => {
+                ("badge.3", "performer.smash", "ui.perform.tunneling_bass")
+            }
+            data::ObstacleKind::Boulder => ("badge.5", "performer.lift", "ui.perform.lift_motif"),
+        };
+        if !self.vars.flags.contains(badge) {
+            events.push(WorldEvent::ItemUsed {
+                item: "performance".into(),
+                message_key: "ui.perform.no_badge".into(),
+            });
+            return true;
+        }
+        if !self.party_has_tag(tag) {
+            events.push(WorldEvent::ItemUsed {
+                item: "performance".into(),
+                message_key: "ui.perform.no_tag".into(),
+            });
+            return true;
+        }
+        match kind {
+            data::ObstacleKind::Boulder => {
+                // Push one tile along the facing if free (cleared flag
+                // marks the ORIGINAL spot; the pushed position lives in
+                // a var pair — boulders reset on map re-entry by design).
+                let Some(bx) = tx.checked_add_signed(dx) else {
+                    return true;
+                };
+                let Some(by) = ty.checked_add_signed(dy) else {
+                    return true;
+                };
+                let free = self.maps[&self.current_map].in_bounds(bx, by)
+                    && !self.maps[&self.current_map].is_solid(bx, by)
+                    && self.obstacle_at(bx, by).is_none()
+                    && !self.npc_blocking(bx, by);
+                if free {
+                    let map_id = self.current_map.clone();
+                    self.vars
+                        .flags
+                        .insert(format!("cleared.{map_id}.{tx}.{ty}"));
+                    events.push(WorldEvent::Performed {
+                        performance: key.into(),
+                    });
+                }
+            }
+            _ => {
+                let map_id = self.current_map.clone();
+                self.vars
+                    .flags
+                    .insert(format!("cleared.{map_id}.{tx}.{ty}"));
+                events.push(WorldEvent::Performed {
+                    performance: key.into(),
+                });
+            }
+        }
+        true
+    }
+
     fn interact(&mut self, events: &mut Vec<WorldEvent>) {
         // Advancing dialogue (or answering an open choice)?
         if let Some(dialogue) = &mut self.dialogue {
@@ -478,6 +684,10 @@ impl WorldState {
                 dialogue.runner.resume_choice(cursor);
             }
             self.advance_dialogue(events);
+            return;
+        }
+        // Performance obstacles claim the facing tile first (doc 02 §11).
+        if self.try_perform(events) {
             return;
         }
         // Facing an NPC?
@@ -654,6 +864,11 @@ impl WorldState {
         }
     }
 
+    /// Night = the last third of the 1200-tick day (doc 02 v1.6 #5).
+    pub fn is_night(&self) -> bool {
+        self.clock_ticks % 1200 >= 800
+    }
+
     /// Resolves a string key to its flavored text; missing keys show
     /// the key itself prefixed so playtests spot them instantly.
     pub fn text(&self, key: &str) -> String {
@@ -675,7 +890,13 @@ impl WorldState {
         let Some(wild) = registry.wild_individual(&species, level, &mut self.rng) else {
             return;
         };
-        if let Some(session) = BattleSession::wild(registry, &self.party, wild, &mut self.rng) {
+        if let Some(mut session) = BattleSession::wild(registry, &self.party, wild, &mut self.rng) {
+            // Ambient weather zone (doc 02 v1.6 #6) + the night flag for
+            // Vesper bells (v1.6 #4).
+            if let Some(kind) = self.map().weather {
+                session.state.weather = Some((kind, 5));
+            }
+            session.night = self.is_night();
             self.battle = Some(session);
         } else {
             // No conscious party — should not happen outside dev worlds.
@@ -692,12 +913,16 @@ impl WorldState {
         let Some(trainer) = registry.trainers.get(trainer_id).cloned() else {
             return;
         };
-        if self.vars.flags.contains(&trainer.defeat_flag) {
-            return; // one-time fights stay won
+        if self.vars.flags.contains(&trainer.defeat_flag) && !trainer.rematch {
+            return; // one-time fights stay won (rematch trainers re-engage)
         }
-        if let Some(session) =
+        if let Some(mut session) =
             BattleSession::trainer(registry, &self.party, &trainer, &mut self.rng)
         {
+            if let Some(kind) = self.map().weather {
+                session.state.weather = Some((kind, 5));
+            }
+            session.night = self.is_night();
             self.battle = Some(session);
         }
     }
@@ -756,6 +981,31 @@ impl WorldState {
             None
         };
         let stream = session.turn(command, bell, heal, &mut self.rng);
+        // Zone weather refreshes every round (doc 02 v1.6 #6).
+        if let Some(kind) = self.map().weather
+            && session.outcome().is_none()
+        {
+            session.state.weather = Some((kind, 5));
+        }
+        // Era Shift: foe replacement entered → offer a free switch when
+        // a conscious bench exists (presenter hides it in Set mode).
+        if session.outcome().is_none()
+            && matches!(session.context, BattleContext::Trainer { .. })
+            && stream
+                .iter()
+                .any(|e| matches!(e, battle::BattleEvent::SwitchedIn { side: 1, .. }))
+        {
+            let bench: Vec<u8> = (0..session.state.sides[0].party.len() as u8)
+                .filter(|i| {
+                    *i != session.state.sides[0].positions[0].party_index
+                        && !session.state.sides[0].party[usize::from(*i)].is_fainted()
+                })
+                .collect();
+            if !bench.is_empty() {
+                self.pending_shift = true;
+                events.push(WorldEvent::ShiftOffered);
+            }
+        }
 
         // Learn prompts: queue events the engine surfaced this turn.
         for event in &stream {
@@ -788,7 +1038,13 @@ impl WorldState {
                 *n > 0
                     && matches!(
                         registry.items.get(id).map(|d| &d.kind),
-                        Some(data::ItemKind::Bell { .. })
+                        Some(
+                            data::ItemKind::Bell { .. }
+                                | data::ItemKind::OvertureBell
+                                | data::ItemKind::CradleBell
+                                | data::ItemKind::VesperBell
+                                | data::ItemKind::Coda
+                        )
                     )
             })
             .then_some(())
@@ -809,19 +1065,54 @@ impl WorldState {
     }
 
     fn consume_best_bell(&mut self) -> Option<undersong_core::moves::Frac> {
+        use undersong_core::moves::Frac;
         let registry = self.registry.as_ref()?;
-        // Best owned bell by multiplier.
-        let mut best: Option<(ItemId, undersong_core::moves::Frac, u64)> = None;
+        // Conditional context (doc 02 v1.6 #4): first turn? target
+        // lulled/frosted? night?
+        let (first_turn, target_lulled) = match &self.battle {
+            Some(session) => {
+                let foe = session.state.sides[1].active_mote();
+                (
+                    session.state.turn == 0,
+                    matches!(
+                        foe.status,
+                        Some(battle::mote::MajorStatus::Sleep { .. })
+                            | Some(battle::mote::MajorStatus::Freeze)
+                    ),
+                )
+            }
+            None => (false, false),
+        };
+        let night = self.battle.as_ref().map(|s| s.night).unwrap_or(false);
+        let effective = |kind: &data::ItemKind| -> Option<Frac> {
+            match kind {
+                data::ItemKind::Bell { catch_mod } => Some(*catch_mod),
+                data::ItemKind::OvertureBell => {
+                    Some(if first_turn { Frac(4, 1) } else { Frac(1, 1) })
+                }
+                data::ItemKind::CradleBell => Some(if target_lulled {
+                    Frac(7, 2)
+                } else {
+                    Frac(1, 1)
+                }),
+                data::ItemKind::VesperBell => Some(if night { Frac(7, 2) } else { Frac(1, 1) }),
+                // Coda: certainty as an overwhelming rational (catch.rs
+                // clamps a ≥ 255 to an immediate catch).
+                data::ItemKind::Coda => Some(Frac(1000, 1)),
+                _ => None,
+            }
+        };
+        let mut best: Option<(ItemId, Frac, u64)> = None;
         for (item_id, count) in &self.bag {
             if *count == 0 {
                 continue;
             }
             if let Some(def) = registry.items.get(item_id)
-                && let data::ItemKind::Bell { catch_mod } = &def.kind
+                && let Some(frac) = effective(&def.kind)
             {
-                let strength = u64::from(catch_mod.0) * 1000 / u64::from(catch_mod.1.max(1));
+                let strength = u64::from(frac.0) * 1000 / u64::from(frac.1.max(1));
                 if best.as_ref().is_none_or(|(_, _, s)| strength > *s) {
-                    best = Some((item_id.clone(), *catch_mod, strength));
+                    best = Some((item_id.clone(), frac, strength));
                 }
             }
         }
@@ -962,6 +1253,29 @@ impl WorldState {
             }
         }
 
+        // Friendship (doc 02 v1.5 #5): +2 per level-up, −5 per faint.
+        for event in &session.last_events_all {
+            match event {
+                battle::BattleEvent::LeveledUp { side: 0, slot, .. } => {
+                    if let Some(party_index) = session.party_map.get(usize::from(*slot))
+                        && let Some(member) = self.party.get_mut(*party_index)
+                    {
+                        member.friendship = member.friendship.saturating_add(2).min(255);
+                    }
+                }
+                battle::BattleEvent::Fainted {
+                    target: 0, slot, ..
+                } => {
+                    if let Some(party_index) = session.party_map.get(usize::from(*slot))
+                        && let Some(member) = self.party.get_mut(*party_index)
+                    {
+                        member.friendship = member.friendship.saturating_sub(5);
+                    }
+                }
+                _ => {}
+            }
+        }
+
         // Queue level evolutions for members that LEVELED this battle
         // (doc 02 v1.4 #2: prompts on level-up only, never for fresh
         // catches already past the threshold).
@@ -978,14 +1292,27 @@ impl WorldState {
                 let Some(individual) = self.party.get(index) else {
                     continue;
                 };
-                if let Some((at_level, target)) = registry.evolutions.get(&individual.species)
-                    && individual.level >= *at_level
+                let Some(methods) = registry.all_evolutions.get(&individual.species) else {
+                    continue;
+                };
+                // Level-up checks Level(n) and Friendship≥220 (doc 02
+                // §9, v1.5 #5); item methods fire from the bag.
+                let target = methods.iter().find_map(|(method, into)| match method {
+                    data::EvolutionMethod::Level(at_level) if individual.level >= *at_level => {
+                        Some(into.clone())
+                    }
+                    data::EvolutionMethod::Friendship if individual.friendship >= 220 => {
+                        Some(into.clone())
+                    }
+                    _ => None,
+                });
+                if let Some(target) = target
                     && !self.pending_evolutions.iter().any(|(i, _)| *i == index)
                 {
                     self.pending_evolutions.push((index, target.clone()));
                     events.push(WorldEvent::EvolutionPrompt {
                         from: individual.species.clone(),
-                        into: target.clone(),
+                        into: target,
                     });
                 }
             }
@@ -1057,6 +1384,215 @@ impl WorldState {
         events.push(WorldEvent::MoneyChanged { money: self.money });
     }
 
+    /// Bag item on a party member or the field (doc 02 v1.6).
+    fn use_item(
+        &mut self,
+        item: &ItemId,
+        target: u8,
+        slot: Option<u8>,
+        events: &mut Vec<WorldEvent>,
+    ) {
+        let Some(registry) = &self.registry else {
+            return;
+        };
+        let Some(def) = registry.items.get(item).cloned() else {
+            return;
+        };
+        let owned = self.bag.get(item).copied().unwrap_or(0);
+        if owned == 0 {
+            return;
+        }
+        let target_index = usize::from(target);
+        let mut consumed = false;
+        let mut message = String::new();
+        match &def.kind {
+            data::ItemKind::Potion { hp } => {
+                if let Some(member) = self.party.get_mut(target_index) {
+                    let max = registry
+                        .resolve(member)
+                        .map(|m| m.max_hp())
+                        .unwrap_or(u16::MAX);
+                    let current = member.hp.unwrap_or(max);
+                    if current < max {
+                        member.hp = Some((current + hp).min(max));
+                        consumed = true;
+                        message = "ui.item.heal".into();
+                    }
+                }
+            }
+            data::ItemKind::StatusHeal => {
+                if let Some(member) = self.party.get_mut(target_index)
+                    && member.status.is_some()
+                {
+                    member.status = None;
+                    consumed = true;
+                    message = "ui.item.status_heal".into();
+                }
+            }
+            data::ItemKind::Vitamin { stat } => {
+                if let Some(member) = self.party.get_mut(target_index) {
+                    // +10 EVs, fail ≥100 in-stat or 510 total (v1.6 #1).
+                    let current = member.evs.get(*stat);
+                    let total: u32 = undersong_core::stats::Stat::ALL
+                        .into_iter()
+                        .map(|s| u32::from(member.evs.get(s)))
+                        .sum();
+                    if current < 100 && total + 10 <= 510 {
+                        member.evs.set(*stat, current + 10);
+                        member.friendship = member.friendship.saturating_add(5).min(255);
+                        consumed = true;
+                        message = "ui.item.vitamin_used".into();
+                    } else {
+                        message = "ui.item.vitamin_fail".into();
+                    }
+                }
+            }
+            data::ItemKind::Tm { move_id } => {
+                if let Some(member) = self.party.get_mut(target_index) {
+                    let allowed = registry.species.get(&member.species).is_some()
+                        && registry
+                            .tm_sets
+                            .get(&member.species)
+                            .is_some_and(|set| set.iter().any(|tm| tm == item));
+                    if !allowed {
+                        message = "ui.item.tm_wrong_species".into();
+                    } else if member.moves.iter().any(|m| &m.id == move_id) {
+                        message = "ui.item.tm_taught".into(); // already known: no-op
+                    } else {
+                        let pp = registry.moves.get(move_id).map(|m| m.pp).unwrap_or(10);
+                        let learned = undersong_core::individual::LearnedMove {
+                            id: move_id.clone(),
+                            pp,
+                            pp_ups: 0,
+                        };
+                        if member.moves.len() < 4 {
+                            member.moves.push(learned);
+                            message = "ui.item.tm_taught".into();
+                        } else if let Some(slot) = slot
+                            && let Some(existing) = member.moves.get_mut(usize::from(slot))
+                        {
+                            *existing = learned;
+                            message = "ui.item.tm_taught".into();
+                        } else {
+                            message = "ui.item.tm_no_slot".into();
+                        }
+                    }
+                    // TMs are reusable (v1.6 #2): never consumed.
+                }
+            }
+            data::ItemKind::MuteCharm => {
+                self.mute_steps = 200;
+                consumed = true;
+                message = "ui.item.mute_charm".into();
+            }
+            data::ItemKind::Key => {
+                // Duet Stone & friends: item-method evolutions (doc 02 §9).
+                if let Some(member) = self.party.get(target_index) {
+                    let evolution =
+                        registry
+                            .all_evolutions
+                            .get(&member.species)
+                            .and_then(|methods| {
+                                methods.iter().find(|(method, _)| match method {
+                                    data::EvolutionMethod::Item(needed) => needed == item,
+                                    data::EvolutionMethod::DuetStone => {
+                                        item.as_str() == "duet_stone"
+                                    }
+                                    _ => false,
+                                })
+                            });
+                    if let Some((_, into)) = evolution.cloned() {
+                        let from = member.species.clone();
+                        if let Some(member) = self.party.get_mut(target_index) {
+                            member.species = into.clone();
+                        }
+                        consumed = true;
+                        events.push(WorldEvent::Evolved { from, into });
+                    }
+                }
+            }
+            _ => {}
+        }
+        if consumed {
+            if let Some(count) = self.bag.get_mut(item) {
+                *count -= 1;
+                if *count == 0 {
+                    self.bag.remove(item);
+                }
+            }
+        }
+        if !message.is_empty() {
+            events.push(WorldEvent::ItemUsed {
+                item: item.clone(),
+                message_key: message,
+            });
+        }
+    }
+
+    /// Era Shift rule: free switch while the offer stands.
+    fn answer_shift(&mut self, choice: Option<u8>, events: &mut Vec<WorldEvent>) {
+        if !self.pending_shift {
+            return;
+        }
+        self.pending_shift = false;
+        let Some(session) = &mut self.battle else {
+            return;
+        };
+        if let Some(to) = choice {
+            let (next, stream) = battle::turn::free_switch(&session.state, 0, to);
+            session.state = next;
+            events.push(WorldEvent::Battle(stream));
+        }
+    }
+
+    /// Skybridge Aria (doc 02 §11): fly to a visited town.
+    fn fly_to(&mut self, destination: &MapId, events: &mut Vec<WorldEvent>) {
+        let allowed = self.vars.flags.contains("badge.6")
+            && self.party_has_tag("performer.sky")
+            && self.vars.flags.contains(&format!("visited.{destination}"))
+            && self.maps.contains_key(destination);
+        if !allowed {
+            return;
+        }
+        self.current_map = destination.clone();
+        // Land at the map's first walkable tile ring from center — towns
+        // register a spawn via the visited flag's recorded position.
+        let spawn = self
+            .vars
+            .vars
+            .get(&format!("spawn.{destination}.x"))
+            .copied()
+            .zip(
+                self.vars
+                    .vars
+                    .get(&format!("spawn.{destination}.y"))
+                    .copied(),
+            )
+            .map(|(x, y)| (x.max(0) as u32, y.max(0) as u32))
+            .unwrap_or((1, 1));
+        self.player = spawn;
+        events.push(WorldEvent::Performed {
+            performance: "ui.perform.skybridge_aria".into(),
+        });
+        events.push(WorldEvent::Warped {
+            map: destination.clone(),
+            to: spawn,
+        });
+    }
+
+    /// Any party member carries the tag (doc 02 §11: party-wide skills).
+    pub fn party_has_tag(&self, tag: &str) -> bool {
+        let Some(registry) = &self.registry else {
+            return false;
+        };
+        self.party.iter().any(|member| {
+            registry
+                .species
+                .get(&member.species)
+                .is_some_and(|spec| spec.tags.iter().any(|t| t == tag))
+        })
+    }
+
     pub fn heal_party(&mut self) {
         for individual in &mut self.party {
             individual.hp = None; // full at next resolve
@@ -1107,7 +1643,11 @@ impl WorldState {
             )]),
             flags: self.vars.flags.clone(),
             vars: self.vars.vars.clone(),
-            counters: BTreeMap::from([("steps".to_string(), self.steps)]),
+            counters: BTreeMap::from([
+                ("steps".to_string(), self.steps),
+                ("clock_ticks".to_string(), self.clock_ticks),
+                ("mute_steps".to_string(), u64::from(self.mute_steps)),
+            ]),
             world_seed: self.world_seed,
             heal_point: Some((self.heal_point.0.to_string(), self.heal_point.1)),
         }
@@ -1125,6 +1665,9 @@ impl WorldState {
         self.vars.flags = file.flags.clone();
         self.vars.vars = file.vars.clone();
         self.steps = file.counters.get("steps").copied().unwrap_or(0);
+        self.clock_ticks = file.counters.get("clock_ticks").copied().unwrap_or(0);
+        self.mute_steps =
+            u16::try_from(file.counters.get("mute_steps").copied().unwrap_or(0)).unwrap_or(0);
         self.party = file.party.clone();
         self.boxes = file.boxes.first().cloned().unwrap_or_default();
         self.money = file.player.money;

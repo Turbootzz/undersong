@@ -70,7 +70,7 @@ pub fn run_replay(content_root: &Path, file: &ReplayFile) -> Result<ReplayOutcom
     };
 
     for (index, input) in file.inputs.iter().enumerate() {
-        let events = world.apply(*input);
+        let events = world.apply(input.clone());
         for event in &events {
             match event {
                 crate::world::WorldEvent::DialogueLine { .. } => outcome.dialogue_lines += 1,

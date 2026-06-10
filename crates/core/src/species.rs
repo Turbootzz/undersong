@@ -36,6 +36,17 @@ impl StatSpread {
         }
     }
 
+    pub fn set(&mut self, stat: Stat, value: u16) {
+        match stat {
+            Stat::Hp => self.hp = value,
+            Stat::Atk => self.atk = value,
+            Stat::Def => self.def = value,
+            Stat::Spa => self.spa = value,
+            Stat::Spd => self.spd = value,
+            Stat::Spe => self.spe = value,
+        }
+    }
+
     pub fn total(&self) -> u32 {
         Stat::ALL.into_iter().map(|s| u32::from(self.get(s))).sum()
     }
