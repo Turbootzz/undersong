@@ -49,6 +49,19 @@ pub struct CoreContent {
     pub moves: MoveSet,
 }
 
+/// A standalone species pool file (the P1 dev testbed; region dexes in
+/// P3+ use the full region.ron flow instead).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SpeciesPool {
+    pub species: Vec<undersong_core::species::SpeciesSpec>,
+}
+
+/// Loads a species pool RON file.
+pub fn load_species_pool(path: &Path) -> Result<SpeciesPool, LoadError> {
+    load_ron(path.to_path_buf())
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum LoadError {
     // Display omits {source}: callers print the chain (anyhow `{:#}`),

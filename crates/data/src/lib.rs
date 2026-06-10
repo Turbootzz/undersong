@@ -10,6 +10,8 @@
 pub mod content;
 pub mod validate;
 
-pub use content::{CoreContent, LoadError, Natures, TypeChart, load_core};
+pub use content::{
+    CoreContent, LoadError, Natures, SpeciesPool, TypeChart, load_core, load_species_pool,
+};
 pub use undersong_core::collections::UniqueMap;
-pub use validate::{Finding, Severity, validate_core};
+pub use validate::{Finding, Severity, validate_core, validate_species_pool};

@@ -1,0 +1,93 @@
+// DEV-ONLY species pool for the P1 balance simulator and CLI battle
+// runner. NOT canon content — Cantorel's real motifs arrive in P3 via the
+// doc 04 §4 batch process. One species per type, equal BST (390) so the
+// type chart and AI quality drive outcomes, learnsets drawn from the 18
+// canon moves only.
+SpeciesPool(
+    species: [
+        (
+            id: "testbed_feral", name_key: "motif.testbed_feral", types: [Feral],
+            base_stats: (hp: 70, atk: 75, def: 65, spa: 45, spd: 60, spe: 75),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {atk: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "quick_step"), (9, "dampen"), (17, "stone_toll")],
+        ),
+        (
+            id: "testbed_ember", name_key: "motif.testbed_ember", types: [Ember],
+            base_stats: (hp: 55, atk: 50, def: 50, spa: 80, spd: 70, spe: 85),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spa: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "ember_note"), (13, "gale_riff"), (21, "flare_brass")],
+        ),
+        (
+            id: "testbed_tide", name_key: "motif.testbed_tide", types: [Tide],
+            base_stats: (hp: 65, atk: 50, def: 70, spa: 75, spd: 70, spe: 60),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spa: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "ripple"), (13, "gale_riff"), (21, "undertow")],
+        ),
+        (
+            id: "testbed_bloom", name_key: "motif.testbed_bloom", types: [Bloom],
+            base_stats: (hp: 70, atk: 70, def: 70, spa: 60, spd: 70, spe: 50),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {def: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "leaf_pick"), (13, "dampen"), (21, "root_chord")],
+        ),
+        (
+            id: "testbed_volt", name_key: "motif.testbed_volt", types: [Volt],
+            base_stats: (hp: 55, atk: 55, def: 50, spa: 80, spd: 55, spe: 95),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spe: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "volt_pluck"), (13, "gale_riff"), (21, "crescendo")],
+        ),
+        (
+            id: "testbed_gale", name_key: "motif.testbed_gale", types: [Gale],
+            base_stats: (hp: 60, atk: 55, def: 55, spa: 75, spd: 60, spe: 85),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spe: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "gale_riff"), (13, "dampen"), (21, "ripple")],
+        ),
+        (
+            id: "testbed_stone", name_key: "motif.testbed_stone", types: [Stone],
+            base_stats: (hp: 80, atk: 85, def: 90, spa: 40, spd: 60, spe: 35),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {def: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "stone_toll"), (13, "dampen"), (21, "alloy_clang")],
+        ),
+        (
+            id: "testbed_frost", name_key: "motif.testbed_frost", types: [Frost],
+            base_stats: (hp: 70, atk: 60, def: 65, spa: 70, spd: 75, spe: 50),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spd: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "ripple"), (13, "frost_lull"), (21, "gale_riff")],
+        ),
+        (
+            id: "testbed_venom", name_key: "motif.testbed_venom", types: [Venom],
+            base_stats: (hp: 65, atk: 60, def: 60, spa: 70, spd: 70, spe: 65),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spd: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "venom_trill"), (13, "dampen"), (21, "gale_riff")],
+        ),
+        (
+            id: "testbed_phantom", name_key: "motif.testbed_phantom", types: [Phantom],
+            base_stats: (hp: 60, atk: 50, def: 55, spa: 85, spd: 70, spe: 70),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spa: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "phantom_rest"), (13, "dampen"), (21, "crescendo")],
+        ),
+        (
+            id: "testbed_alloy", name_key: "motif.testbed_alloy", types: [Alloy],
+            base_stats: (hp: 70, atk: 80, def: 95, spa: 45, spd: 70, spe: 30),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {def: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "alloy_clang"), (13, "stone_toll"), (21, "dampen")],
+        ),
+        (
+            id: "testbed_resonant", name_key: "motif.testbed_resonant", types: [Resonant],
+            base_stats: (hp: 60, atk: 45, def: 55, spa: 85, spd: 75, spe: 70),
+            catch_rate: 120, base_exp_yield: 120, ev_yield: {spa: 1},
+            growth_curve: MediumFast,
+            learnset: [(1, "tackle"), (5, "ripple"), (13, "crescendo"), (21, "resonate")],
+        ),
+    ],
+)

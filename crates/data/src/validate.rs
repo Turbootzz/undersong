@@ -172,6 +172,78 @@ fn check_moves(content: &CoreContent, findings: &mut Vec<Finding>) {
     }
 }
 
+/// Species-pool rules (doc 04 §3 rule 4 subset that applies to a bare
+/// pool file): unique ids, 1–2 types, learnset levels ascending, every
+/// move reference resolves, a damaging move by level 5, ev_yield 1–3,
+/// catch_rate ≥ 3.
+pub fn validate_species_pool(
+    pool: &crate::content::SpeciesPool,
+    moves: &crate::content::MoveSet,
+) -> Vec<Finding> {
+    use undersong_core::moves::MoveCategory;
+
+    let mut findings = Vec::new();
+    let mut seen = BTreeSet::new();
+    for spec in &pool.species {
+        let id = spec.id.as_str();
+        if !seen.insert(id.to_owned()) {
+            findings.push(Finding::error(
+                "species.unique",
+                format!("duplicate species id `{id}`"),
+            ));
+        }
+        if spec.types.is_empty() || spec.types.len() > 2 {
+            findings.push(Finding::error(
+                "species.types",
+                format!("`{id}` has {} types (need 1–2)", spec.types.len()),
+            ));
+        }
+        if spec.catch_rate < 3 {
+            findings.push(Finding::error(
+                "species.catch_rate",
+                format!("`{id}` catch_rate {} below 3", spec.catch_rate),
+            ));
+        }
+        for (stat, amount) in spec.ev_yield.iter() {
+            if !(1..=3).contains(amount) {
+                findings.push(Finding::error(
+                    "species.ev_yield",
+                    format!("`{id}` ev_yield {stat:?}={amount} outside 1..=3"),
+                ));
+            }
+        }
+        let mut last_level = 0u8;
+        let mut damaging_by_5 = false;
+        for (level, move_id) in &spec.learnset {
+            if *level < last_level {
+                findings.push(Finding::error(
+                    "species.learnset_order",
+                    format!("`{id}` learnset levels not ascending at {move_id}"),
+                ));
+            }
+            last_level = *level;
+            match moves.get(move_id) {
+                None => findings.push(Finding::error(
+                    "species.move_ref",
+                    format!("`{id}` references unknown move `{move_id}`"),
+                )),
+                Some(m) => {
+                    if *level <= 5 && m.power > 0 && !matches!(m.category, MoveCategory::Status) {
+                        damaging_by_5 = true;
+                    }
+                }
+            }
+        }
+        if !damaging_by_5 {
+            findings.push(Finding::error(
+                "species.damaging_by_5",
+                format!("`{id}` has no damaging move by level 5 (doc 04 §3 rule 4)"),
+            ));
+        }
+    }
+    findings
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;

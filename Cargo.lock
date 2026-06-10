@@ -4765,7 +4765,9 @@ name = "tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "battle",
  "data",
+ "undersong-core",
 ]
 
 [[package]]
