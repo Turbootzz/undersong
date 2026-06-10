@@ -2821,6 +2821,7 @@ dependencies = [
 name = "game"
 version = "0.1.0"
 dependencies = [
+ "battle",
  "bevy",
  "data",
  "ron",

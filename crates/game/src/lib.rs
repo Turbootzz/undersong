@@ -5,4 +5,5 @@
 #![forbid(unsafe_code)]
 
 pub mod replay;
+pub mod session;
 pub mod world;

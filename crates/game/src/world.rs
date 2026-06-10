@@ -8,9 +8,12 @@ use std::collections::BTreeMap;
 
 use data::map::{MapDef, NpcBehavior, TriggerKind};
 use script::{Cmd, ScriptRunner, ScriptVars, SideEffectReq, StepResult};
-use undersong_core::ids::{MapId, SpeciesId};
+use undersong_core::ids::{ItemId, MapId, SpeciesId};
+use undersong_core::individual::Individual;
 use undersong_core::rng::BattleRng;
 use undersong_core::world::Facing;
+
+use crate::session::{BattleCmd, BattleContext, BattleSession, Registry};
 
 /// Replay-file input vocabulary (tests/replays/*.ron).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -24,6 +27,20 @@ pub enum Input {
     Tick,
     /// Save to the autosave slot (the replay harness uses a MemBackend).
     Save,
+    /// A battle command while a battle session is active.
+    Battle(BattleCmd),
+    /// Answer a pending learn prompt: replace this move slot (None skips).
+    Learn {
+        replace: Option<u8>,
+    },
+    /// Accept or refuse a pending evolution.
+    Evolve {
+        accept: bool,
+    },
+    /// Move the shop cursor / buy / leave.
+    ShopCursor(i8),
+    ShopBuy,
+    ShopClose,
 }
 
 /// What happened during one input application; the Bevy layer turns
@@ -64,6 +81,43 @@ pub enum WorldEvent {
         to: (u32, u32),
     },
     Saved,
+    /// A battle turn resolved; the presenter renders this stream.
+    Battle(Vec<battle::BattleEvent>),
+    BattleFinished {
+        outcome: battle::Outcome,
+    },
+    MoteCaught {
+        species: SpeciesId,
+    },
+    MoteJoined {
+        species: SpeciesId,
+    },
+    LearnPrompt {
+        species: SpeciesId,
+        move_id: undersong_core::ids::MoveId,
+    },
+    MoveLearned {
+        species: SpeciesId,
+        move_id: undersong_core::ids::MoveId,
+    },
+    EvolutionPrompt {
+        from: SpeciesId,
+        into: SpeciesId,
+    },
+    Evolved {
+        from: SpeciesId,
+        into: SpeciesId,
+    },
+    MoneyChanged {
+        money: u32,
+    },
+    ShopOpened,
+    ItemBought {
+        item: ItemId,
+    },
+    /// Party wiped: half money, heal, return to the rest point
+    /// (doc 02 §15).
+    Whiteout,
 }
 
 /// A live NPC (positions can drift from the map definition via wander).
@@ -104,8 +158,24 @@ pub struct WorldState {
     pub rng: BattleRng,
     pub world_seed: u64,
     pub steps: u64,
-    /// Set when an encounter triggers; the scene layer consumes it.
+    /// Set when an encounter triggers; consumed by the battle bridge
+    /// when a registry is present, by the placeholder scene otherwise.
     pub pending_encounter: Option<(SpeciesId, u8)>,
+    /// Content registry; None in the registry-less dev world (P2 tests).
+    pub registry: Option<Registry>,
+    pub party: Vec<Individual>,
+    pub boxes: Vec<Individual>,
+    pub bag: std::collections::BTreeMap<ItemId, u32>,
+    pub money: u32,
+    pub battle: Option<BattleSession>,
+    /// Open mart: (item ids, cursor).
+    pub shop: Option<(Vec<ItemId>, usize)>,
+    /// Queued evolution prompts: (party index, target species).
+    pub pending_evolutions: Vec<(usize, SpeciesId)>,
+    /// Learn prompts awaiting an answer: (party index, move).
+    pub pending_learn_queue: Vec<(usize, undersong_core::ids::MoveId)>,
+    /// Respawn point after a whiteout (map, position).
+    pub heal_point: (MapId, (u32, u32)),
 }
 
 impl WorldState {
@@ -139,7 +209,7 @@ impl WorldState {
         Self {
             maps,
             scripts,
-            current_map: start_map,
+            current_map: start_map.clone(),
             player: start,
             facing: Facing::Down,
             vars: ScriptVars::default(),
@@ -149,6 +219,16 @@ impl WorldState {
             world_seed,
             steps: 0,
             pending_encounter: None,
+            registry: None,
+            party: Vec::new(),
+            boxes: Vec::new(),
+            bag: std::collections::BTreeMap::new(),
+            money: 3000,
+            battle: None,
+            shop: None,
+            pending_evolutions: Vec::new(),
+            pending_learn_queue: Vec::new(),
+            heal_point: (start_map, start),
         }
     }
 
@@ -166,6 +246,36 @@ impl WorldState {
     /// while dialogue or an encounter is pending.
     pub fn apply(&mut self, input: Input) -> Vec<WorldEvent> {
         let mut events = Vec::new();
+        // Battle mode captures its own vocabulary first.
+        if self.battle.is_some() {
+            if let Input::Battle(command) = input {
+                self.battle_turn(command, &mut events);
+            }
+            return events;
+        }
+        if !self.pending_evolutions.is_empty() {
+            if let Input::Evolve { accept } = input {
+                self.resolve_evolution(accept, &mut events);
+            }
+            return events;
+        }
+        if self.shop.is_some() {
+            match input {
+                Input::ShopCursor(delta) => {
+                    if let Some((items, cursor)) = &mut self.shop {
+                        let len = items.len() as i32;
+                        let next = (*cursor as i32 + i32::from(delta)).clamp(0, len - 1);
+                        *cursor = usize::try_from(next).unwrap_or(0);
+                    }
+                }
+                Input::ShopBuy => self.shop_buy(&mut events),
+                Input::ShopClose | Input::Interact => {
+                    self.shop = None;
+                }
+                _ => {}
+            }
+            return events;
+        }
         match input {
             Input::Interact if self.pending_encounter.is_none() => self.interact(&mut events),
             Input::Interact => {}
@@ -192,6 +302,13 @@ impl WorldState {
             }
             Input::Tick => {}
             Input::Save => events.push(WorldEvent::Saved),
+            Input::Learn { replace } => {
+                let mut learn_events = Vec::new();
+                self.answer_learn(replace, &mut learn_events);
+                events.extend(learn_events);
+            }
+            // Battle/shop/prompt vocabulary outside its mode: no-op.
+            _ => {}
         }
         events
     }
@@ -275,6 +392,7 @@ impl WorldState {
                         species: species.clone(),
                         level,
                     });
+                    self.maybe_start_wild_battle(events);
                     break;
                 }
             }
@@ -416,12 +534,47 @@ impl WorldState {
                     events.push(WorldEvent::Warped { map, to: (x, y) });
                 }
                 StepResult::Effect(SideEffectReq::HealParty) => {
-                    // Party heal lands with the party system in P3.
+                    self.heal_party();
+                    self.heal_point = (self.current_map.clone(), self.player);
+                }
+                StepResult::Effect(SideEffectReq::GiveMote { species, level }) => {
+                    if let Some(registry) = &self.registry
+                        && self.party.len() < 6
+                        && let Some(mut given) =
+                            registry.wild_individual(&species, level, &mut self.rng)
+                    {
+                        given.ot = "player".into();
+                        self.party.push(given);
+                        events.push(WorldEvent::MoteJoined { species });
+                    }
+                }
+                StepResult::Effect(SideEffectReq::GiveItem { id, n }) => {
+                    *self.bag.entry(id).or_insert(0) += n;
+                }
+                StepResult::Effect(SideEffectReq::StartBattle { trainer }) => {
+                    // The battle takes over; the script resumes after.
+                    self.dialogue = Some(dialogue);
+                    self.start_trainer_battle(&trainer);
+                    return;
+                }
+                StepResult::Effect(SideEffectReq::OpenShop { table }) => {
+                    if let Some(registry) = &self.registry {
+                        // P3 mart: every priced item; per-table stock in P4.
+                        let _ = table;
+                        let mut stock: Vec<ItemId> = registry
+                            .items
+                            .values()
+                            .filter(|def| def.price > 0)
+                            .map(|def| def.id.clone())
+                            .collect();
+                        stock.sort();
+                        self.shop = Some((stock, 0));
+                        events.push(WorldEvent::ShopOpened);
+                    }
                 }
                 StepResult::Effect(_other) => {
-                    // Remaining effects (items, battles, music…) arrive
-                    // with their systems in P3+; the interpreter contract
-                    // is already exercised by the script crate tests.
+                    // Music / cries / camera effects are presentation-only;
+                    // the Bevy layer subscribes to them in its own pass.
                 }
                 StepResult::Done => {
                     events.push(WorldEvent::DialogueEnded);
@@ -478,6 +631,294 @@ impl WorldState {
                     id: npcs[index].id.clone(),
                     to: (nx, ny),
                 });
+            }
+        }
+    }
+
+    /// Starts the wild battle for `pending_encounter` if content is
+    /// loaded and the player has a party.
+    fn maybe_start_wild_battle(&mut self, events: &mut Vec<WorldEvent>) {
+        let Some(registry) = &self.registry else {
+            return;
+        };
+        let Some((species, level)) = self.pending_encounter.clone() else {
+            return;
+        };
+        let Some(wild) = registry.wild_individual(&species, level, &mut self.rng) else {
+            return;
+        };
+        if let Some(session) = BattleSession::wild(registry, &self.party, wild, &mut self.rng) {
+            self.battle = Some(session);
+        } else {
+            // No conscious party — should not happen outside dev worlds.
+            self.pending_encounter = None;
+        }
+        let _ = events;
+    }
+
+    /// Starts a trainer battle by id (script `StartBattle`).
+    pub fn start_trainer_battle(&mut self, trainer_id: &undersong_core::ids::TrainerId) {
+        let Some(registry) = &self.registry else {
+            return;
+        };
+        let Some(trainer) = registry.trainers.get(trainer_id).cloned() else {
+            return;
+        };
+        if self.vars.flags.contains(&trainer.defeat_flag) {
+            return; // one-time fights stay won
+        }
+        if let Some(session) =
+            BattleSession::trainer(registry, &self.party, &trainer, &mut self.rng)
+        {
+            self.battle = Some(session);
+        }
+    }
+
+    fn battle_turn(&mut self, command: BattleCmd, events: &mut Vec<WorldEvent>) {
+        let Some(mut session) = self.battle.take() else {
+            return;
+        };
+        // Bell resolution consumes one bell item from the bag.
+        let bell = if matches!(command, BattleCmd::Bell) {
+            self.consume_best_bell()
+        } else {
+            None
+        };
+        let stream = session.turn(command, bell, &mut self.rng);
+
+        // Learn prompts: queue events the engine surfaced this turn.
+        for event in &stream {
+            if let battle::BattleEvent::MoveLearnable { slot, move_id, .. } = event {
+                let party_index = session
+                    .party_map
+                    .get(usize::from(*slot))
+                    .copied()
+                    .unwrap_or(0);
+                session.pending_learn.push((party_index, move_id.clone()));
+            }
+        }
+        events.push(WorldEvent::Battle(stream));
+
+        match session.outcome() {
+            None => {
+                self.battle = Some(session);
+            }
+            Some(outcome) => {
+                self.finish_battle(session, outcome, events);
+            }
+        }
+    }
+
+    fn consume_best_bell(&mut self) -> Option<undersong_core::moves::Frac> {
+        let registry = self.registry.as_ref()?;
+        // Best owned bell by multiplier.
+        let mut best: Option<(ItemId, undersong_core::moves::Frac, u64)> = None;
+        for (item_id, count) in &self.bag {
+            if *count == 0 {
+                continue;
+            }
+            if let Some(def) = registry.items.get(item_id)
+                && let data::ItemKind::Bell { catch_mod } = &def.kind
+            {
+                let strength = u64::from(catch_mod.0) * 1000 / u64::from(catch_mod.1.max(1));
+                if best.as_ref().is_none_or(|(_, _, s)| strength > *s) {
+                    best = Some((item_id.clone(), *catch_mod, strength));
+                }
+            }
+        }
+        let (item_id, frac, _) = best?;
+        if let Some(count) = self.bag.get_mut(&item_id) {
+            *count -= 1;
+            if *count == 0 {
+                self.bag.remove(&item_id);
+            }
+        }
+        Some(frac)
+    }
+
+    fn finish_battle(
+        &mut self,
+        session: BattleSession,
+        outcome: battle::Outcome,
+        events: &mut Vec<WorldEvent>,
+    ) {
+        // Fold survivors back into the party.
+        for (battle_slot, party_index) in session.party_map.iter().enumerate() {
+            if let (Some(mote), Some(individual)) = (
+                session.state.sides[0].party.get(battle_slot),
+                self.party.get_mut(*party_index),
+            ) {
+                Registry::fold_back(individual, mote);
+            }
+        }
+        self.pending_encounter = None;
+        events.push(WorldEvent::BattleFinished { outcome });
+
+        match outcome {
+            battle::Outcome::Caught => {
+                if let Some(mut wild) = session.wild {
+                    // Carry the battle-end condition into the caught Mote.
+                    if let Some(foe) = session.state.sides[1].party.first() {
+                        wild.hp = Some(foe.hp.max(1));
+                        wild.status = foe.status.map(battle::mote::MajorStatus::ailment);
+                    }
+                    wild.ot = "player".into();
+                    events.push(WorldEvent::MoteCaught {
+                        species: wild.species.clone(),
+                    });
+                    if self.party.len() < 6 {
+                        self.party.push(wild);
+                    } else {
+                        self.boxes.push(wild);
+                    }
+                }
+            }
+            battle::Outcome::Won { winner: 0 } => {
+                if let BattleContext::Trainer { id } = &session.context
+                    && let Some(registry) = &self.registry
+                    && let Some(trainer) = registry.trainers.get(id)
+                {
+                    // Payout = class base × ace level (doc 02 §15).
+                    let ace = trainer.party.iter().map(|m| m.level).max().unwrap_or(1);
+                    let payout = trainer.payout_base * u32::from(ace);
+                    self.money = self.money.saturating_add(payout);
+                    self.vars.flags.insert(trainer.defeat_flag.clone());
+                    for (item, count) in &trainer.reward_items {
+                        *self.bag.entry(item.clone()).or_insert(0) += count;
+                    }
+                    events.push(WorldEvent::MoneyChanged { money: self.money });
+                }
+            }
+            battle::Outcome::Won { .. } | battle::Outcome::Drawn => {
+                // Loss: half money, heal, return to the rest point
+                // (doc 02 §15).
+                self.money /= 2;
+                self.heal_party();
+                self.current_map = self.heal_point.0.clone();
+                self.player = self.heal_point.1;
+                events.push(WorldEvent::Whiteout);
+                events.push(WorldEvent::MoneyChanged { money: self.money });
+            }
+            battle::Outcome::Fled { .. } => {}
+        }
+
+        // Surface queued learn prompts (auto-learn when a slot is free).
+        for (party_index, move_id) in session.pending_learn {
+            let Some(individual) = self.party.get_mut(party_index) else {
+                continue;
+            };
+            let species = individual.species.clone();
+            if individual.moves.len() < 4 {
+                if let Some(registry) = &self.registry
+                    && let Some(spec) = registry.moves.get(&move_id)
+                {
+                    individual
+                        .moves
+                        .push(undersong_core::individual::LearnedMove {
+                            id: move_id.clone(),
+                            pp: spec.pp,
+                            pp_ups: 0,
+                        });
+                    events.push(WorldEvent::MoveLearned { species, move_id });
+                }
+            } else {
+                self.pending_learn_queue
+                    .push((party_index, move_id.clone()));
+                events.push(WorldEvent::LearnPrompt { species, move_id });
+            }
+        }
+
+        // Queue level evolutions (doc 02 §9).
+        if let Some(registry) = &self.registry {
+            for (index, individual) in self.party.iter().enumerate() {
+                if let Some((at_level, target)) = registry.evolutions.get(&individual.species)
+                    && individual.level >= *at_level
+                    && !self.pending_evolutions.iter().any(|(i, _)| *i == index)
+                {
+                    self.pending_evolutions.push((index, target.clone()));
+                    events.push(WorldEvent::EvolutionPrompt {
+                        from: individual.species.clone(),
+                        into: target.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    /// Answers the oldest learn prompt outside battle.
+    pub fn answer_learn(&mut self, replace: Option<u8>, events: &mut Vec<WorldEvent>) {
+        let Some((party_index, move_id)) = self.pending_learn_queue.first().cloned() else {
+            return;
+        };
+        self.pending_learn_queue.remove(0);
+        let Some(individual) = self.party.get_mut(party_index) else {
+            return;
+        };
+        if let Some(slot) = replace
+            && let Some(registry) = &self.registry
+            && let Some(spec) = registry.moves.get(&move_id)
+            && let Some(learned) = individual.moves.get_mut(usize::from(slot))
+        {
+            *learned = undersong_core::individual::LearnedMove {
+                id: move_id.clone(),
+                pp: spec.pp,
+                pp_ups: 0,
+            };
+            events.push(WorldEvent::MoveLearned {
+                species: individual.species.clone(),
+                move_id,
+            });
+        }
+    }
+
+    fn resolve_evolution(&mut self, accept: bool, events: &mut Vec<WorldEvent>) {
+        let Some((party_index, target)) = self.pending_evolutions.first().cloned() else {
+            return;
+        };
+        self.pending_evolutions.remove(0);
+        if !accept {
+            return;
+        }
+        if let Some(individual) = self.party.get_mut(party_index) {
+            let from = individual.species.clone();
+            individual.species = target.clone();
+            individual.hp = None; // recompute full at next resolve
+            events.push(WorldEvent::Evolved { from, into: target });
+        }
+    }
+
+    fn shop_buy(&mut self, events: &mut Vec<WorldEvent>) {
+        let Some(registry) = &self.registry else {
+            return;
+        };
+        let Some((items, cursor)) = &self.shop else {
+            return;
+        };
+        let Some(item_id) = items.get(*cursor).cloned() else {
+            return;
+        };
+        let Some(def) = registry.items.get(&item_id) else {
+            return;
+        };
+        if def.price == 0 || self.money < def.price {
+            return;
+        }
+        self.money -= def.price;
+        *self.bag.entry(item_id.clone()).or_insert(0) += 1;
+        events.push(WorldEvent::ItemBought { item: item_id });
+        events.push(WorldEvent::MoneyChanged { money: self.money });
+    }
+
+    pub fn heal_party(&mut self) {
+        for individual in &mut self.party {
+            individual.hp = None; // full at next resolve
+            individual.status = None;
+            if let Some(registry) = &self.registry {
+                for learned in &mut individual.moves {
+                    if let Some(spec) = registry.moves.get(&learned.id) {
+                        learned.pp = spec.pp;
+                    }
+                }
             }
         }
     }
@@ -590,4 +1031,43 @@ pub fn load_dev_world(content_root: &std::path::Path, seed: u64) -> Result<World
         (5, 2),
         seed,
     ))
+}
+
+/// Loads the real game world: the Cantorel region pack + core content,
+/// with the battle registry attached. Maps and scripts come from the
+/// pack (doc 04 §1 layout).
+pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<WorldState, String> {
+    let core_content = data::load_core(content_root).map_err(|e| e.to_string())?;
+    let items = data::load_items(content_root).map_err(|e| e.to_string())?;
+    let pack = data::load_region(content_root, "cantorel").map_err(|e| e.to_string())?;
+
+    let maps_root = content_root.join("regions/cantorel/maps");
+    let mut scripts = BTreeMap::new();
+    for (id, map) in &pack.maps {
+        let mut paths: Vec<String> = map.npcs.iter().filter_map(|n| n.script.clone()).collect();
+        for trigger in &map.triggers {
+            if let TriggerKind::Script { path } = &trigger.kind {
+                paths.push(path.clone());
+            }
+        }
+        for path in paths {
+            let file = maps_root.join(id.as_str()).join("scripts").join(&path);
+            let text =
+                std::fs::read_to_string(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let cmds: Vec<Cmd> =
+                ron::from_str(&text).map_err(|e| format!("{}: {e}", file.display()))?;
+            scripts.insert((id.clone(), path), cmds);
+        }
+    }
+
+    let registry = Registry::from_content(&core_content, &pack, &items);
+    let mut world = WorldState::new(
+        pack.maps.clone(),
+        scripts,
+        pack.def.entry_map.clone(),
+        pack.def.entry_spawn,
+        seed,
+    );
+    world.registry = Some(registry);
+    Ok(world)
 }
