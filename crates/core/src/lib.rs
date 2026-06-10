@@ -6,6 +6,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod chart;
 pub mod collections;
 pub mod ids;
 pub mod moves;

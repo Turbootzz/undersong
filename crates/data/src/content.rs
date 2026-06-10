@@ -8,27 +8,11 @@ use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use undersong_core::collections::UniqueMap;
 use undersong_core::moves::MoveSpec;
-use undersong_core::types::{Eff, Type};
 
-/// The 12×12 effectiveness chart, attacker → defender → multiplier.
-///
-/// The RON file is fully explicit — every attacker lists every defender —
-/// so the validator proves totality (doc 04 §3 rule 6) instead of silently
-/// defaulting missing pairs to neutral.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct TypeChart {
-    pub entries: UniqueMap<Type, UniqueMap<Type, Eff>>,
-}
-
-impl TypeChart {
-    /// Effectiveness of `attacker` against `defender`, if the pair is present.
-    pub fn eff(&self, attacker: Type, defender: Type) -> Option<Eff> {
-        self.entries.get(&attacker)?.get(&defender).copied()
-    }
-}
+/// Re-exported from core: the chart shape is shared vocabulary between
+/// content loading (here) and the battle sim.
+pub use undersong_core::chart::TypeChart;
 
 /// The 25 temperaments (natures), in canonical index order `n ∈ 0..25`:
 /// boosted stat = `n / 5`, hindered = `n % 5`, over `[atk, def, spa, spd, spe]`;
