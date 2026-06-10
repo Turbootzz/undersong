@@ -5,9 +5,9 @@
 // for gaps (doc 04 §3 rule 6). `tools validate` and the cross-transcription
 // test in crates/data/tests/core_content.rs must stay green when editing.
 //
-// Known doc note: the §1 "derived defensive weakness counts" sanity line
-// says frost has 3 weaknesses; the table itself gives frost 4
-// (ember, stone, alloy, resonant all hit frost 2×). The table wins.
+// Doc note: doc 02 §1's derived-weakness sanity line originally said
+// frost 3; corrected to 4 in the doc changelog (2026-06-10) — the table
+// (ember, stone, alloy, resonant all hit frost 2×) was always the truth.
 TypeChart(
     entries: {
         Feral: {

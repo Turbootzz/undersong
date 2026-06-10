@@ -187,7 +187,7 @@ CI: GitHub Actions — `fmt --check`, `clippy -D warnings`, `test --workspace`,
 |---|---|---|
 | bevy | 0.18 | client engine |
 | serde / ron | 1 / 0.12 | content & saves |
-| rand / rand_chacha | 0.10 | seeded determinism |
+| rand_core / rand_chacha | 0.10 | seeded determinism; `rand` itself is deliberately NOT a dependency, so no global RNG (`thread_rng`) is even linkable from sim code |
 | directories | 6 | save paths |
 | proptest | 1.11 | property tests (dev-dep) |
 | fundsp | 0.23 | offline cry/jingle synthesis in `tools` only |
@@ -217,3 +217,7 @@ autoplay needs a first-interaction gate on web — title screen press handles it
 
 - 2026-06: Stack locked (this doc v1). Hand-rolled tilemap over plugins. RON over
   JSON (comments + enums). Integer-only battle math. Event-stream battle rendering.
+- 2026-06-10 (P0): the `crates/core` package is named **`undersong-core`** — cargo
+  reserves `core` (collides with Rust's built-in crate). All other packages keep
+  their doc names, so `cargo run -p game` / `cargo test -p battle` etc. match the
+  docs verbatim.

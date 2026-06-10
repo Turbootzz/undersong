@@ -32,8 +32,10 @@ story creatures and sound-flagged specialists.
 | resonant | phantom, frost | resonant, venom | — |
 
 Derived defensive weakness counts (sanity): feral 0 (imm. phantom) · ember 2 ·
-tide 2 · bloom 4 · volt 1 (imm. n/a) · gale 3 · stone 4 (imm. volt) · frost 3 ·
-venom 2 · phantom 2 (imm. feral) · alloy 2 · resonant 2.
+tide 2 · bloom 4 · volt 1 (imm. n/a) · gale 3 · stone 4 (imm. volt) · frost 4 ·
+venom 2 · phantom 2 (imm. feral) · alloy 2 (imm. venom) · resonant 2.
+*(frost corrected 3→4 and alloy's venom immunity annotated, 2026-06-10 — see
+Changelog; the table above is the source of truth.)*
 
 The chart ships as data (`content/core/typechart.ron`). The balance simulator
 (see 06, gate P1) must report: per-type offensive coverage, defensive profile, and
@@ -282,3 +284,8 @@ other for regression (T3 must beat T1 ≥ 85% with equal teams).
 
 - v1.0 — initial law (this document). All future rule changes append here with
   date + reason, and must keep `tools validate && cargo test -p battle` green.
+- 2026-06-10 (P0) — annotation fix, no rule change: §1's derived defensive
+  weakness sanity line said "frost 3"; the chart table (which is the law) gives
+  frost **4** weaknesses (ember, stone, alloy, resonant all hit frost 2×). The
+  sanity line is corrected to 4. Content ships the table as written; the
+  cross-transcription test in `crates/data/tests/core_content.rs` guards it.

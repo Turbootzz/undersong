@@ -22,20 +22,20 @@ Phase sizing assumes Claude Code sessions; each box ≈ one coherent commit-seri
 
 ## P0 — Bootstrap (repo that proves the pipeline)
 
-- [ ] `cargo new` workspace; crates `core, battle, data, save, script, game, tools`
+- [x] `cargo new` workspace; crates `core, battle, data, save, script, game, tools`
       per `03-ARCHITECTURE.md` §1; shared lints (`clippy::all`, `-D warnings`);
       release profile settings.
-- [ ] Pin deps from 03 §7 exactly; `rust-toolchain.toml` (stable, edition 2024).
-- [ ] `core`: ids (newtypes), Stat enum, Type enum, `BattleRng` wrapper (ChaCha8),
+- [x] Pin deps from 03 §7 exactly; `rust-toolchain.toml` (stable, edition 2024).
+- [x] `core`: ids (newtypes), Stat enum, Type enum, `BattleRng` wrapper (ChaCha8),
       no `thread_rng` reachable.
-- [ ] `data`: load `content/core/typechart.ron` + `natures.ron`; first validation
+- [x] `data`: load `content/core/typechart.ron` + `natures.ron`; first validation
       rule (chart is total over 12×12).
-- [ ] `tools validate` skeleton (loads pack, runs rules, exit code).
-- [ ] `game`: Bevy 0.18 window at 480×270 integer scale, "UNDERSONG P0" text,
+- [x] `tools validate` skeleton (loads pack, runs rules, exit code).
+- [x] `game`: Bevy 0.18 window at 480×270 integer scale, "UNDERSONG P0" text,
       AppState enum stubbed.
-- [ ] CI (GitHub Actions): fmt, clippy, test, validate; cache cargo+target.
-- [ ] Write the typechart + natures RON from doc 02 §1/§3 (data, not code).
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p0-start..HEAD` — all findings fixed, review clean.
+- [x] CI (GitHub Actions): fmt, clippy, test, validate; cache cargo+target.
+- [x] Write the typechart + natures RON from doc 02 §1/§3 (data, not code).
+- [x] **Phase review:** `/code-review` (high effort) over `git diff p0-start..HEAD` — all findings fixed, review clean.
 
 **Gate P0:** `cargo run -p game` opens the window; CI green on a fresh clone.
 
@@ -201,4 +201,48 @@ Tamburra/Neonata are then "just content."
 > `### YYYY-MM-DD — Phase Px`
 > `Done: …` / `Gate evidence: …` / `Next: …` / `Open questions: …`
 
-*(empty — project not started; begin at P0)*
+### 2026-06-10 — Phase P0 (complete)
+
+**Done:** Workspace bootstrap — 7 crates per 03 §1, shared lints
+(`clippy::all` + `warnings` denied), pinned profiles, `rust-toolchain.toml`
+(stable, edition 2024). `core`: id newtypes, `Stat`, `Type`, `Eff`,
+`BattleRng` (ChaCha8; depends on rand_core + rand_chacha only, so
+`thread_rng` is unlinkable). `data`: TypeChart/Natures schemas, RON
+loaders, validation (12×12 totality, natures count/uniqueness;
+`UniqueMap` rejects duplicate keys at parse time; `deny_unknown_fields`
+everywhere). `content/core/`: typechart + natures transcribed from doc 02
+§1/§3, guarded by a cross-transcription test (doc lists re-derived
+independently of the RON matrix). `tools validate` CLI (exit 1 on any
+error finding). `game`: Bevy 0.18.1, 960×540 fixed window (480×270 ×2),
+nearest sampling, "UNDERSONG P0" text, AppState stub. CI workflow.
+Package-name note: `crates/core` is `undersong-core` (cargo reserves
+`core`) — 03 §10; all other package names match the docs.
+
+**Gate evidence:**
+- `cargo run -p game` → winit `Creating new window Undersong`, Metal
+  renderer init, process healthy, no panic (macOS 26.5, M3 Pro).
+- Fresh-clone simulation (full clone to /tmp): `cargo fmt --check` ✓,
+  `clippy --workspace --all-targets -D warnings` exit 0,
+  `cargo test --workspace` exit 0 (28 tests), `tools validate`
+  → `0 error(s), 0 warning(s)` exit 0. GitHub Actions itself hasn't run
+  yet (nothing pushed); the workflow mirrors exactly these commands.
+
+**Phase review:** `/code-review` resolved to the CodeRabbit plugin
+(1 finding) + a 22-agent adversarial review workflow over
+`p0-start..HEAD` (4 lenses → per-finding refutation agents; 16 confirmed,
+2 refuted). All confirmed findings fixed: duplicate-RON-key last-wins
+through the validator (major → `UniqueMap`), CI missing wayland build
+deps for bevy 0.18 on ubuntu runners (critical), `range_inclusive`
+full-domain overflow, missing `--locked`, dead `rustup show` step,
+`expect(dead_code)`, full 25-key natures assertion, `rand_core` recorded
+in 03 §7, doc 02 frost sanity-count corrected 3→4 via changelog.
+Won't-fix (justified): CodeRabbit's `data`→`undersong-data` rename — docs
+pin the crate names used in cargo commands; only `core` is cargo-reserved
+(03 §10). Pinning a concrete stable toolchain version — roadmap mandates
+channel "stable"; the standalone finding was refuted in verification.
+
+**Next:** P1 — `git tag p1-start`; `battle` crate: `BattleState`,
+`TurnActions`, `step()` per 03 §2; stat math (02 §3) with hand-computed
+test vectors.
+
+**Open questions:** none.
