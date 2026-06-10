@@ -9,6 +9,7 @@
 
 pub mod content;
 pub mod map;
+pub mod region;
 pub mod validate;
 
 pub use content::{
@@ -16,7 +17,12 @@ pub use content::{
     load_species_pool,
 };
 pub use map::{EncounterDef, MapDef, NpcBehavior, NpcDef, Trigger, TriggerKind, load_maps};
+pub use region::{
+    DexInfo, Evolution, EvolutionMethod, ItemDef, ItemKind, ItemSet, Motif, RegionDef, RegionPack,
+    Trainer, TrainerMote, load_items, load_region,
+};
 pub use undersong_core::collections::UniqueMap;
 pub use validate::{
-    Finding, Severity, validate_core, validate_maps, validate_palette, validate_species_pool,
+    Finding, Severity, validate_core, validate_items, validate_maps, validate_palette,
+    validate_region, validate_species_pool,
 };

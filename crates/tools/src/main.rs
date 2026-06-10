@@ -210,6 +210,57 @@ fn validate(options: &Options) -> Result<bool> {
         .with_context(|| format!("loading palette under {}", options.content.display()))?;
     findings.extend(data::validate_palette(&palette));
 
+    // Items (doc 02 §8/§15).
+    let items = data::load_items(&options.content)
+        .with_context(|| format!("loading items under {}", options.content.display()))?;
+    findings.extend(data::validate_items(&items));
+
+    // Region packs (doc 04 §3): every directory under content/regions/.
+    let regions_root = options.content.join("regions");
+    if regions_root.exists() {
+        let mut region_dirs: Vec<_> = std::fs::read_dir(&regions_root)
+            .with_context(|| format!("reading {}", regions_root.display()))?
+            .filter_map(Result::ok)
+            .map(|e| e.path())
+            .filter(|p| p.is_dir())
+            .collect();
+        region_dirs.sort();
+        for dir in region_dirs {
+            let region = dir
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default()
+                .to_string();
+            let pack = data::load_region(&options.content, &region)
+                .with_context(|| format!("loading region `{region}`"))?;
+            findings.extend(data::validate_region(&pack, &content, &items));
+
+            // Region scripts parse, too.
+            for map_id in pack.maps.keys() {
+                let scripts_dir = dir.join("maps").join(map_id.as_str()).join("scripts");
+                let Ok(entries) = std::fs::read_dir(&scripts_dir) else {
+                    continue;
+                };
+                for entry in entries.filter_map(Result::ok) {
+                    let path = entry.path();
+                    if path.extension().is_none_or(|e| e != "ron") {
+                        continue;
+                    }
+                    let text = std::fs::read_to_string(&path)
+                        .with_context(|| format!("reading {}", path.display()))?;
+                    match ron::from_str::<Vec<script::Cmd>>(&text) {
+                        Err(error) => findings.push(data::Finding {
+                            severity: data::Severity::Error,
+                            rule: "script.parse",
+                            message: format!("{}: {error}", path.display()),
+                        }),
+                        Ok(cmds) => check_script_cmds(&cmds, &path, &mut findings),
+                    }
+                }
+            }
+        }
+    }
+
     for finding in &findings {
         println!("{finding}");
     }

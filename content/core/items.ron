@@ -1,0 +1,18 @@
+// Core items — bells per doc 02 §8, heals per §15. Mart availability is
+// gated by badge count in mart tables (P4); prices live here.
+// Overture/Cradle/Vesper bells and the Coda arrive with their systems
+// (turn-1/status/night conditions land in P4's item pass).
+ItemSet(
+    items: [
+        (id: "fermata", name_key: "item.fermata", kind: Bell(catch_mod: (1, 1)), price: 200),
+        (id: "grand_fermata", name_key: "item.grand_fermata", kind: Bell(catch_mod: (3, 2)), price: 600),
+        (id: "maestro_fermata", name_key: "item.maestro_fermata", kind: Bell(catch_mod: (2, 1)), price: 1200),
+        (id: "potion_s", name_key: "item.potion_s", kind: Potion(hp: 20), price: 200),
+        (id: "potion_m", name_key: "item.potion_m", kind: Potion(hp: 50), price: 700),
+        (id: "potion_l", name_key: "item.potion_l", kind: Potion(hp: 120), price: 1200),
+        (id: "potion_x", name_key: "item.potion_x", kind: Potion(hp: 999), price: 3000),
+        (id: "status_heal", name_key: "item.status_heal", kind: StatusHeal, price: 250),
+        (id: "duet_stone", name_key: "item.duet_stone", kind: Key, price: 0),
+        (id: "oran_chime", name_key: "item.oran_chime", kind: Key, price: 0),
+    ],
+)

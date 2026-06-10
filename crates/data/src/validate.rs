@@ -497,6 +497,242 @@ pub fn validate_maps(
     findings
 }
 
+/// Items: unique ids, sane prices, bell mods positive.
+pub fn validate_items(items: &crate::region::ItemSet) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    let mut seen = BTreeSet::new();
+    for item in &items.items {
+        let id = item.id.as_str();
+        if !seen.insert(id.to_owned()) {
+            findings.push(Finding::error(
+                "items.unique",
+                format!("duplicate item id `{id}`"),
+            ));
+        }
+        if let crate::region::ItemKind::Bell { catch_mod } = &item.kind
+            && (catch_mod.0 == 0 || catch_mod.1 == 0)
+        {
+            findings.push(Finding::error(
+                "items.bell",
+                format!("`{id}` bell mod {catch_mod:?} must be a positive fraction"),
+            ));
+        }
+        if let crate::region::ItemKind::Potion { hp } = &item.kind
+            && *hp == 0
+        {
+            findings.push(Finding::error("items.potion", format!("`{id}` heals 0 HP")));
+        }
+    }
+    findings
+}
+
+/// Region rules (doc 04 §3 subset for the slice): dex/starters resolve,
+/// motif species rules (via the pool checks), evolution targets exist and
+/// are acyclic, trainer parties legal (1–6 members, species + moves
+/// resolve, level-legal movesets), warp graph connected from the entry
+/// map, encounter species in the region dex.
+pub fn validate_region(
+    pack: &crate::region::RegionPack,
+    core: &CoreContent,
+    items: &crate::region::ItemSet,
+) -> Vec<Finding> {
+    use std::collections::VecDeque;
+
+    let mut findings = Vec::new();
+    let rid = &pack.def.id;
+
+    // Move lookup across core + region moves.
+    let move_exists = |id: &undersong_core::ids::MoveId| {
+        core.moves.get(id).is_some() || pack.moves.iter().any(|m| &m.id == id)
+    };
+    let item_exists = |id: &undersong_core::ids::ItemId| items.items.iter().any(|i| &i.id == id);
+
+    // Dex + starters resolve.
+    for species in &pack.def.dex {
+        if !pack.motifs.contains_key(species) {
+            findings.push(Finding::error(
+                "region.dex",
+                format!("`{rid}` dex lists unknown motif `{species}`"),
+            ));
+        }
+    }
+    for starter in &pack.def.starters {
+        if !pack.def.dex.contains(starter) {
+            findings.push(Finding::error(
+                "region.starters",
+                format!("starter `{starter}` not in the dex"),
+            ));
+        }
+    }
+
+    // Motif rules: reuse the species-pool subset, plus evolution checks.
+    let pool = crate::content::SpeciesPool {
+        species: pack.motifs.values().map(|m| m.spec.clone()).collect(),
+    };
+    let mut combined_moves = core.moves.clone();
+    combined_moves.moves.extend(pack.moves.iter().cloned());
+    findings.extend(validate_species_pool(&pool, &combined_moves));
+
+    for motif in pack.motifs.values() {
+        let sid = motif.spec.id.as_str();
+        if let Some(evolution) = &motif.evolution {
+            if !pack.motifs.contains_key(&evolution.target) {
+                findings.push(Finding::error(
+                    "region.evolution",
+                    format!("`{sid}` evolves into unknown `{}`", evolution.target),
+                ));
+            }
+            if let crate::region::EvolutionMethod::Item(item) = &evolution.method
+                && !item_exists(item)
+            {
+                findings.push(Finding::error(
+                    "region.evolution",
+                    format!("`{sid}` evolution item `{item}` unknown"),
+                ));
+            }
+        }
+        for tm in &motif.tm_set {
+            if !move_exists(tm) {
+                findings.push(Finding::error(
+                    "region.tm_set",
+                    format!("`{sid}` tm_set references unknown move `{tm}`"),
+                ));
+            }
+        }
+    }
+    // Evolution acyclicity (doc 04 §3 rule 4).
+    for start in pack.motifs.keys() {
+        let mut seen = BTreeSet::new();
+        let mut current = start.clone();
+        while let Some(next) = pack
+            .motifs
+            .get(&current)
+            .and_then(|m| m.evolution.as_ref())
+            .map(|e| e.target.clone())
+        {
+            if !seen.insert(next.clone()) {
+                findings.push(Finding::error(
+                    "region.evolution",
+                    format!("evolution cycle reachable from `{start}`"),
+                ));
+                break;
+            }
+            current = next;
+        }
+    }
+
+    // Trainers (doc 04 §3 rule 5 subset).
+    for trainer in pack.trainers.values() {
+        let tid = trainer.id.as_str();
+        if trainer.party.is_empty() || trainer.party.len() > 6 {
+            findings.push(Finding::error(
+                "region.trainer",
+                format!("`{tid}` party size {} outside 1..=6", trainer.party.len()),
+            ));
+        }
+        if trainer.ai_tier > 3 {
+            findings.push(Finding::error(
+                "region.trainer",
+                format!("`{tid}` ai_tier {} outside 0..=3", trainer.ai_tier),
+            ));
+        }
+        for member in &trainer.party {
+            let Some(motif) = pack.motifs.get(&member.species) else {
+                findings.push(Finding::error(
+                    "region.trainer",
+                    format!("`{tid}` uses unknown species `{}`", member.species),
+                ));
+                continue;
+            };
+            if let Some(moves) = &member.moves {
+                if moves.is_empty() || moves.len() > 4 {
+                    findings.push(Finding::error(
+                        "region.trainer",
+                        format!("`{tid}` {} has {} moves", member.species, moves.len()),
+                    ));
+                }
+                for move_id in moves {
+                    let legal = motif
+                        .spec
+                        .learnset
+                        .iter()
+                        .any(|(level, id)| id == move_id && *level <= member.level)
+                        || motif.tm_set.contains(move_id);
+                    if !legal {
+                        findings.push(Finding::error(
+                            "region.trainer",
+                            format!(
+                                "`{tid}` {} can't know `{move_id}` at level {}",
+                                member.species, member.level
+                            ),
+                        ));
+                    }
+                }
+            }
+            if let Some(item) = &member.held_item
+                && !item_exists(item)
+            {
+                findings.push(Finding::error(
+                    "region.trainer",
+                    format!("`{tid}` held item `{item}` unknown"),
+                ));
+            }
+        }
+    }
+
+    // Maps: structural rules + dex-membership of encounters + warp graph
+    // connectivity from the entry map (doc 04 §3 rule 2).
+    let script_exists = |_: &undersong_core::ids::MapId, _: &str| true; // checked by tools on disk
+    findings.extend(validate_maps(&pack.maps, &pool, &script_exists));
+    for (mid, map) in &pack.maps {
+        if let Some(encounters) = &map.encounters {
+            for (species, ..) in &encounters.slots {
+                if !pack.def.dex.contains(species) {
+                    findings.push(Finding::error(
+                        "region.encounters",
+                        format!("`{mid}` encounter species `{species}` not in the dex"),
+                    ));
+                }
+            }
+        }
+    }
+    if !pack.maps.is_empty() {
+        if !pack.maps.contains_key(&pack.def.entry_map) {
+            findings.push(Finding::error(
+                "region.entry",
+                format!("entry map `{}` not in the pack", pack.def.entry_map),
+            ));
+        } else {
+            let mut reached = BTreeSet::new();
+            let mut queue = VecDeque::from([pack.def.entry_map.clone()]);
+            while let Some(map_id) = queue.pop_front() {
+                if !reached.insert(map_id.clone()) {
+                    continue;
+                }
+                if let Some(map) = pack.maps.get(&map_id) {
+                    for trigger in &map.triggers {
+                        if let crate::map::TriggerKind::Warp { map: target, .. } = &trigger.kind
+                            && !reached.contains(target)
+                        {
+                            queue.push_back(target.clone());
+                        }
+                    }
+                }
+            }
+            for map_id in pack.maps.keys() {
+                if !reached.contains(map_id) {
+                    findings.push(Finding::error(
+                        "region.warp_graph",
+                        format!("map `{map_id}` unreachable from the entry map"),
+                    ));
+                }
+            }
+        }
+    }
+
+    findings
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
