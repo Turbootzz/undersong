@@ -966,7 +966,7 @@ impl WorldState {
             },
             player: save::model::Player {
                 name: name.into(),
-                money: 0,
+                money: self.money,
                 position: save::Position {
                     map: self.current_map.clone(),
                     x: self.player.0,
@@ -975,9 +975,12 @@ impl WorldState {
                 },
                 settings: save::Settings::default(),
             },
-            party: vec![],
-            boxes: vec![],
-            bag: BTreeMap::new(),
+            party: self.party.clone(),
+            boxes: vec![self.boxes.clone()],
+            bag: BTreeMap::from([(
+                "items".to_string(),
+                self.bag.iter().map(|(id, n)| (id.clone(), *n)).collect(),
+            )]),
             flags: self.vars.flags.clone(),
             vars: self.vars.vars.clone(),
             counters: BTreeMap::from([("steps".to_string(), self.steps)]),
@@ -994,6 +997,14 @@ impl WorldState {
         self.vars.flags = file.flags.clone();
         self.vars.vars = file.vars.clone();
         self.steps = file.counters.get("steps").copied().unwrap_or(0);
+        self.party = file.party.clone();
+        self.boxes = file.boxes.first().cloned().unwrap_or_default();
+        self.money = file.player.money;
+        self.bag = file
+            .bag
+            .get("items")
+            .map(|items| items.iter().cloned().collect())
+            .unwrap_or_default();
         self.world_seed = file.world_seed;
         self.rng = BattleRng::from_seed(file.world_seed);
         self.dialogue = None;

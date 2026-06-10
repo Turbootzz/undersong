@@ -5,7 +5,7 @@
 use bevy::prelude::*;
 use bevy::ui::UiScale;
 use data::Palette;
-use game::world::{Input as WorldInput, WorldEvent, WorldState, load_dev_world};
+use game::world::{Input as WorldInput, WorldEvent, WorldState, load_game_world};
 use undersong_core::types::Type;
 use undersong_core::world::Facing;
 
@@ -50,29 +50,32 @@ impl Plugin for UndersongPlugin {
             .add_systems(OnEnter(AppState::Menu), menu_open)
             .add_systems(Update, menu_input.run_if(in_state(AppState::Menu)))
             .add_systems(OnExit(AppState::Menu), despawn_tagged::<MenuUi>)
-            .add_systems(OnEnter(AppState::Battle), battle_open)
-            .add_systems(Update, battle_input.run_if(in_state(AppState::Battle)))
-            .add_systems(OnExit(AppState::Battle), despawn_tagged::<BattleUi>);
+            .add_systems(OnEnter(AppState::Title), title_open)
+            .add_systems(Update, title_input.run_if(in_state(AppState::Title)))
+            .add_systems(OnExit(AppState::Title), despawn_tagged::<TitleUi>)
+            .add_systems(OnEnter(AppState::Dialogue), party_open)
+            .add_systems(Update, party_input.run_if(in_state(AppState::Dialogue)))
+            .add_systems(OnExit(AppState::Dialogue), despawn_tagged::<PartyUi>);
     }
 }
 
 // ----- resources & markers ------------------------------------------------
 
 #[derive(Resource)]
-struct WorldRes(WorldState);
+pub struct WorldRes(pub WorldState);
 
 #[derive(Resource)]
-struct Theme {
-    palette: Palette,
+pub struct Theme {
+    pub palette: Palette,
 }
 
 impl Theme {
-    fn color(&self, hex: &str) -> Color {
+    pub fn color(&self, hex: &str) -> Color {
         let parse = |s: &str| u8::from_str_radix(s, 16).unwrap_or(255);
         Color::srgb_u8(parse(&hex[1..3]), parse(&hex[3..5]), parse(&hex[5..7]))
     }
 
-    fn ty(&self, ty: Type) -> Color {
+    pub fn ty(&self, ty: Type) -> Color {
         self.palette
             .type_colors
             .get(&ty)
@@ -81,7 +84,7 @@ impl Theme {
     }
 }
 
-fn shade(color: Color, factor: f32) -> Color {
+pub fn shade(color: Color, factor: f32) -> Color {
     let c = color.to_srgba();
     Color::srgba(
         (c.red * factor).min(1.0),
@@ -142,9 +145,6 @@ struct MenuUi;
 struct MenuRow(usize);
 
 #[derive(Component)]
-struct BattleUi;
-
-#[derive(Component)]
 struct WipeBar;
 
 // ----- boot -----------------------------------------------------------
@@ -152,13 +152,13 @@ struct WipeBar;
 fn boot_load(mut commands: Commands, mut next: ResMut<NextState<AppState>>) {
     let content = std::path::Path::new("content");
     let palette = data::load_palette(content).expect("palette.ron must load");
-    let world = load_dev_world(content, 0x00D0_5EED).expect("dev world must load");
+    let world = load_game_world(content, 0x00D0_5EED).expect("game world must load");
 
     let zoom = 1.0 / WINDOW_SCALE as f32;
     commands.spawn((Camera2d, Transform::from_scale(Vec3::new(zoom, zoom, 1.0))));
     commands.insert_resource(Theme { palette });
     commands.insert_resource(WorldRes(world));
-    next.set(AppState::Overworld);
+    next.set(AppState::Title);
 }
 
 // ----- map rendering --------------------------------------------------
@@ -371,6 +371,12 @@ fn handle_events(
     next: &mut ResMut<NextState<AppState>>,
     player: &mut Query<&mut Transform, With<PlayerSprite>>,
 ) {
+    // Any event batch that left a live battle session moves us to the
+    // battle scene (wild rolls, LoS engagements, scripted fights).
+    if world.0.battle.is_some() {
+        anim.0 = None;
+        next.set(AppState::Battle);
+    }
     for event in events {
         match event {
             WorldEvent::Warped { .. } => {
@@ -395,7 +401,6 @@ fn handle_events(
                     transform.translation =
                         Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
                 }
-                next.set(AppState::Battle);
             }
             _ => {}
         }
@@ -614,7 +619,7 @@ fn advance_wipe(
 
 // ----- pause menu ---------------------------------------------------------
 
-const MENU_ROWS: [&str; 3] = ["Resume", "Save", "Settings"];
+const MENU_ROWS: [&str; 4] = ["Resume", "Party", "Save", "Settings"];
 
 fn menu_open(mut commands: Commands, theme: Res<Theme>, mut cursor: ResMut<MenuCursor>) {
     cursor.0 = 0;
@@ -686,6 +691,9 @@ fn menu_input(
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
         match cursor.0 {
             1 => {
+                next.set(AppState::Dialogue); // the party screen state
+            }
+            2 => {
                 // Manual save → slot 1 (slot picker arrives with the P3
                 // save-select screen). Playtime is the session clock;
                 // created stays 0 until the title flow stamps it.
@@ -702,7 +710,7 @@ fn menu_input(
                 }
                 next.set(AppState::Overworld);
             }
-            2 => {
+            3 => {
                 settings_ui.0 = !settings_ui.0;
             }
             _ => next.set(AppState::Overworld),
@@ -743,193 +751,8 @@ fn menu_input(
     }
 }
 
-// ----- battle placeholder + layout spike -----------------------------------
-
-fn battle_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
-    let (species, level) = world
-        .0
-        .pending_encounter
-        .clone()
-        .unwrap_or(("???".into(), 0));
-
-    commands
-        .spawn((
-            BattleUi,
-            Node {
-                position_type: PositionType::Absolute,
-                left: Val::Px(0.0),
-                top: Val::Px(0.0),
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                ..default()
-            },
-            BackgroundColor(theme.color(&theme.palette.parchment)),
-        ))
-        .with_children(|root| {
-            // Foe plate, top-left (doc 05 §5): name, level, waveform HP
-            // placeholder (12 bars at full amplitude).
-            root.spawn((
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(8.0),
-                    top: Val::Px(8.0),
-                    width: Val::Px(180.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(6.0)),
-                    row_gap: Val::Px(4.0),
-                    ..default()
-                },
-                BackgroundColor(theme.color(&theme.palette.parchment_dim)),
-            ))
-            .with_children(|plate| {
-                plate.spawn((
-                    Text::new(format!("{species}  L{level}")),
-                    TextFont::from_font_size(8.0),
-                    TextColor(theme.color(&theme.palette.ink)),
-                ));
-                plate
-                    .spawn(Node {
-                        flex_direction: FlexDirection::Row,
-                        column_gap: Val::Px(2.0),
-                        height: Val::Px(14.0),
-                        align_items: AlignItems::Center,
-                        ..default()
-                    })
-                    .with_children(|wave| {
-                        for i in 0..12 {
-                            let height = 6.0 + 6.0 * (1.0 + (i as f32 * 0.9).sin()) / 2.0;
-                            wave.spawn((
-                                Node {
-                                    width: Val::Px(3.0),
-                                    height: Val::Px(height),
-                                    ..default()
-                                },
-                                BackgroundColor(theme.color(&theme.palette.hp_high)),
-                            ));
-                        }
-                    });
-            });
-
-            // Player plate, bottom-right.
-            root.spawn((
-                Node {
-                    position_type: PositionType::Absolute,
-                    right: Val::Px(8.0),
-                    bottom: Val::Px(80.0),
-                    width: Val::Px(180.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(6.0)),
-                    row_gap: Val::Px(4.0),
-                    ..default()
-                },
-                BackgroundColor(theme.color(&theme.palette.parchment_dim)),
-            ))
-            .with_children(|plate| {
-                plate.spawn((
-                    Text::new("your side (P3)"),
-                    TextFont::from_font_size(8.0),
-                    TextColor(theme.color(&theme.palette.ink_soft)),
-                ));
-                plate
-                    .spawn(Node {
-                        flex_direction: FlexDirection::Row,
-                        column_gap: Val::Px(2.0),
-                        height: Val::Px(14.0),
-                        align_items: AlignItems::Center,
-                        ..default()
-                    })
-                    .with_children(|wave| {
-                        for i in 0..12 {
-                            let height = 6.0 + 6.0 * (1.0 + (i as f32 * 1.3).sin()) / 2.0;
-                            wave.spawn((
-                                Node {
-                                    width: Val::Px(3.0),
-                                    height: Val::Px(height),
-                                    ..default()
-                                },
-                                BackgroundColor(theme.color(&theme.palette.hp_mid)),
-                            ));
-                        }
-                    });
-            });
-
-            // Move grid spike: 2×2 type-tinted buttons (doc 05 §5).
-            root.spawn((
-                Node {
-                    position_type: PositionType::Absolute,
-                    left: Val::Px(8.0),
-                    bottom: Val::Px(8.0),
-                    width: Val::Px(280.0),
-                    height: Val::Px(64.0),
-                    flex_direction: FlexDirection::Row,
-                    flex_wrap: FlexWrap::Wrap,
-                    column_gap: Val::Px(4.0),
-                    row_gap: Val::Px(4.0),
-                    ..default()
-                },
-                BackgroundColor(theme.color(&theme.palette.ink)),
-            ))
-            .with_children(|grid| {
-                for (label, ty) in [
-                    ("tackle", Type::Feral),
-                    ("ember_note", Type::Ember),
-                    ("ripple", Type::Tide),
-                    ("dampen", Type::Feral),
-                ] {
-                    grid.spawn((
-                        Node {
-                            width: Val::Px(134.0),
-                            height: Val::Px(28.0),
-                            padding: UiRect::all(Val::Px(4.0)),
-                            ..default()
-                        },
-                        BackgroundColor(shade(theme.ty(ty), 1.6)),
-                    ))
-                    .with_child((
-                        Text::new(label),
-                        TextFont::from_font_size(8.0),
-                        TextColor(theme.color(&theme.palette.ink)),
-                    ));
-                }
-            });
-
-            // Message line.
-            root.spawn((
-                Node {
-                    position_type: PositionType::Absolute,
-                    right: Val::Px(8.0),
-                    bottom: Val::Px(8.0),
-                    padding: UiRect::all(Val::Px(6.0)),
-                    ..default()
-                },
-                BackgroundColor(theme.color(&theme.palette.parchment_dim)),
-            ))
-            .with_child((
-                Text::new("a wild mote hums! (Z: slip away)"),
-                TextFont::from_font_size(8.0),
-                TextColor(theme.color(&theme.palette.ink)),
-            ));
-        });
-}
-
-fn battle_input(
-    keys: Res<ButtonInput<KeyCode>>,
-    mut world: ResMut<WorldRes>,
-    mut next: ResMut<NextState<AppState>>,
-) {
-    if keys.just_pressed(KeyCode::KeyZ)
-        || keys.just_pressed(KeyCode::KeyX)
-        || keys.just_pressed(KeyCode::Escape)
-    {
-        world.0.pending_encounter = None;
-        // Autosave post-battle (doc 03 §4).
-        autosave(&world.0);
-        next.set(AppState::Overworld);
-    }
-}
-
 /// Writes the rotating autosave (doc 03 §4: map change & post-battle).
-fn autosave(world: &WorldState) {
+pub fn autosave(world: &WorldState) {
     let Some(mut backend) = save::FsBackend::platform_default() else {
         bevy::log::warn!("no platform save directory; autosave skipped");
         return;
@@ -953,8 +776,158 @@ fn cleanup_wipe(
     }
 }
 
-fn despawn_tagged<T: Component>(mut commands: Commands, tagged: Query<Entity, With<T>>) {
+pub fn despawn_tagged<T: Component>(mut commands: Commands, tagged: Query<Entity, With<T>>) {
     for entity in &tagged {
         commands.entity(entity).despawn();
+    }
+}
+
+// ----- title & save select --------------------------------------------------
+
+#[derive(Component)]
+pub struct TitleUi;
+
+#[derive(Component)]
+struct TitleSlotRow;
+
+fn title_open(mut commands: Commands, theme: Res<Theme>) {
+    commands
+        .spawn((
+            TitleUi,
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                top: Val::Px(0.0),
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                row_gap: Val::Px(10.0),
+                ..default()
+            },
+            BackgroundColor(theme.color(&theme.palette.ink)),
+        ))
+        .with_children(|root| {
+            root.spawn((
+                Text::new("U N D E R S O N G"),
+                TextFont::from_font_size(24.0),
+                TextColor(theme.color(&theme.palette.gilt)),
+            ));
+            root.spawn((
+                Text::new("the song holds, for now"),
+                TextFont::from_font_size(8.0),
+                TextColor(theme.color(&theme.palette.parchment_dim)),
+            ));
+            // Save select: continue (slot 1) when a save exists, else new.
+            let has_save = save::FsBackend::platform_default()
+                .and_then(|backend| save::peek_header(&backend, save::SlotId::Slot1).ok())
+                .flatten();
+            let rows: Vec<String> = match &has_save {
+                Some(header) => vec![
+                    format!(
+                        "Continue — {} badge(s), {}s played  (Z)",
+                        header.badge_bits.count_ones(),
+                        header.playtime_s
+                    ),
+                    "New Song  (N)".to_string(),
+                ],
+                None => vec!["New Song  (Z)".to_string()],
+            };
+            for label in &rows {
+                root.spawn((
+                    TitleSlotRow,
+                    Text::new(label.clone()),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.parchment)),
+                ));
+            }
+        });
+}
+
+fn title_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut world: ResMut<WorldRes>,
+    mut next: ResMut<NextState<AppState>>,
+) {
+    let load = keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter);
+    let fresh = keys.just_pressed(KeyCode::KeyN);
+    if !load && !fresh {
+        return;
+    }
+    if load
+        && let Some(backend) = save::FsBackend::platform_default()
+        && let Ok(Some(file)) = save::load(&backend, save::SlotId::Slot1)
+    {
+        world.0.restore(&file);
+    }
+    // (fresh or no save: the boot world is already a new game)
+    next.set(AppState::Overworld);
+}
+
+// ----- party screen (menu → Party) ------------------------------------------
+
+#[derive(Component)]
+pub struct PartyUi;
+
+fn party_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
+    commands
+        .spawn((
+            PartyUi,
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(40.0),
+                right: Val::Px(40.0),
+                top: Val::Px(20.0),
+                bottom: Val::Px(20.0),
+                flex_direction: FlexDirection::Column,
+                padding: UiRect::all(Val::Px(8.0)),
+                row_gap: Val::Px(4.0),
+                ..default()
+            },
+            BackgroundColor(theme.color(&theme.palette.parchment)),
+        ))
+        .with_children(|panel| {
+            panel.spawn((
+                Text::new(format!("PARTY — ₵{}  (X: back)", world.0.money)),
+                TextFont::from_font_size(8.0),
+                TextColor(theme.color(&theme.palette.ink)),
+            ));
+            for member in &world.0.party {
+                let hp = member
+                    .hp
+                    .map(|hp| hp.to_string())
+                    .unwrap_or_else(|| "full".into());
+                let moves: Vec<&str> = member.moves.iter().map(|m| m.id.as_str()).collect();
+                panel.spawn((
+                    Text::new(format!(
+                        "{}  L{}  hp {}  [{}]",
+                        member.species,
+                        member.level,
+                        hp,
+                        moves.join(" / ")
+                    )),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.ink_soft)),
+                ));
+            }
+            panel.spawn((
+                Text::new("BAG"),
+                TextFont::from_font_size(8.0),
+                TextColor(theme.color(&theme.palette.ink)),
+            ));
+            for (item, count) in &world.0.bag {
+                panel.spawn((
+                    Text::new(format!("{item} ×{count}")),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.ink_soft)),
+                ));
+            }
+        });
+}
+
+fn party_input(keys: Res<ButtonInput<KeyCode>>, mut next: ResMut<NextState<AppState>>) {
+    if keys.just_pressed(KeyCode::KeyX) || keys.just_pressed(KeyCode::Escape) {
+        next.set(AppState::Overworld);
     }
 }

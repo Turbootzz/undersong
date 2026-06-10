@@ -6,6 +6,8 @@
 
 #[cfg(not(feature = "headless"))]
 mod app;
+#[cfg(not(feature = "headless"))]
+mod battle_ui;
 
 use bevy::prelude::AppExit;
 #[cfg(not(feature = "headless"))]
@@ -31,8 +33,7 @@ pub const WINDOW_SCALE: u32 = 2;
 /// presenter flow.
 #[cfg(not(feature = "headless"))]
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[expect(dead_code, reason = "Title/Transition wired by the P3 flow")]
-enum AppState {
+pub enum AppState {
     #[default]
     Boot,
     Title,
@@ -93,5 +94,6 @@ fn main() -> AppExit {
         )
         .init_state::<AppState>()
         .add_plugins(app::UndersongPlugin)
+        .add_plugins(battle_ui::BattleUiPlugin)
         .run()
 }
