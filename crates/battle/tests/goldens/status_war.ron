@@ -1,0 +1,78 @@
+// golden replay `status_war` — REPLAY_VERSION 1
+// regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
+[
+    TurnStarted(
+        n: 1,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "maul",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 30,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "lull",
+    ),
+    StatusApplied(
+        target: 1,
+        status: Sleep,
+    ),
+    TurnStarted(
+        n: 2,
+    ),
+    StatusCured(
+        target: 1,
+        status: Sleep,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "maul",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 31,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "numbing_spark",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 16,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    TurnStarted(
+        n: 3,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "maul",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 24,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    Fainted(
+        target: 0,
+    ),
+    ExpGained(
+        side: 1,
+        slot: 0,
+        amount: 720,
+    ),
+    BattleEnded(
+        outcome: Won(
+            winner: 1,
+        ),
+    ),
+]

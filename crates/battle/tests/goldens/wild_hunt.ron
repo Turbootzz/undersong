@@ -1,0 +1,120 @@
+// golden replay `wild_hunt` — REPLAY_VERSION 1
+// regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
+[
+    TurnStarted(
+        n: 1,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "jab",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 16,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "pick",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 16,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    TurnStarted(
+        n: 2,
+    ),
+    AttuneAttempt(
+        rings: 1,
+        caught: false,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "pick",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 16,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    TurnStarted(
+        n: 3,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "jab",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 15,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "pick",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 15,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    TurnStarted(
+        n: 4,
+    ),
+    AttuneAttempt(
+        rings: 2,
+        caught: false,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "pick",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 15,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    TurnStarted(
+        n: 5,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "jab",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 16,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "pick",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 13,
+        crit: false,
+        effectiveness: Neutral,
+    ),
+    Fainted(
+        target: 0,
+    ),
+    ExpGained(
+        side: 1,
+        slot: 0,
+        amount: 411,
+    ),
+    BattleEnded(
+        outcome: Won(
+            winner: 1,
+        ),
+    ),
+]

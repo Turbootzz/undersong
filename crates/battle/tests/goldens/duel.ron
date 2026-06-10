@@ -1,0 +1,63 @@
+// golden replay `duel` — REPLAY_VERSION 1
+// regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
+[
+    TurnStarted(
+        n: 1,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "singe",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 12,
+        crit: false,
+        effectiveness: Half,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "surge",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 50,
+        crit: false,
+        effectiveness: Double,
+    ),
+    TurnStarted(
+        n: 2,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "singe",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 12,
+        crit: false,
+        effectiveness: Half,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "surge",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 22,
+        crit: false,
+        effectiveness: Double,
+    ),
+    Fainted(
+        target: 0,
+    ),
+    ExpGained(
+        side: 1,
+        slot: 0,
+        amount: 642,
+    ),
+    BattleEnded(
+        outcome: Won(
+            winner: 1,
+        ),
+    ),
+]

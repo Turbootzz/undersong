@@ -1,0 +1,143 @@
+// golden replay `chaos` — REPLAY_VERSION 1
+// regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
+[
+    TurnStarted(
+        n: 1,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "kindle",
+    ),
+    WeatherChanged(
+        kind: Some(Heatwave),
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "swell",
+    ),
+    StatStageChanged(
+        target: 0,
+        stat: spa,
+        delta: 1,
+        new_stage: 1,
+    ),
+    StatStageChanged(
+        target: 0,
+        stat: spe,
+        delta: 1,
+        new_stage: 1,
+    ),
+    TurnStarted(
+        n: 2,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "chord",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 20,
+        crit: false,
+        effectiveness: Half,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "flurry_hits",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 20,
+        crit: false,
+        effectiveness: Double,
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 20,
+        crit: false,
+        effectiveness: Double,
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 20,
+        crit: false,
+        effectiveness: Double,
+    ),
+    MultiHit(
+        hits: 3,
+    ),
+    TurnStarted(
+        n: 3,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "swell",
+    ),
+    StatStageChanged(
+        target: 0,
+        stat: spa,
+        delta: 1,
+        new_stage: 2,
+    ),
+    StatStageChanged(
+        target: 0,
+        stat: spe,
+        delta: 1,
+        new_stage: 2,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "kindle",
+    ),
+    WeatherChanged(
+        kind: Some(Heatwave),
+    ),
+    TurnStarted(
+        n: 4,
+    ),
+    MoveUsed(
+        side: 0,
+        move_id: "chord",
+    ),
+    DamageDealt(
+        target: 1,
+        amount: 30,
+        crit: false,
+        effectiveness: Half,
+    ),
+    Drained(
+        from: 1,
+        amount: 15,
+    ),
+    MoveUsed(
+        side: 1,
+        move_id: "flurry_hits",
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 20,
+        crit: false,
+        effectiveness: Double,
+    ),
+    DamageDealt(
+        target: 0,
+        amount: 15,
+        crit: true,
+        effectiveness: Double,
+    ),
+    MultiHit(
+        hits: 2,
+    ),
+    Fainted(
+        target: 0,
+    ),
+    ExpGained(
+        side: 1,
+        slot: 0,
+        amount: 693,
+    ),
+    BattleEnded(
+        outcome: Won(
+            winner: 1,
+        ),
+    ),
+]
