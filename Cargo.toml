@@ -1,0 +1,46 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/core",
+    "crates/battle",
+    "crates/data",
+    "crates/save",
+    "crates/script",
+    "crates/game",
+    "crates/tools",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# Shared lints (docs/06-ROADMAP.md P0): clippy::all + warnings as hard errors.
+[workspace.lints.rust]
+warnings = { level = "deny", priority = -1 }
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+
+# Pinned dependencies — closed list, see docs/03-ARCHITECTURE.md §7.
+# proptest / directories / fundsp / image are on the allowed list but are not
+# added until the phase that uses them (P1+).
+[workspace.dependencies]
+undersong-core = { path = "crates/core" }
+data = { path = "crates/data" }
+bevy = "0.18"
+serde = { version = "1", features = ["derive"] }
+ron = "0.12"
+rand_chacha = "0.10"
+rand_core = "0.10"
+anyhow = "1"
+thiserror = "2"
+
+# docs/03-ARCHITECTURE.md §8: deps at opt-level 1 in dev for compile-time sanity.
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

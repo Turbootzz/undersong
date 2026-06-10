@@ -1,0 +1,20 @@
+# Package is `undersong-core` because cargo reserves the name `core`
+# (it would collide with Rust's built-in core crate). The directory and the
+# docs still call this crate "core"; see docs/03-ARCHITECTURE.md §10.
+[package]
+name = "undersong-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+rand_chacha = { workspace = true }
+rand_core = { workspace = true }
+
+[dev-dependencies]
+ron = { workspace = true }
