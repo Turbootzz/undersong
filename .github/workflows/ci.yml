@@ -7,6 +7,11 @@ on:
     branches: [main]
   pull_request:
 
+# Cancel superseded runs on PR branches; let main always run to completion.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 env:
   CARGO_TERM_COLOR: always
 
@@ -16,28 +21,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Bevy's Linux build needs ALSA and udev headers.
+      # Bevy 0.18's default features need ALSA + udev headers AND the
+      # Wayland client libs at compile time (wayland-sys links the system
+      # library; the runner image does not ship the -dev packages).
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev pkg-config
+          sudo apt-get install -y --no-install-recommends \
+            libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config
 
-      # rust-toolchain.toml pins the channel and components; this just
-      # makes sure rustup has synced it on the runner.
-      - name: Sync Rust toolchain
-        run: rustup show
+      # Installs the channel + components pinned in rust-toolchain.toml.
+      # (`rustup show` stopped syncing as a side effect in rustup 1.28.)
+      - name: Install pinned toolchain
+        run: rustup toolchain install
 
       - name: Cache cargo + target
         uses: Swatinem/rust-cache@v2
+        with:
+          # Bevy's cold build is expensive; keep partial caches from red runs.
+          cache-on-failure: true
 
       - name: Format
         run: cargo fmt --all --check
 
+      # --locked everywhere: the committed Cargo.lock is the version pin
+      # (golden rule 3); silent re-resolution would test unpinned versions.
       - name: Clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --locked
 
       - name: Validate content
-        run: cargo run -p tools -- validate
+        run: cargo run -p tools --locked -- validate
