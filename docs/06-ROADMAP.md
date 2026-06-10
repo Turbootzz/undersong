@@ -61,20 +61,21 @@ T2 beats T0 ≥ 90% with equal teams in `simulate`.
 
 ## P2 — Overworld & UI shell
 
-- [ ] Hand-rolled tilemap (3 layers + collision + triggers) per 03 §3; one debug map.
-- [ ] Grid movement w/ interpolation + input buffer; camera follow + map clamp.
-- [ ] `tools importmap` for LDtk/Tiled JSON → `map.ron` (pick one editor, support it
-      well; the other is best-effort).
-- [ ] NPCs: static, wander, line-of-sight `!` engage (flag-gated).
-- [ ] `script` crate interpreter + Dialogue UI (05 §4) running a test script.
-- [ ] Warps + map transitions (measure-bar wipe); encounters rolling on resonance
+- [x] Hand-rolled tilemap (3 layers + collision + triggers) per 03 §3; one debug map.
+- [x] Grid movement w/ interpolation + input buffer; camera follow + map clamp.
+- [x] `tools importmap` for LDtk/Tiled JSON → `map.ron` (pick one editor, support it
+      well; the other is best-effort). *(LDtk chosen; Tiled deferred.)*
+- [x] NPCs: static, wander, line-of-sight `!` engage (flag-gated).
+- [x] `script` crate interpreter + Dialogue UI (05 §4) running a test script.
+- [x] Warps + map transitions (measure-bar wipe); encounters rolling on resonance
       patches (02 §12) into a placeholder battle scene.
-- [ ] UiTheme + palette.ron + fonts; pause menu skeleton; Settings (text speed,
-      volume, scale).
-- [ ] `save` crate v1 + 3 slots + autosave; round-trip tests; SaveBackend trait.
-- [ ] UI spike: static battle layout (plates, waveform HP w/ fake data, move grid)
+- [x] UiTheme + palette.ron + fonts; pause menu skeleton; Settings (text speed,
+      volume, scale). *(Bevy default font until the m5x7/m6x11 files are
+      vendored — P3 asset task.)*
+- [x] `save` crate v1 + 3 slots + autosave; round-trip tests; SaveBackend trait.
+- [x] UI spike: static battle layout (plates, waveform HP w/ fake data, move grid)
       to flush Bevy 0.18 UI API issues early.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p2-start..HEAD` — all findings fixed, review clean.
+- [x] **Phase review:** `/code-review` (high effort) over `git diff p2-start..HEAD` — all findings fixed, review clean.
 
 **Gate P2:** headless replay `walk_talk_warp_save.ron` passes (spawn → NPC chat →
 warp → save → reload → position/flags assert); manual: walking around the debug map
@@ -200,6 +201,54 @@ Tamburra/Neonata are then "just content."
 > Template:
 > `### YYYY-MM-DD — Phase Px`
 > `Done: …` / `Gate evidence: …` / `Next: …` / `Open questions: …`
+
+### 2026-06-10 — Phase P2 (complete)
+
+**Done:** Overworld & UI shell, with the battle crate's purity discipline
+extended to the overworld: `game::world` is an engine-free core (grid
+movement with tap-to-turn per v1.3 #1, collision/NPC blocking, warp and
+script triggers with once-flags, §12 encounter rolls, line-of-sight
+engagement v1.3 #3, NPC wander with pure pause rules, the script
+interpreter incl. choice lists, save snapshot/restore) and the Bevy
+layer only renders it. script crate: pure frame-stack interpreter, doc
+04 §2 fisher script as a test. save crate: SaveFile v1, FsBackend
+(fsync + rename) / MemBackend behind SaveBackend, committed v1 wire
+fixture, version-peek migrations. data: MapDef/Palette schemas, dev
+debug maps (rehearsal + annex with greeter/stroller/sentry), placement +
+weight-law validation; tools validate parses every script. tools
+importmap compiles LDtk JSON (IntGrid layers + Warp/Script/Npc
+entities, y-flip, dimension/bounds checks). Bevy app: colored-quad
+tilemap, walk interpolation + one-step buffer, camera clamp, parchment
+dialogue box with staff lines + choice cursor, measure-bar wipe, pause
+menu with slot-1 save + settings panel, autosave on warp/post-battle,
+encounter placeholder doubling as the doc 05 §5 battle-layout spike.
+
+**Gate P2 evidence:**
+- Headless replay `walk_talk_warp_save.ron` passes: spawn → greeter
+  chat (2 lines, met.greeter) → warp to the annex → save → MemBackend
+  reload → map/position/flags re-asserted. Runs as `cargo test -p game`
+  and via `cargo run -p game --features headless -- --replay …`
+  ("replay ok: 2 dialogue lines, 1 warps, 1 saves").
+- 129 workspace tests green; clippy clean in windowed AND headless
+  configs; `tools validate` 0 errors incl. maps/scripts/palette.
+- Manual: windowed boot renders the debug yard at 480×270×2, walking,
+  dialogue, warp wipe, menu save, encounter scene all live (visual
+  60 fps feel check done on-machine; no panics in the boot log).
+
+**Phase review:** CodeRabbit (2 findings) + 49-agent adversarial
+workflow (~25 confirmed / 9 refuted). Real bugs fixed: Choice scripts
+panicked the pure core; the wander-pause rule lived only in the
+renderer (windowed vs replay rng divergence); post-battle player-sprite
+desync; warp glitch frame; vacuous encounter-determinism test; LoS
+engage box was silently unshipped — now implemented with tests. All
+rulings in doc 02 v1.3. Refuted findings documented in the workflow
+output (9, incl. once-flag timing and rng-rewind-on-reload complaints).
+
+**Next:** P3 — `git tag p3-start`; vertical slice content (20 motifs,
+Pausa/Route 1/Prelude/Hall 1), battle presenter on the event stream,
+party/summary/bag UI, title screen + save select.
+
+**Open questions:** none.
 
 ### 2026-06-10 — Phase P1 (complete)
 
