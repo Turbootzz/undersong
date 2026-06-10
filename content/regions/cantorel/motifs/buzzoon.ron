@@ -9,7 +9,7 @@ Motif(
     abilities: ["live_wire"],
     hidden_ability: None,
     tags: ["habitat.brush"],
-    tm_set: [],
+    tm_set: ["tm04"],
     evolution: None,
     cry_seed: 156980265388063, sigil_seed: 156980265388063,
     dex: (height_dm: 9, weight_hg: 233, entry_key: "dex.buzzoon"),

@@ -9,7 +9,7 @@ use std::collections::BTreeSet;
 
 use undersong_core::types::Type;
 
-use crate::content::{CoreContent, NATURE_COUNT};
+use crate::content::{CoreContent, NATURE_COUNT, SpeciesPool};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Severity {
@@ -449,49 +449,75 @@ pub fn validate_maps(
         }
 
         if let Some(encounters) = &map.encounters {
-            if encounters.slots.len() != 12 {
+            findings.extend(check_encounter_table(mid, encounters, pool, "day"));
+        }
+        // Night tables obey the same law (doc 02 v1.6 #5).
+        if let Some(encounters) = &map.night_encounters {
+            findings.extend(check_encounter_table(mid, encounters, pool, "night"));
+        }
+        for obstacle in &map.obstacles {
+            let (x, y) = obstacle.at;
+            if !map.in_bounds(x, y) {
                 findings.push(Finding::error(
-                    "map.encounters",
-                    format!(
-                        "`{mid}` has {} encounter slots, doc 02 §12 requires exactly 12",
-                        encounters.slots.len()
-                    ),
+                    "map.obstacle",
+                    format!("`{mid}` obstacle at ({x}, {y}) out of bounds"),
                 ));
             }
-            // The weight schedule is law, not convention (doc 02 v1.3 #2).
-            let mut weights: Vec<u8> = encounters.slots.iter().map(|s| s.3).collect();
-            weights.sort_unstable_by(|a, b| b.cmp(a));
-            if weights != [20, 20, 10, 10, 10, 10, 5, 5, 4, 4, 1, 1] {
-                findings.push(Finding::error(
-                    "map.encounters",
-                    format!(
-                        "`{mid}` weight multiset {weights:?} differs from doc 02 §12's fixed schedule"
-                    ),
-                ));
-            }
-            if !(1..=100).contains(&encounters.patch_rate_pct) {
-                findings.push(Finding::error(
-                    "map.encounters",
-                    format!(
-                        "`{mid}` patch_rate_pct {} outside 1..=100 (doc 02 v1.3 #2)",
-                        encounters.patch_rate_pct
-                    ),
-                ));
-            }
-            for (species, lo, hi, _) in &encounters.slots {
-                if *lo < 1 || hi < lo {
-                    findings.push(Finding::error(
-                        "map.encounters",
-                        format!("`{mid}` slot `{species}` level range {lo}..{hi} invalid"),
-                    ));
-                }
-                if !pool.species.iter().any(|sp| &sp.id == species) {
-                    findings.push(Finding::error(
-                        "map.encounters",
-                        format!("`{mid}` slot references unknown species `{species}`"),
-                    ));
-                }
-            }
+        }
+    }
+    findings
+}
+
+/// The 12-slot encounter-table law (doc 02 §12, v1.3 #2): exactly 12
+/// slots, the fixed weight multiset, integer patch rate, sane levels,
+/// known species.
+fn check_encounter_table(
+    mid: &str,
+    encounters: &crate::map::EncounterDef,
+    pool: &SpeciesPool,
+    which: &str,
+) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    if encounters.slots.len() != 12 {
+        findings.push(Finding::error(
+            "map.encounters",
+            format!(
+                "`{mid}` {which} table has {} slots, doc 02 §12 requires exactly 12",
+                encounters.slots.len()
+            ),
+        ));
+    }
+    let mut weights: Vec<u8> = encounters.slots.iter().map(|s| s.3).collect();
+    weights.sort_unstable_by(|a, b| b.cmp(a));
+    if weights != [20, 20, 10, 10, 10, 10, 5, 5, 4, 4, 1, 1] {
+        findings.push(Finding::error(
+            "map.encounters",
+            format!(
+                "`{mid}` {which} weight multiset {weights:?} differs from doc 02 §12's fixed schedule"
+            ),
+        ));
+    }
+    if !(1..=100).contains(&encounters.patch_rate_pct) {
+        findings.push(Finding::error(
+            "map.encounters",
+            format!(
+                "`{mid}` {which} patch_rate_pct {} outside 1..=100 (doc 02 v1.3 #2)",
+                encounters.patch_rate_pct
+            ),
+        ));
+    }
+    for (species, lo, hi, _) in &encounters.slots {
+        if *lo < 1 || hi < lo {
+            findings.push(Finding::error(
+                "map.encounters",
+                format!("`{mid}` {which} slot `{species}` level range {lo}..{hi} invalid"),
+            ));
+        }
+        if !pool.species.iter().any(|sp| &sp.id == species) {
+            findings.push(Finding::error(
+                "map.encounters",
+                format!("`{mid}` {which} slot references unknown species `{species}`"),
+            ));
         }
     }
     findings
@@ -526,6 +552,25 @@ pub fn validate_items(items: &crate::region::ItemSet) -> Vec<Finding> {
     findings
 }
 
+/// TM move references resolve against a move table (core + region).
+pub fn validate_item_moves(
+    items: &crate::region::ItemSet,
+    move_exists: &dyn Fn(&undersong_core::ids::MoveId) -> bool,
+) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    for item in &items.items {
+        if let crate::region::ItemKind::Tm { move_id } = &item.kind
+            && !move_exists(move_id)
+        {
+            findings.push(Finding::error(
+                "items.tm",
+                format!("`{}` teaches unknown move `{move_id}`", item.id),
+            ));
+        }
+    }
+    findings
+}
+
 /// Region rules (doc 04 §3 subset for the slice): dex/starters resolve,
 /// motif species rules (via the pool checks), evolution targets exist and
 /// are acyclic, trainer parties legal (1–6 members, species + moves
@@ -541,10 +586,6 @@ pub fn validate_region(
     let mut findings = Vec::new();
     let rid = &pack.def.id;
 
-    // Move lookup across core + region moves.
-    let move_exists = |id: &undersong_core::ids::MoveId| {
-        core.moves.get(id).is_some() || pack.moves.iter().any(|m| &m.id == id)
-    };
     let item_exists = |id: &undersong_core::ids::ItemId| items.items.iter().any(|i| &i.id == id);
 
     // Dex + starters resolve.
@@ -605,10 +646,16 @@ pub fn validate_region(
             }
         }
         for tm in &motif.tm_set {
-            if !move_exists(tm) {
+            // tm_set lists TM ITEM ids (doc 04 §2); the item carries the
+            // move (doc 02 v1.6 #2).
+            let resolves = items.items.iter().any(|item| {
+                item.id.as_str() == tm.as_str()
+                    && matches!(item.kind, crate::region::ItemKind::Tm { .. })
+            });
+            if !resolves {
                 findings.push(Finding::error(
                     "region.tm_set",
-                    format!("`{sid}` tm_set references unknown move `{tm}`"),
+                    format!("`{sid}` tm_set references unknown TM item `{tm}`"),
                 ));
             }
         }
@@ -665,11 +712,21 @@ pub fn validate_region(
                     ));
                 }
                 for move_id in moves {
+                    let tm_taught = motif.tm_set.iter().any(|tm| {
+                        items.items.iter().any(|item| {
+                            item.id.as_str() == tm.as_str()
+                                && matches!(
+                                    &item.kind,
+                                    crate::region::ItemKind::Tm { move_id: taught }
+                                        if taught == move_id
+                                )
+                        })
+                    });
                     let legal = motif
                         .learnset
                         .iter()
                         .any(|(level, id)| id == move_id && *level <= member.level)
-                        || motif.tm_set.contains(move_id);
+                        || tm_taught;
                     if !legal {
                         findings.push(Finding::error(
                             "region.trainer",

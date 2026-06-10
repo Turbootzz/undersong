@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_ember"],
     hidden_ability: Some("amplify"),
     tags: ["performer.light", "habitat.urban"],
-    tm_set: [],
+    tm_set: ["tm01", "tm02"],
     evolution: Some((method: Level(16), target: "embaritone")),
     cry_seed: 1486184087595, sigil_seed: 1486184087595,
     dex: (height_dm: 9, weight_hg: 190, entry_key: "dex.fanfyre"),

@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_ember"],
     hidden_ability: Some("soloist"),
     tags: ["performer.light", "habitat.urban"],
-    tm_set: [],
+    tm_set: ["tm01", "tm02"],
     evolution: None,
     cry_seed: 1486184087595, sigil_seed: 197334477696665,
     dex: (height_dm: 9, weight_hg: 290, entry_key: "dex.maestroar"),

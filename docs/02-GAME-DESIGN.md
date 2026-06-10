@@ -472,3 +472,29 @@ Specifications P4 needs that earlier sections left open. Doc is law.
    +2 per level-up, +1 per badge won while in party, +5 per vitamin,
    −5 per faint; clamps 0–255. Friendship evolutions check ≥ 220 at
    level-up (v1.4 #2 timing).
+
+### v1.6 — 2026-06-10 (P4 item & overworld specs)
+
+1. **Vitamins.** Six, one per stat (Crescendo Tonic = atk, Forte Filter =
+   def, Aria Drop = spa, Chorale Shell = spd, Presto Reed = spe, Vital
+   Verse = hp). +10 EVs in the stat; fails (not consumed) if that stat
+   already has ≥ 100 EVs or the 510 total would be exceeded. +5
+   friendship (v1.5 #5).
+2. **TMs are reusable** (roadmap P4 box, made law). A TM teaches its move
+   to any species whose `tm_set` lists the TM's id; teaching replaces a
+   chosen slot or fails politely with 4 moves and no choice. TM ids are
+   `tm01`–`tm50`; the launch slice ships tm01–tm05.
+3. **Mute Charm.** Bag item, 200 steps of no wild engagement when the
+   lead's level exceeds the wild's (doc 02 §12); steps tick on Step
+   inputs only; reapplying resets to 200.
+4. **Special bells.** Overture Bell ×4 on the battle's first turn else
+   ×1; Cradle Bell ×3.5 if the target is lulled (sleep) or frosted
+   (freeze); Vesper Bell ×3.5 at night (overworld clock — battles seeded
+   from a night overworld are night battles); Coda always succeeds, one
+   per save (post-game). Conditional mods resolve at ring time.
+5. **Day/night.** The overworld clock runs on steps: 1 step = 1 tick,
+   1200 ticks = a full day; night is the last third. Maps may declare a
+   `night_slots` encounter table (same 12-weight law) used during night.
+6. **Weather zones.** A map may declare ambient weather; battles started
+   there open with it active (5 turns refreshing each round the zone's
+   weather — i.e. effectively permanent in-zone).

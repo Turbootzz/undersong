@@ -9,7 +9,7 @@ Motif(
     abilities: ["live_wire"],
     hidden_ability: Some("metronome_soul"),
     tags: ["performer.bright", "habitat.fields", "performer.light"],
-    tm_set: [],
+    tm_set: ["tm02", "tm04"],
     evolution: None,
     cry_seed: 97031567816629, sigil_seed: 97031567816629,
     dex: (height_dm: 8, weight_hg: 249, entry_key: "dex.zapresto"),

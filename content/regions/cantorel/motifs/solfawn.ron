@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_bloom"],
     hidden_ability: Some("thorn_coat"),
     tags: ["performer.clear", "habitat.forest"],
-    tm_set: [],
+    tm_set: ["tm01", "tm05"],
     evolution: Some((method: Level(16), target: "vinebrato")),
     cry_seed: 210841023521502, sigil_seed: 210841023521502,
     dex: (height_dm: 8, weight_hg: 217, entry_key: "dex.solfawn"),

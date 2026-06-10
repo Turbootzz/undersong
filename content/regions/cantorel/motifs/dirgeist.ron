@@ -9,7 +9,7 @@ Motif(
     abilities: ["damper"],
     hidden_ability: Some("keysmith"),
     tags: ["performer.lament", "habitat.ruins"],
-    tm_set: [],
+    tm_set: ["tm04"],
     evolution: None,
     cry_seed: 253963756363645, sigil_seed: 253963756363645,
     dex: (height_dm: 8, weight_hg: 235, entry_key: "dex.dirgeist"),

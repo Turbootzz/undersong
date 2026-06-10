@@ -1,18 +1,45 @@
-// Core items — bells per doc 02 §8, heals per §15. Mart availability is
-// gated by badge count in mart tables (P4); prices live here.
-// Overture/Cradle/Vesper bells and the Coda arrive with their systems
-// (turn-1/status/night conditions land in P4's item pass).
+// Core items — bells per doc 02 §8, heals per §15, the v1.6 item pass
+// (TMs, vitamins, Mute Charm, special bells, held items). Pockets per
+// roadmap P4 ("Bag pockets final").
 ItemSet(
     items: [
-        (id: "fermata", name_key: "item.fermata", kind: Bell(catch_mod: (1, 1)), price: 200),
-        (id: "grand_fermata", name_key: "item.grand_fermata", kind: Bell(catch_mod: (3, 2)), price: 600),
-        (id: "maestro_fermata", name_key: "item.maestro_fermata", kind: Bell(catch_mod: (2, 1)), price: 1200),
+        // Bells (pocket: Bells). Badge gating lives in mart tables.
+        (id: "fermata", name_key: "item.fermata", kind: Bell(catch_mod: (1, 1)), price: 200, pocket: Bells),
+        (id: "grand_fermata", name_key: "item.grand_fermata", kind: Bell(catch_mod: (3, 2)), price: 600, pocket: Bells),
+        (id: "maestro_fermata", name_key: "item.maestro_fermata", kind: Bell(catch_mod: (2, 1)), price: 1200, pocket: Bells),
+        (id: "overture_bell", name_key: "item.overture_bell", kind: OvertureBell, price: 1000, pocket: Bells),
+        (id: "cradle_bell", name_key: "item.cradle_bell", kind: CradleBell, price: 1000, pocket: Bells),
+        (id: "vesper_bell", name_key: "item.vesper_bell", kind: VesperBell, price: 1000, pocket: Bells),
+        (id: "coda", name_key: "item.coda", kind: Coda, price: 0, pocket: Bells),
+
+        // Heals.
         (id: "potion_s", name_key: "item.potion_s", kind: Potion(hp: 20), price: 200),
         (id: "potion_m", name_key: "item.potion_m", kind: Potion(hp: 50), price: 700),
         (id: "potion_l", name_key: "item.potion_l", kind: Potion(hp: 120), price: 1200),
         (id: "potion_x", name_key: "item.potion_x", kind: Potion(hp: 999), price: 3000),
         (id: "status_heal", name_key: "item.status_heal", kind: StatusHeal, price: 250),
-        (id: "duet_stone", name_key: "item.duet_stone", kind: Key, price: 0),
-        (id: "oran_chime", name_key: "item.oran_chime", kind: Key, price: 0),
+
+        // Vitamins (doc 02 v1.6 #1): +10 EVs, fail at 100+/510 cap.
+        (id: "vital_verse", name_key: "item.vital_verse", kind: Vitamin(stat: hp), price: 4900),
+        (id: "crescendo_tonic", name_key: "item.crescendo_tonic", kind: Vitamin(stat: atk), price: 4900),
+        (id: "forte_filter", name_key: "item.forte_filter", kind: Vitamin(stat: def), price: 4900),
+        (id: "aria_drop", name_key: "item.aria_drop", kind: Vitamin(stat: spa), price: 4900),
+        (id: "chorale_shell", name_key: "item.chorale_shell", kind: Vitamin(stat: spd), price: 4900),
+        (id: "presto_reed", name_key: "item.presto_reed", kind: Vitamin(stat: spe), price: 4900),
+
+        // Field & held.
+        (id: "mute_charm", name_key: "item.mute_charm", kind: MuteCharm, price: 200),
+        (id: "exp_share", name_key: "item.exp_share", kind: Held, price: 0),
+        (id: "oran_chime", name_key: "item.oran_chime", kind: Held, price: 0),
+
+        // TMs (doc 02 v1.6 #2, reusable; pocket Tms). tm01-tm05 launch.
+        (id: "tm01", name_key: "item.tm01", kind: Tm(move_id: "downbeat"), price: 3000, pocket: Tms),
+        (id: "tm02", name_key: "item.tm02", kind: Tm(move_id: "cinder_waltz"), price: 3000, pocket: Tms),
+        (id: "tm03", name_key: "item.tm03", kind: Tm(move_id: "breaker_beat"), price: 3000, pocket: Tms),
+        (id: "tm04", name_key: "item.tm04", kind: Tm(move_id: "stun_chord"), price: 2000, pocket: Tms),
+        (id: "tm05", name_key: "item.tm05", kind: Tm(move_id: "bramble_reel"), price: 3000, pocket: Tms),
+
+        // Key items.
+        (id: "duet_stone", name_key: "item.duet_stone", kind: Key, price: 0, pocket: Key),
     ],
 )

@@ -9,7 +9,7 @@ Motif(
     abilities: ["thick_hide"],
     hidden_ability: Some("metronome_soul"),
     tags: ["performer.percussion", "habitat.quarry"],
-    tm_set: [],
+    tm_set: ["tm01"],
     evolution: None,
     cry_seed: 188097190213445, sigil_seed: 188097190213445,
     dex: (height_dm: 8, weight_hg: 215, entry_key: "dex.timpanite"),

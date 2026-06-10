@@ -126,16 +126,48 @@ pub struct Trainer {
     pub defeat_key: String,
 }
 
-/// Item kinds for the slice (doc 02 §8 bells, §15 economy; more in P4).
+/// Item kinds (doc 02 §8 bells, §15 economy, v1.6 item pass).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ItemKind {
     /// Restores `hp` HP.
-    Potion { hp: u16 },
+    Potion {
+        hp: u16,
+    },
     /// Cures any major status.
     StatusHeal,
     /// Attunement bell with its catch multiplier.
-    Bell { catch_mod: Frac },
+    Bell {
+        catch_mod: Frac,
+    },
+    /// Conditional bells (doc 02 v1.6 #4).
+    OvertureBell,
+    CradleBell,
+    VesperBell,
+    /// Always succeeds; one per save (post-game).
+    Coda,
+    /// Reusable TM teaching `move_id` (v1.6 #2).
+    Tm {
+        move_id: MoveId,
+    },
+    /// +10 EVs in `stat` (v1.6 #1).
+    Vitamin {
+        stat: undersong_core::stats::Stat,
+    },
+    /// 200 steps of wild silence (v1.6 #3).
+    MuteCharm,
+    /// Held in battle (oran_chime, exp_share — battle crate hooks).
+    Held,
     /// Story/progression item; not usable from the bag.
+    Key,
+}
+
+/// Bag pockets (doc 06 P4: "Bag pockets final").
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum Pocket {
+    #[default]
+    Items,
+    Bells,
+    Tms,
     Key,
 }
 
@@ -147,6 +179,8 @@ pub struct ItemDef {
     pub kind: ItemKind,
     /// Mart price in ₵; 0 = not sold.
     pub price: u32,
+    #[serde(default)]
+    pub pocket: Pocket,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

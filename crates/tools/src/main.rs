@@ -303,6 +303,12 @@ fn validate(options: &Options) -> Result<bool> {
             let core_strings = data::load_core_strings(&options.content)
                 .with_context(|| "loading core strings")?;
             findings.extend(data::validate_strings(&pack, &core_strings, &script_keys));
+
+            // TM references resolve (doc 02 v1.6 #2).
+            let move_exists = |id: &undersong_core::ids::MoveId| {
+                content.moves.get(id).is_some() || pack.moves.iter().any(|m| &m.id == id)
+            };
+            findings.extend(data::validate_item_moves(&items, &move_exists));
         }
     }
 

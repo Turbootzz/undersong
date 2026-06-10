@@ -9,7 +9,7 @@ Motif(
     abilities: ["vigor"],
     hidden_ability: None,
     tags: ["performer.glass", "habitat.alpine"],
-    tm_set: [],
+    tm_set: ["tm03"],
     evolution: None,
     cry_seed: 173994936525706, sigil_seed: 173994936525706,
     dex: (height_dm: 9, weight_hg: 251, entry_key: "dex.glissicle"),

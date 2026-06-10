@@ -9,7 +9,7 @@ Motif(
     abilities: ["stage_fright"],
     hidden_ability: Some("iron_ear"),
     tags: ["habitat.field", "habitat.urban"],
-    tm_set: [],
+    tm_set: ["tm01"],
     evolution: None,
     cry_seed: 29096669115640, sigil_seed: 202468817696553,
     dex: (height_dm: 8, weight_hg: 258, entry_key: "dex.rattacca"),

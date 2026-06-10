@@ -40,6 +40,18 @@ pub struct MapDef {
     pub encounters: Option<EncounterDef>,
     #[serde(default)]
     pub music: Option<String>,
+    /// Ambient weather zone (doc 02 v1.6 #6).
+    #[serde(default)]
+    pub weather: Option<undersong_core::moves::WeatherKind>,
+    /// Night encounter table (v1.6 #5); same 12-weight law.
+    #[serde(default)]
+    pub night_encounters: Option<EncounterDef>,
+    /// Performance obstacles (doc 02 §11).
+    #[serde(default)]
+    pub obstacles: Vec<Obstacle>,
+    /// Dark cave: unlit without Lumen Hum (doc 02 §11).
+    #[serde(default)]
+    pub dark: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -92,6 +104,24 @@ pub struct NpcDef {
 
 fn default_behavior() -> NpcBehavior {
     NpcBehavior::Static
+}
+
+/// Overworld obstacles cleared by Performances (doc 02 §11).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ObstacleKind {
+    /// Clearing Chord (Badge 2).
+    Brush,
+    /// Tunneling Bass (Badge 3).
+    CrackedRock,
+    /// Lift Motif (Badge 5): pushable one tile along the facing.
+    Boulder,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Obstacle {
+    pub at: (u32, u32),
+    pub kind: ObstacleKind,
 }
 
 /// Per-map wild encounter config (doc 02 §12: 12 slots, weights sum 100).

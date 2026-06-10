@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_tide"],
     hidden_ability: Some("damper"),
     tags: ["habitat.water"],
-    tm_set: [],
+    tm_set: ["tm03"],
     evolution: Some((method: Level(16), target: "tidalegro")),
     cry_seed: 121564979345958, sigil_seed: 121564979345958,
     dex: (height_dm: 8, weight_hg: 193, entry_key: "dex.rippeggio"),

@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_tide"],
     hidden_ability: Some("damper"),
     tags: ["performer.ferry", "habitat.water"],
-    tm_set: [],
+    tm_set: ["tm03"],
     evolution: Some((method: Level(34), target: "cellorca")),
     cry_seed: 121564979345958, sigil_seed: 209155816552945,
     dex: (height_dm: 8, weight_hg: 255, entry_key: "dex.tidalegro"),

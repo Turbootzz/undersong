@@ -203,6 +203,10 @@ fn import_level(level: &Value) -> Result<MapDef> {
         npcs,
         encounters: None, // encounter tables stay hand-authored RON (doc 04)
         music: None,
+        weather: None,
+        night_encounters: None,
+        obstacles: Vec::new(),
+        dark: false,
     })
 }
 

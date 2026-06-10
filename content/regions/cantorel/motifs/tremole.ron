@@ -9,7 +9,7 @@ Motif(
     abilities: ["stage_fright"],
     hidden_ability: Some("vigor"),
     tags: ["habitat.field"],
-    tm_set: [],
+    tm_set: ["tm01"],
     evolution: Some((method: Level(14), target: "rattacca")),
     cry_seed: 29096669115640, sigil_seed: 29096669115640,
     dex: (height_dm: 6, weight_hg: 205, entry_key: "dex.tremole"),

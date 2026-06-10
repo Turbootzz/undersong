@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_tide"],
     hidden_ability: Some("encore_heart"),
     tags: ["performer.ferry", "habitat.water"],
-    tm_set: [],
+    tm_set: ["tm03"],
     evolution: None,
     cry_seed: 121564979345958, sigil_seed: 183955917128596,
     dex: (height_dm: 38, weight_hg: 1850, entry_key: "dex.cellorca"),

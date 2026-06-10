@@ -9,7 +9,7 @@ Motif(
     abilities: ["crescendo_bloom"],
     hidden_ability: Some("thorn_coat"),
     tags: ["performer.clear", "habitat.forest"],
-    tm_set: [],
+    tm_set: ["tm01", "tm05"],
     evolution: Some((method: Level(34), target: "sonatler")),
     cry_seed: 210841023521502, sigil_seed: 89850089658867,
     dex: (height_dm: 10, weight_hg: 257, entry_key: "dex.vinebrato"),

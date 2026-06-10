@@ -9,7 +9,7 @@ Motif(
     abilities: ["thorn_coat"],
     hidden_ability: None,
     tags: ["habitat.brush", "performer.clear"],
-    tm_set: [],
+    tm_set: ["tm01", "tm05"],
     evolution: None,
     cry_seed: 29536439227558, sigil_seed: 29536439227558,
     dex: (height_dm: 8, weight_hg: 238, entry_key: "dex.burrbass"),

@@ -9,7 +9,7 @@ Motif(
     abilities: ["amplify"],
     hidden_ability: Some("tuning_fork"),
     tags: ["performer.bells", "habitat.urban"],
-    tm_set: [],
+    tm_set: ["tm04"],
     evolution: None,
     cry_seed: 23050010048578, sigil_seed: 23050010048578,
     dex: (height_dm: 9, weight_hg: 278, entry_key: "dex.carilloy"),
