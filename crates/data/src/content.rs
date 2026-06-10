@@ -1,11 +1,16 @@
 //! Schemas and RON loaders for `content/core`.
+//!
+//! Schema strictness conventions (all future content schemas follow them):
+//! `deny_unknown_fields` on every struct, and [`UniqueMap`] instead of bare
+//! `BTreeMap` so typos and duplicate keys are parse errors, not silent drift.
 
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use undersong_core::types::{Eff, Type};
+
+use crate::unique_map::UniqueMap;
 
 /// The 12×12 effectiveness chart, attacker → defender → multiplier.
 ///
@@ -13,8 +18,9 @@ use undersong_core::types::{Eff, Type};
 /// so the validator proves totality (doc 04 §3 rule 6) instead of silently
 /// defaulting missing pairs to neutral.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TypeChart {
-    pub entries: BTreeMap<Type, BTreeMap<Type, Eff>>,
+    pub entries: UniqueMap<Type, UniqueMap<Type, Eff>>,
 }
 
 impl TypeChart {
@@ -29,6 +35,7 @@ impl TypeChart {
 /// the diagonal (`n / 5 == n % 5`) is neutral (doc 02 §3). Data carries only
 /// the UI name keys; the index math is law and lives with the stat formulas.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Natures {
     pub name_keys: Vec<String>,
 }

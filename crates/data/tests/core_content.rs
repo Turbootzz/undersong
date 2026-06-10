@@ -73,6 +73,14 @@ const DOC_TABLE: &[DocRow] = &[
 fn chart_matches_design_doc_table() {
     let content = load_core(&content_root()).expect("content/core must parse");
     assert_eq!(DOC_TABLE.len(), Type::COUNT, "one row per attacker");
+    let attackers: std::collections::BTreeSet<Type> =
+        DOC_TABLE.iter().map(|&(attacker, ..)| attacker).collect();
+    assert_eq!(
+        attackers.len(),
+        Type::COUNT,
+        "DOC_TABLE attackers must be distinct, or a duplicated row would \
+         leave one attacker's twelve cells value-unchecked"
+    );
 
     for &(attacker, double, half, zero) in DOC_TABLE {
         for defender in Type::ALL {
@@ -94,20 +102,51 @@ fn chart_matches_design_doc_table() {
     }
 }
 
+/// Doc 02 §3's 5×5 grid in canonical index order (row = boosted stat,
+/// column = hindered, over [atk, def, spa, spd, spe]). Index order is
+/// mechanics law — a transposed key would silently change which stat a
+/// temperament boosts once P1 wires up the multiplier — so all 25 entries
+/// are asserted, not just the diagonal.
+const DOC_GRID: [&str; 25] = [
+    "nature.marcato",
+    "nature.forte",
+    "nature.bravura",
+    "nature.sforzando",
+    "nature.pesante",
+    "nature.tenuto",
+    "nature.fermo",
+    "nature.solido",
+    "nature.grave",
+    "nature.largo",
+    "nature.brillante",
+    "nature.estro",
+    "nature.lucido",
+    "nature.acuto",
+    "nature.rubato",
+    "nature.placido",
+    "nature.sereno",
+    "nature.velato",
+    "nature.calmo",
+    "nature.adagio",
+    "nature.vivace",
+    "nature.presto",
+    "nature.agile",
+    "nature.scherzo",
+    "nature.moderato",
+];
+
 #[test]
 fn natures_follow_the_doc_grid() {
     let content = load_core(&content_root()).expect("content/core must parse");
     let keys = &content.natures.name_keys;
-    assert_eq!(keys.len(), 25);
-    // The five diagonal (neutral) temperaments from the doc 02 §3 grid,
-    // at indices where n / 5 == n % 5.
-    for (index, name) in [
-        (0, "nature.marcato"),
-        (6, "nature.fermo"),
-        (12, "nature.lucido"),
-        (18, "nature.calmo"),
-        (24, "nature.moderato"),
-    ] {
-        assert_eq!(keys[index], name, "neutral diagonal at index {index}");
+    assert_eq!(keys.len(), DOC_GRID.len());
+    for (index, expected) in DOC_GRID.iter().enumerate() {
+        assert_eq!(
+            keys[index],
+            *expected,
+            "temperament at index {index} (boost {}, hinder {})",
+            index / 5,
+            index % 5
+        );
     }
 }

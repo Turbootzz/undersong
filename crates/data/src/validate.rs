@@ -117,9 +117,11 @@ mod tests {
         for attacker in Type::ALL {
             let row: BTreeMap<Type, Eff> =
                 Type::ALL.into_iter().map(|d| (d, Eff::Neutral)).collect();
-            entries.insert(attacker, row);
+            entries.insert(attacker, row.into());
         }
-        TypeChart { entries }
+        TypeChart {
+            entries: entries.into(),
+        }
     }
 
     fn canonical_natures() -> Natures {
@@ -214,5 +216,31 @@ mod tests {
         // the type level: an unknown Eff variant cannot parse.
         let bad = "TypeChart(entries: { Feral: { Feral: Triple } })";
         assert!(ron::from_str::<TypeChart>(bad).is_err());
+    }
+
+    #[test]
+    fn parse_rejects_duplicate_defender_keys() {
+        // serde's default map handling is last-wins; UniqueMap makes a
+        // conflicting content entry a loud parse error instead.
+        let bad = "TypeChart(entries: { Feral: { Stone: Half, Stone: Double } })";
+        let err = ron::from_str::<TypeChart>(bad).expect_err("duplicate defender");
+        assert!(err.to_string().contains("duplicate map key"));
+    }
+
+    #[test]
+    fn parse_rejects_duplicate_attacker_rows() {
+        let bad = "TypeChart(entries: { Feral: {}, Feral: {} })";
+        let err = ron::from_str::<TypeChart>(bad).expect_err("duplicate attacker");
+        assert!(err.to_string().contains("duplicate map key"));
+    }
+
+    #[test]
+    fn parse_rejects_unknown_schema_fields() {
+        // deny_unknown_fields: typo'd or leftover fields must not rot
+        // silently in content packs.
+        let bad_natures = "Natures(name_keys: [], name_kyes: [])";
+        assert!(ron::from_str::<crate::Natures>(bad_natures).is_err());
+        let bad_chart = "TypeChart(entries: {}, extra: 1)";
+        assert!(ron::from_str::<TypeChart>(bad_chart).is_err());
     }
 }
