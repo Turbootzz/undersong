@@ -8,9 +8,9 @@ use std::path::{Path, PathBuf};
 
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use undersong_core::collections::UniqueMap;
+use undersong_core::moves::MoveSpec;
 use undersong_core::types::{Eff, Type};
-
-use crate::unique_map::UniqueMap;
 
 /// The 12×12 effectiveness chart, attacker → defender → multiplier.
 ///
@@ -43,11 +43,26 @@ pub struct Natures {
 /// Number of natures required by the 5×5 grid in doc 02 §3.
 pub const NATURE_COUNT: usize = 25;
 
+/// The core move set (`content/core/moves.ron`, doc 04 §1: core moves live
+/// in content/core; region packs may add, never modify).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MoveSet {
+    pub moves: Vec<MoveSpec>,
+}
+
+impl MoveSet {
+    pub fn get(&self, id: &undersong_core::ids::MoveId) -> Option<&MoveSpec> {
+        self.moves.iter().find(|m| &m.id == id)
+    }
+}
+
 /// Everything loaded from `content/core` (cross-region law, doc 04 §1).
 #[derive(Debug, Clone)]
 pub struct CoreContent {
     pub typechart: TypeChart,
     pub natures: Natures,
+    pub moves: MoveSet,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -75,7 +90,12 @@ pub enum LoadError {
 pub fn load_core(content_root: &Path) -> Result<CoreContent, LoadError> {
     let typechart = load_ron(content_root.join("core/typechart.ron"))?;
     let natures = load_ron(content_root.join("core/natures.ron"))?;
-    Ok(CoreContent { typechart, natures })
+    let moves = load_ron(content_root.join("core/moves.ron"))?;
+    Ok(CoreContent {
+        typechart,
+        natures,
+        moves,
+    })
 }
 
 fn load_ron<T: DeserializeOwned>(path: PathBuf) -> Result<T, LoadError> {

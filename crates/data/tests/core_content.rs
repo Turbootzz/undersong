@@ -8,6 +8,8 @@
 use std::path::{Path, PathBuf};
 
 use data::{load_core, validate_core};
+use undersong_core::moves::{Ailment, Effect, EffectTarget, Frac, MoveCategory};
+use undersong_core::stats::Stat;
 use undersong_core::types::{
     Eff,
     Type::{
@@ -134,6 +136,156 @@ const DOC_GRID: [&str; 25] = [
     "nature.scherzo",
     "nature.moderato",
 ];
+
+/// Doc 02 §6's canon-move table, re-transcribed:
+/// (id, type, category, power, accuracy, pp, priority).
+const DOC_MOVES: [(&str, Type, MoveCategory, u16, u8, u8, i8); 18] = [
+    ("tackle", Feral, MoveCategory::Physical, 40, 100, 35, 0),
+    ("quick_step", Feral, MoveCategory::Physical, 40, 100, 30, 1),
+    ("ember_note", Ember, MoveCategory::Special, 40, 100, 25, 0),
+    ("flare_brass", Ember, MoveCategory::Special, 90, 100, 15, 0),
+    ("ripple", Tide, MoveCategory::Special, 40, 100, 25, 0),
+    ("undertow", Tide, MoveCategory::Special, 80, 100, 15, 0),
+    ("leaf_pick", Bloom, MoveCategory::Physical, 55, 95, 25, 0),
+    ("root_chord", Bloom, MoveCategory::Special, 75, 100, 10, 0),
+    ("volt_pluck", Volt, MoveCategory::Special, 65, 100, 20, 0),
+    ("gale_riff", Gale, MoveCategory::Special, 60, 100, 20, 0),
+    ("stone_toll", Stone, MoveCategory::Physical, 75, 90, 15, 0),
+    ("venom_trill", Venom, MoveCategory::Special, 65, 100, 20, 0),
+    (
+        "phantom_rest",
+        Phantom,
+        MoveCategory::Special,
+        80,
+        100,
+        15,
+        0,
+    ),
+    ("alloy_clang", Alloy, MoveCategory::Physical, 80, 100, 15, 0),
+    ("frost_lull", Frost, MoveCategory::Status, 0, 75, 10, 0),
+    ("resonate", Resonant, MoveCategory::Special, 85, 100, 10, 0),
+    ("crescendo", Resonant, MoveCategory::Status, 0, 0, 20, 0),
+    ("dampen", Feral, MoveCategory::Status, 0, 100, 20, 0),
+];
+
+#[test]
+fn canon_moves_match_design_doc_table() {
+    let content = load_core(&content_root()).expect("content/core must parse");
+    let moves = &content.moves;
+    assert_eq!(
+        moves.moves.len(),
+        DOC_MOVES.len(),
+        "exactly the 18 canon moves"
+    );
+
+    for (id, ty, category, power, accuracy, pp, priority) in DOC_MOVES {
+        let m = moves
+            .get(&id.into())
+            .unwrap_or_else(|| panic!("move `{id}` present"));
+        assert_eq!(m.r#type, ty, "{id} type");
+        assert_eq!(m.category, category, "{id} category");
+        assert_eq!(m.power, power, "{id} power");
+        assert_eq!(m.accuracy, accuracy, "{id} accuracy");
+        assert_eq!(m.pp, pp, "{id} pp");
+        assert_eq!(m.priority, priority, "{id} priority");
+    }
+
+    // Flags and effects, per the doc rows that carry them.
+    let get = |id: &str| moves.get(&id.into()).expect("present");
+    for sound in [
+        "ember_note",
+        "flare_brass",
+        "gale_riff",
+        "venom_trill",
+        "alloy_clang",
+        "frost_lull",
+        "resonate",
+        "dampen",
+    ] {
+        assert!(get(sound).flags.sound, "{sound} is a sound move");
+    }
+    for contact in ["tackle", "quick_step", "leaf_pick"] {
+        assert!(get(contact).flags.contact, "{contact} is contact");
+    }
+    assert!(get("leaf_pick").flags.high_crit);
+    assert!(get("resonate").flags.ignore_evasion);
+    assert_eq!(
+        get("ember_note").effects,
+        vec![Effect::Status {
+            ailment: Ailment::Burn,
+            chance: 10
+        }]
+    );
+    assert_eq!(
+        get("undertow").effects,
+        vec![Effect::StatStage {
+            target: EffectTarget::Target,
+            stat: Stat::Spe,
+            delta: -1,
+            chance: 20
+        }]
+    );
+    assert_eq!(
+        get("root_chord").effects,
+        vec![Effect::Drain { frac: Frac(1, 2) }]
+    );
+    assert_eq!(
+        get("volt_pluck").effects,
+        vec![Effect::Status {
+            ailment: Ailment::Paralysis,
+            chance: 10
+        }]
+    );
+    assert_eq!(
+        get("venom_trill").effects,
+        vec![Effect::Status {
+            ailment: Ailment::Poison,
+            chance: 30
+        }]
+    );
+    assert_eq!(
+        get("alloy_clang").effects,
+        vec![Effect::StatStage {
+            target: EffectTarget::User,
+            stat: Stat::Def,
+            delta: 1,
+            chance: 10
+        }]
+    );
+    assert_eq!(
+        get("frost_lull").effects,
+        vec![Effect::Status {
+            ailment: Ailment::Sleep,
+            chance: 100
+        }]
+    );
+    assert_eq!(
+        get("crescendo").effects,
+        vec![
+            Effect::StatStage {
+                target: EffectTarget::User,
+                stat: Stat::Spa,
+                delta: 1,
+                chance: 100
+            },
+            Effect::StatStage {
+                target: EffectTarget::User,
+                stat: Stat::Spe,
+                delta: 1,
+                chance: 100
+            },
+        ]
+    );
+    assert_eq!(
+        get("dampen").effects,
+        vec![Effect::StatStage {
+            target: EffectTarget::Target,
+            stat: Stat::Atk,
+            delta: -1,
+            chance: 100
+        }]
+    );
+}
 
 #[test]
 fn natures_follow_the_doc_grid() {

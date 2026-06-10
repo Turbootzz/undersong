@@ -51,6 +51,7 @@ pub fn validate_core(content: &CoreContent) -> Vec<Finding> {
     let mut findings = Vec::new();
     check_typechart_total(content, &mut findings);
     check_natures(content, &mut findings);
+    check_moves(content, &mut findings);
     findings
 }
 
@@ -103,6 +104,74 @@ fn check_natures(content: &CoreContent, findings: &mut Vec<Finding>) {
     }
 }
 
+/// Moves: unique ids, schema ranges from doc 02 §6
+/// (power 0 only for status / >0 for damaging, accuracy 0–100, pp 5–40,
+/// priority −7..=+5, effect chances 1–100).
+fn check_moves(content: &CoreContent, findings: &mut Vec<Finding>) {
+    let mut seen = BTreeSet::new();
+    for spec in &content.moves.moves {
+        let id = spec.id.as_str();
+        if !seen.insert(id.to_owned()) {
+            findings.push(Finding::error(
+                "moves.unique",
+                format!("duplicate move id `{id}`"),
+            ));
+        }
+        if matches!(
+            spec.category,
+            undersong_core::moves::MoveCategory::Physical
+                | undersong_core::moves::MoveCategory::Special
+        ) && spec.power == 0
+        {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` is {:?} but has power 0", spec.category),
+            ));
+        }
+        if matches!(spec.category, undersong_core::moves::MoveCategory::Status) && spec.power != 0 {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` is Status but has power {}", spec.power),
+            ));
+        }
+        if spec.accuracy > 100 {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` accuracy {} outside 0..=100", spec.accuracy),
+            ));
+        }
+        if !(5..=40).contains(&spec.pp) {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` pp {} outside 5..=40", spec.pp),
+            ));
+        }
+        if !(-7..=5).contains(&spec.priority) {
+            findings.push(Finding::error(
+                "moves.ranges",
+                format!("`{id}` priority {} outside -7..=5", spec.priority),
+            ));
+        }
+        for effect in &spec.effects {
+            use undersong_core::moves::Effect;
+            let chance = match effect {
+                Effect::StatStage { chance, .. }
+                | Effect::Status { chance, .. }
+                | Effect::Flinch { chance } => Some(*chance),
+                _ => None,
+            };
+            if let Some(chance) = chance
+                && !(1..=100).contains(&chance)
+            {
+                findings.push(Finding::error(
+                    "moves.ranges",
+                    format!("`{id}` effect chance {chance} outside 1..=100"),
+                ));
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -110,7 +179,7 @@ mod tests {
     use undersong_core::types::Eff;
 
     use super::*;
-    use crate::content::{Natures, TypeChart};
+    use crate::content::{MoveSet, Natures, TypeChart};
 
     fn full_neutral_chart() -> TypeChart {
         let mut entries = BTreeMap::new();
@@ -130,6 +199,14 @@ mod tests {
         }
     }
 
+    fn content_of(typechart: TypeChart, natures: Natures) -> CoreContent {
+        CoreContent {
+            typechart,
+            natures,
+            moves: MoveSet { moves: vec![] },
+        }
+    }
+
     fn errors(findings: &[Finding]) -> Vec<&Finding> {
         findings
             .iter()
@@ -139,10 +216,7 @@ mod tests {
 
     #[test]
     fn complete_core_content_is_clean() {
-        let content = CoreContent {
-            typechart: full_neutral_chart(),
-            natures: canonical_natures(),
-        };
+        let content = content_of(full_neutral_chart(), canonical_natures());
         assert!(validate_core(&content).is_empty());
     }
 
@@ -154,10 +228,7 @@ mod tests {
             .get_mut(&Type::Frost)
             .expect("row exists")
             .remove(&Type::Alloy);
-        let content = CoreContent {
-            typechart: chart,
-            natures: canonical_natures(),
-        };
+        let content = content_of(chart, canonical_natures());
         let findings = validate_core(&content);
         let errs = errors(&findings);
         assert_eq!(errs.len(), 1);
@@ -170,10 +241,7 @@ mod tests {
     fn missing_attacker_row_fails_totality() {
         let mut chart = full_neutral_chart();
         chart.entries.remove(&Type::Venom);
-        let content = CoreContent {
-            typechart: chart,
-            natures: canonical_natures(),
-        };
+        let content = content_of(chart, canonical_natures());
         let findings = validate_core(&content);
         let errs = errors(&findings);
         assert_eq!(errs.len(), 1);
@@ -184,10 +252,7 @@ mod tests {
     fn wrong_nature_count_fails() {
         let mut natures = canonical_natures();
         natures.name_keys.pop();
-        let content = CoreContent {
-            typechart: full_neutral_chart(),
-            natures,
-        };
+        let content = content_of(full_neutral_chart(), natures);
         let findings = validate_core(&content);
         assert!(
             findings
@@ -201,10 +266,7 @@ mod tests {
         let mut natures = canonical_natures();
         natures.name_keys[3] = natures.name_keys[2].clone();
         natures.name_keys[7] = String::new();
-        let content = CoreContent {
-            typechart: full_neutral_chart(),
-            natures,
-        };
+        let content = content_of(full_neutral_chart(), natures);
         let findings = validate_core(&content);
         assert!(findings.iter().any(|f| f.rule == "natures.unique"));
         assert!(findings.iter().any(|f| f.rule == "natures.empty"));

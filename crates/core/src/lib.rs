@@ -6,7 +6,10 @@
 
 #![forbid(unsafe_code)]
 
+pub mod collections;
 pub mod ids;
+pub mod moves;
 pub mod rng;
+pub mod species;
 pub mod stats;
 pub mod types;

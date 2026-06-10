@@ -8,9 +8,8 @@
 #![forbid(unsafe_code)]
 
 pub mod content;
-pub mod unique_map;
 pub mod validate;
 
 pub use content::{CoreContent, LoadError, Natures, TypeChart, load_core};
-pub use unique_map::UniqueMap;
+pub use undersong_core::collections::UniqueMap;
 pub use validate::{Finding, Severity, validate_core};

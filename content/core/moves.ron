@@ -1,0 +1,123 @@
+// Core move set — the 18 canon moves of docs/02-GAME-DESIGN.md §6.
+// The table there is law; the cross-transcription test in
+// crates/data/tests/core_content.rs re-derives every row from the doc.
+// The remaining launch moves (60 total) are generated in the content
+// phases under the §6 power budgets.
+MoveSet(
+    moves: [
+        (
+            id: "tackle", name_key: "move.tackle", type: Feral,
+            category: Physical, power: 40, accuracy: 100, pp: 35,
+            priority: 0, target: Foe,
+            flags: (contact: true),
+        ),
+        (
+            id: "quick_step", name_key: "move.quick_step", type: Feral,
+            category: Physical, power: 40, accuracy: 100, pp: 30,
+            priority: 1, target: Foe,
+            flags: (contact: true),
+        ),
+        (
+            id: "ember_note", name_key: "move.ember_note", type: Ember,
+            category: Special, power: 40, accuracy: 100, pp: 25,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [Status(ailment: Burn, chance: 10)],
+        ),
+        (
+            id: "flare_brass", name_key: "move.flare_brass", type: Ember,
+            category: Special, power: 90, accuracy: 100, pp: 15,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [Status(ailment: Burn, chance: 10)],
+        ),
+        (
+            id: "ripple", name_key: "move.ripple", type: Tide,
+            category: Special, power: 40, accuracy: 100, pp: 25,
+            priority: 0, target: Foe,
+        ),
+        (
+            id: "undertow", name_key: "move.undertow", type: Tide,
+            category: Special, power: 80, accuracy: 100, pp: 15,
+            priority: 0, target: Foe,
+            effects: [StatStage(target: Target, stat: spe, delta: -1, chance: 20)],
+        ),
+        (
+            id: "leaf_pick", name_key: "move.leaf_pick", type: Bloom,
+            category: Physical, power: 55, accuracy: 95, pp: 25,
+            priority: 0, target: Foe,
+            flags: (contact: true, high_crit: true),
+        ),
+        (
+            id: "root_chord", name_key: "move.root_chord", type: Bloom,
+            category: Special, power: 75, accuracy: 100, pp: 10,
+            priority: 0, target: Foe,
+            effects: [Drain(frac: (1, 2))],
+        ),
+        (
+            id: "volt_pluck", name_key: "move.volt_pluck", type: Volt,
+            category: Special, power: 65, accuracy: 100, pp: 20,
+            priority: 0, target: Foe,
+            effects: [Status(ailment: Paralysis, chance: 10)],
+        ),
+        (
+            id: "gale_riff", name_key: "move.gale_riff", type: Gale,
+            category: Special, power: 60, accuracy: 100, pp: 20,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+        ),
+        (
+            id: "stone_toll", name_key: "move.stone_toll", type: Stone,
+            category: Physical, power: 75, accuracy: 90, pp: 15,
+            priority: 0, target: Foe,
+        ),
+        (
+            id: "venom_trill", name_key: "move.venom_trill", type: Venom,
+            category: Special, power: 65, accuracy: 100, pp: 20,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [Status(ailment: Poison, chance: 30)],
+        ),
+        (
+            id: "phantom_rest", name_key: "move.phantom_rest", type: Phantom,
+            category: Special, power: 80, accuracy: 100, pp: 15,
+            priority: 0, target: Foe,
+        ),
+        (
+            id: "alloy_clang", name_key: "move.alloy_clang", type: Alloy,
+            category: Physical, power: 80, accuracy: 100, pp: 15,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [StatStage(target: User, stat: def, delta: 1, chance: 10)],
+        ),
+        (
+            id: "frost_lull", name_key: "move.frost_lull", type: Frost,
+            category: Status, power: 0, accuracy: 75, pp: 10,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [Status(ailment: Sleep, chance: 100)],
+        ),
+        (
+            id: "resonate", name_key: "move.resonate", type: Resonant,
+            category: Special, power: 85, accuracy: 100, pp: 10,
+            priority: 0, target: Foe,
+            flags: (sound: true, ignore_evasion: true),
+        ),
+        (
+            id: "crescendo", name_key: "move.crescendo", type: Resonant,
+            category: Status, power: 0, accuracy: 0, pp: 20,
+            priority: 0, target: User,
+            effects: [
+                StatStage(target: User, stat: spa, delta: 1, chance: 100),
+                StatStage(target: User, stat: spe, delta: 1, chance: 100),
+            ],
+        ),
+        (
+            id: "dampen", name_key: "move.dampen", type: Feral,
+            category: Status, power: 0, accuracy: 100, pp: 20,
+            priority: 0, target: Foe,
+            flags: (sound: true),
+            effects: [StatStage(target: Target, stat: atk, delta: -1, chance: 100)],
+        ),
+    ],
+)

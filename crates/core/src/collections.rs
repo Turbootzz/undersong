@@ -13,7 +13,7 @@ use std::marker::PhantomData;
 use serde::de::{Deserializer, Error as DeError, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
 pub struct UniqueMap<K: Ord, V>(BTreeMap<K, V>);
 
