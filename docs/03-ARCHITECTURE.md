@@ -220,6 +220,9 @@ autoplay needs a first-interaction gate on web — title screen press handles it
 
 - 2026-06: Stack locked (this doc v1). Hand-rolled tilemap over plugins. RON over
   JSON (comments + enums). Integer-only battle math. Event-stream battle rendering.
+- 2026-06-10 (P3): cries render to **WAV** (fundsp's built-in writer; bevy's `wav`
+  feature plays it). The doc 04 "OGG" target needs a vorbis *encoder*, which the
+  closed dep list doesn't carry; revisit if audio size ever matters pre-ship.
 - 2026-06-10 (P0): the `crates/core` package is named **`undersong-core`** — cargo
   reserves `core` (collides with Rust's built-in crate). All other packages keep
   their doc names, so `cargo run -p game` / `cargo test -p battle` etc. match the

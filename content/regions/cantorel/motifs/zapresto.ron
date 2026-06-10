@@ -1,0 +1,16 @@
+// Zapresto — Zap × presto (the fastest tempo marking). A darting static-furred squi
+Motif(
+    id: "zapresto", name_key: "motif.zapresto", types: [Volt],
+    base_stats: (hp: 46, atk: 50, def: 40, spa: 62, spd: 52, spe: 110),
+    catch_rate: 200, base_exp_yield: 66,
+    ev_yield: {spe: 1},
+    growth_curve: Fast,
+    learnset: [(1, "quick_step"), (4, "static_strum"), (9, "dampen"), (13, "gale_riff"), (17, "volt_pluck"), (23, "crescendo"), (34, "tutti_charge")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["performer.bright", "habitat.fields"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 97031567816629, sigil_seed: 97031567816629,
+    dex: (height_dm: 8, weight_hg: 249, entry_key: "dex.zapresto"),
+)

@@ -1,0 +1,16 @@
+// Timpanite — Timpani x -ite (mineral suffix). A squat tortoise-Mote whose layered-s
+Motif(
+    id: "timpanite", name_key: "motif.timpanite", types: [Stone],
+    base_stats: (hp: 75, atk: 60, def: 100, spa: 35, spd: 80, spe: 30),
+    catch_rate: 190, base_exp_yield: 84,
+    ev_yield: {def: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (4, "pebble_beat"), (8, "dampen"), (11, "leaf_pick"), (15, "stone_toll"), (20, "fermata_guard"), (26, "alloy_clang"), (33, "boulder_coda")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["performer.percussion", "habitat.quarry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 188097190213445, sigil_seed: 188097190213445,
+    dex: (height_dm: 8, weight_hg: 215, entry_key: "dex.timpanite"),
+)

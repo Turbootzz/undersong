@@ -556,6 +556,15 @@ pub fn validate_region(
             ));
         }
     }
+    if pack.def.starters.len() != 3 {
+        findings.push(Finding::error(
+            "region.starters",
+            format!(
+                "{} starters, the trio must be exactly 3",
+                pack.def.starters.len()
+            ),
+        ));
+    }
     for starter in &pack.def.starters {
         if !pack.def.dex.contains(starter) {
             findings.push(Finding::error(
@@ -567,14 +576,18 @@ pub fn validate_region(
 
     // Motif rules: reuse the species-pool subset, plus evolution checks.
     let pool = crate::content::SpeciesPool {
-        species: pack.motifs.values().map(|m| m.spec.clone()).collect(),
+        species: pack
+            .motifs
+            .values()
+            .map(crate::region::Motif::spec)
+            .collect(),
     };
     let mut combined_moves = core.moves.clone();
     combined_moves.moves.extend(pack.moves.iter().cloned());
     findings.extend(validate_species_pool(&pool, &combined_moves));
 
     for motif in pack.motifs.values() {
-        let sid = motif.spec.id.as_str();
+        let sid = motif.id.as_str();
         if let Some(evolution) = &motif.evolution {
             if !pack.motifs.contains_key(&evolution.target) {
                 findings.push(Finding::error(
@@ -653,7 +666,6 @@ pub fn validate_region(
                 }
                 for move_id in moves {
                     let legal = motif
-                        .spec
                         .learnset
                         .iter()
                         .any(|(level, id)| id == move_id && *level <= member.level)

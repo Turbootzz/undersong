@@ -39,6 +39,8 @@ thiserror = "2"
 proptest = "1.11"
 directories = "6"
 serde_json = "1"
+fundsp = "0.23"
+image = "0.25"
 
 # docs/03-ARCHITECTURE.md §8: deps at opt-level 1 in dev for compile-time sanity.
 [profile.dev.package."*"]

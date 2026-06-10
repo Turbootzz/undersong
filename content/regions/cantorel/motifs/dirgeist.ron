@@ -1,0 +1,16 @@
+// Dirgeist — Dirge × geist. A rare haunter-Mote: a funeral song that was never allo
+Motif(
+    id: "dirgeist", name_key: "motif.dirgeist", types: [Phantom],
+    base_stats: (hp: 38, atk: 35, def: 45, spa: 78, spd: 80, spe: 70),
+    catch_rate: 90, base_exp_yield: 89,
+    ev_yield: {spa: 1},
+    growth_curve: Slow,
+    learnset: [(1, "hollow_hum"), (7, "dampen"), (11, "venom_trill"), (22, "phantom_rest"), (26, "frost_lull"), (31, "resonate"), (36, "requiem_swell")],
+    abilities: ["damper"],
+    hidden_ability: Some("keysmith"),
+    tags: ["performer.lament", "habitat.ruins"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 253963756363645, sigil_seed: 253963756363645,
+    dex: (height_dm: 8, weight_hg: 235, entry_key: "dex.dirgeist"),
+)

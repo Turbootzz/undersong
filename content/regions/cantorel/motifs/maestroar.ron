@@ -1,0 +1,16 @@
+// Maestroar — Canon final stage (doc 04 §2 evolution target, doc 01 §9 name). A cond
+Motif(
+    id: "maestroar", name_key: "motif.maestroar", types: [Ember],
+    base_stats: (hp: 79, atk: 87, def: 68, spa: 109, spd: 78, spe: 109),
+    catch_rate: 45, base_exp_yield: 240,
+    ev_yield: {spa: 3},
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"), (21, "flare_brass"), (30, "crescendo"), (34, "alloy_clang"), (38, "resonate")],
+    abilities: ["crescendo_ember"],
+    hidden_ability: Some("soloist"),
+    tags: ["performer.light", "habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 1486184087595, sigil_seed: 197334477696665,
+    dex: (height_dm: 9, weight_hg: 290, entry_key: "dex.maestroar"),
+)

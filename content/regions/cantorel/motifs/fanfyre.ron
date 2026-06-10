@@ -1,0 +1,16 @@
+// Fanfyre — Canon first stage (doc 04 §2 sample, rebanded to 310 BST). A brass-man
+Motif(
+    id: "fanfyre", name_key: "motif.fanfyre", types: [Ember],
+    base_stats: (hp: 46, atk: 51, def: 40, spa: 64, spd: 46, spe: 63),
+    catch_rate: 45, base_exp_yield: 62,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"), (19, "flare_brass"), (28, "crescendo"), (36, "resonate")],
+    abilities: ["crescendo_ember"],
+    hidden_ability: Some("amplify"),
+    tags: ["performer.light", "habitat.urban"],
+    tm_set: [],
+    evolution: Some((method: Level(16), target: "embaritone")),
+    cry_seed: 1486184087595, sigil_seed: 1486184087595,
+    dex: (height_dm: 9, weight_hg: 190, entry_key: "dex.fanfyre"),
+)

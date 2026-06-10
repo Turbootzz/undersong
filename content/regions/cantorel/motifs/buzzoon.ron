@@ -1,0 +1,16 @@
+// Buzzoon — Standalone route critter (buzz × bassoon). A plump drone-wasp whose re
+Motif(
+    id: "buzzoon", name_key: "motif.buzzoon", types: [Venom],
+    base_stats: (hp: 55, atk: 50, def: 50, spa: 70, spd: 55, spe: 60),
+    catch_rate: 200, base_exp_yield: 74,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sour_note"), (6, "dampen"), (11, "gale_riff"), (14, "venom_trill"), (20, "crescendo"), (25, "phantom_rest"), (31, "venom_cadenza")],
+    abilities: ["live_wire"],
+    hidden_ability: None,
+    tags: ["habitat.brush"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 156980265388063, sigil_seed: 156980265388063,
+    dex: (height_dm: 9, weight_hg: 233, entry_key: "dex.buzzoon"),
+)

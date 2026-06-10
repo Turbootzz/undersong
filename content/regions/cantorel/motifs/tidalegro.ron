@@ -1,0 +1,16 @@
+// Tidalegro — Tide middle stage (canon doc 01 §9 example name). A sleek porpoise gro
+Motif(
+    id: "tidalegro", name_key: "motif.tidalegro", types: [Tide],
+    base_stats: (hp: 75, atk: 50, def: 63, spa: 83, spd: 86, spe: 63),
+    catch_rate: 45, base_exp_yield: 142,
+    ev_yield: {spd: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (36, "riptide_finale")],
+    abilities: ["crescendo_tide"],
+    hidden_ability: Some("damper"),
+    tags: ["performer.ferry", "habitat.water"],
+    tm_set: [],
+    evolution: Some((method: Level(34), target: "cellorca")),
+    cry_seed: 121564979345958, sigil_seed: 209155816552945,
+    dex: (height_dm: 8, weight_hg: 255, entry_key: "dex.tidalegro"),
+)

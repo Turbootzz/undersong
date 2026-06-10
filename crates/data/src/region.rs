@@ -43,13 +43,27 @@ pub struct DexInfo {
     pub entry_key: String,
 }
 
-/// Full content species: the battle-facing spec plus content-only fields
-/// (doc 04 §2's motif file shape).
+/// Full content species: the battle-facing fields plus content-only ones
+/// (doc 04 §2's motif file shape). Fields mirror `SpeciesSpec` explicitly
+/// — serde(flatten) is incompatible with RON's named-struct syntax.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Motif {
-    #[serde(flatten)]
-    pub spec: SpeciesSpec,
+    pub id: SpeciesId,
+    pub name_key: String,
+    pub types: Vec<undersong_core::types::Type>,
+    pub base_stats: undersong_core::species::StatSpread,
+    pub catch_rate: u8,
+    pub base_exp_yield: u16,
+    pub ev_yield: undersong_core::collections::UniqueMap<undersong_core::stats::Stat, u8>,
+    pub growth_curve: undersong_core::species::GrowthCurve,
+    pub learnset: Vec<(u8, MoveId)>,
+    #[serde(default)]
+    pub abilities: Vec<undersong_core::ids::AbilityId>,
+    #[serde(default)]
+    pub hidden_ability: Option<undersong_core::ids::AbilityId>,
+    #[serde(default)]
+    pub tags: Vec<String>,
     #[serde(default)]
     pub tm_set: Vec<MoveId>,
     #[serde(default)]
@@ -57,6 +71,26 @@ pub struct Motif {
     pub cry_seed: u64,
     pub sigil_seed: u64,
     pub dex: DexInfo,
+}
+
+impl Motif {
+    /// The battle-facing subset (what the sim and tools consume).
+    pub fn spec(&self) -> SpeciesSpec {
+        SpeciesSpec {
+            id: self.id.clone(),
+            name_key: self.name_key.clone(),
+            types: self.types.clone(),
+            base_stats: self.base_stats,
+            catch_rate: self.catch_rate,
+            base_exp_yield: self.base_exp_yield,
+            ev_yield: self.ev_yield.clone(),
+            growth_curve: self.growth_curve,
+            learnset: self.learnset.clone(),
+            abilities: self.abilities.clone(),
+            hidden_ability: self.hidden_ability.clone(),
+            tags: self.tags.clone(),
+        }
+    }
 }
 
 /// A trainer's party member (doc 04 §2 trainer shape).
@@ -128,7 +162,8 @@ pub struct RegionDef {
     pub id: String,
     pub name_key: String,
     pub dex: Vec<SpeciesId>,
-    pub starters: [SpeciesId; 3],
+    /// Exactly three (validated) — RON authors a plain list.
+    pub starters: Vec<SpeciesId>,
     pub entry_map: MapId,
     pub entry_spawn: (u32, u32),
 }
@@ -166,7 +201,7 @@ pub fn load_region(content_root: &Path, region: &str) -> Result<RegionPack, Load
         paths.sort();
         for path in paths {
             let motif: Motif = load_ron_file(&path)?;
-            motifs.insert(motif.spec.id.clone(), motif);
+            motifs.insert(motif.id.clone(), motif);
         }
     }
 

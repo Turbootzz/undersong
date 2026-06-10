@@ -1,0 +1,16 @@
+// Cellorca — Tide final stage. A great orca whose hollow body is a living cello, ho
+Motif(
+    id: "cellorca", name_key: "motif.cellorca", types: [Tide],
+    base_stats: (hp: 95, atk: 60, def: 80, spa: 105, spd: 110, spe: 80),
+    catch_rate: 45, base_exp_yield: 240,
+    ev_yield: {spd: 3},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (34, "crescendo"), (38, "riptide_finale")],
+    abilities: ["crescendo_tide"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["performer.ferry", "habitat.water"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 121564979345958, sigil_seed: 183955917128596,
+    dex: (height_dm: 38, weight_hg: 1850, entry_key: "dex.cellorca"),
+)

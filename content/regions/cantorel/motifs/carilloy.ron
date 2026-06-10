@@ -1,0 +1,16 @@
+// Carilloy — Carillon × alloy. A drifting frame of mismatched bells scavenged from 
+Motif(
+    id: "carilloy", name_key: "motif.carilloy", types: [Alloy],
+    base_stats: (hp: 60, atk: 40, def: 85, spa: 80, spd: 95, spe: 40),
+    catch_rate: 120, base_exp_yield: 93,
+    ev_yield: {spd: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "chime_peal"), (6, "dampen"), (10, "gale_riff"), (16, "anvil_chorus"), (22, "fermata_guard"), (28, "volt_pluck"), (34, "hour_toll")],
+    abilities: ["amplify"],
+    hidden_ability: Some("tuning_fork"),
+    tags: ["performer.bells", "habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 23050010048578, sigil_seed: 23050010048578,
+    dex: (height_dm: 9, weight_hg: 278, entry_key: "dex.carilloy"),
+)

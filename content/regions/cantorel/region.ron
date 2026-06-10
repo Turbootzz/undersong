@@ -1,0 +1,10 @@
+// Cantorel — the main region (doc 01 §4). P3 ships the vertical slice;
+// the dex grows by simulate-gated batches (doc 04 §4).
+RegionDef(
+    id: "cantorel",
+    name_key: "region.cantorel",
+    dex: ["fanfyre", "embaritone", "maestroar", "rippeggio", "tidalegro", "cellorca", "solfawn", "vinebrato", "sonatler", "tremole", "rattacca", "pipling", "soarprano", "burrbass", "buzzoon", "timpanite", "zapresto", "glissicle", "dirgeist", "carilloy"],
+    starters: ["fanfyre", "rippeggio", "solfawn"],
+    entry_map: "pausa_village",
+    entry_spawn: (8, 4),
+)

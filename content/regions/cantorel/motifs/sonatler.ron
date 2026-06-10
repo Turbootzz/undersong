@@ -1,0 +1,16 @@
+// Sonatler — Bloom final stage. A great elk whose antlers have grown into a full st
+Motif(
+    id: "sonatler", name_key: "motif.sonatler", types: [Bloom],
+    base_stats: (hp: 82, atk: 104, def: 82, spa: 78, spd: 82, spe: 102),
+    catch_rate: 45, base_exp_yield: 240,
+    ev_yield: {atk: 3},
+    growth_curve: MediumSlow,
+    learnset: [(1, "bud_strum"), (1, "tackle"), (6, "quick_step"), (10, "dampen"), (13, "leaf_pick"), (17, "root_chord"), (26, "frost_lull"), (30, "stone_toll"), (34, "briar_bow"), (38, "resonate")],
+    abilities: ["crescendo_bloom"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["performer.clear", "habitat.forest"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 210841023521502, sigil_seed: 120886737901369,
+    dex: (height_dm: 9, weight_hg: 334, entry_key: "dex.sonatler"),
+)

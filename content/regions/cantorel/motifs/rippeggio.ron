@@ -1,0 +1,16 @@
+// Rippeggio — Tide starter, first stage (canon doc 01 §9 example name). A glossy cal
+Motif(
+    id: "rippeggio", name_key: "motif.rippeggio", types: [Tide],
+    base_stats: (hp: 55, atk: 38, def: 47, spa: 61, spd: 64, spe: 45),
+    catch_rate: 45, base_exp_yield: 62,
+    ev_yield: {spd: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (19, "undertow"), (26, "phantom_rest"), (33, "riptide_finale")],
+    abilities: ["crescendo_tide"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.water"],
+    tm_set: [],
+    evolution: Some((method: Level(16), target: "tidalegro")),
+    cry_seed: 121564979345958, sigil_seed: 121564979345958,
+    dex: (height_dm: 8, weight_hg: 193, entry_key: "dex.rippeggio"),
+)

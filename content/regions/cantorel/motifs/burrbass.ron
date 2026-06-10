@@ -1,0 +1,16 @@
+// Burrbass — Standalone route critter (burr × bass; name is doc-canon from 04 §2 ro
+Motif(
+    id: "burrbass", name_key: "motif.burrbass", types: [Bloom, Feral],
+    base_stats: (hp: 60, atk: 55, def: 75, spa: 40, spd: 60, spe: 30),
+    catch_rate: 220, base_exp_yield: 68,
+    ev_yield: {def: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (6, "leaf_pick"), (10, "dampen"), (14, "venom_trill"), (18, "fermata_guard"), (21, "root_chord"), (26, "stone_toll"), (33, "fortissimo_slam")],
+    abilities: ["thorn_coat"],
+    hidden_ability: None,
+    tags: ["habitat.brush", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 29536439227558, sigil_seed: 29536439227558,
+    dex: (height_dm: 8, weight_hg: 238, entry_key: "dex.burrbass"),
+)

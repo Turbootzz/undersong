@@ -1,0 +1,16 @@
+// Rattacca — Regional rodent, stage 2 (attacca × rat) — 'attacca': proceed to the n
+Motif(
+    id: "rattacca", name_key: "motif.rattacca", types: [Feral],
+    base_stats: (hp: 62, atk: 88, def: 58, spa: 40, spd: 52, spe: 110),
+    catch_rate: 180, base_exp_yield: 132,
+    ev_yield: {spe: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "quick_step"), (5, "dampen"), (12, "leaf_pick"), (17, "downbeat"), (22, "quick_march"), (27, "stone_toll"), (34, "fortissimo_slam")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.field", "habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 29096669115640, sigil_seed: 202468817696553,
+    dex: (height_dm: 8, weight_hg: 258, entry_key: "dex.rattacca"),
+)

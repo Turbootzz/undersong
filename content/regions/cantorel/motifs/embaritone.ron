@@ -1,0 +1,16 @@
+// Embaritone — NEW middle stage of the canonical fanfyre line. A gangly adolescent wh
+Motif(
+    id: "embaritone", name_key: "motif.embaritone", types: [Ember],
+    base_stats: (hp: 62, atk: 69, def: 54, spa: 86, spd: 62, spe: 87),
+    catch_rate: 45, base_exp_yield: 142,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"), (21, "flare_brass"), (30, "crescendo"), (38, "resonate")],
+    abilities: ["crescendo_ember"],
+    hidden_ability: Some("amplify"),
+    tags: ["performer.light", "habitat.urban"],
+    tm_set: [],
+    evolution: Some((method: Level(34), target: "maestroar")),
+    cry_seed: 1486184087595, sigil_seed: 25338769774329,
+    dex: (height_dm: 8, weight_hg: 239, entry_key: "dex.embaritone"),
+)

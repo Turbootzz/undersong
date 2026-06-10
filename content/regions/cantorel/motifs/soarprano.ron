@@ -1,0 +1,16 @@
+// Soarprano — Early bird, stage 2 (soar x soprano). A sleek songbird that climbs ver
+Motif(
+    id: "soarprano", name_key: "motif.soarprano", types: [Feral, Gale],
+    base_stats: (hp: 65, atk: 60, def: 55, spa: 85, spd: 55, spe: 100),
+    catch_rate: 180, base_exp_yield: 138,
+    ev_yield: {spa: 1, spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "grace_gust"), (9, "dampen"), (13, "ember_note"), (19, "gale_riff"), (25, "crescendo"), (31, "volt_pluck"), (38, "tempest_coda")],
+    abilities: ["floating"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.sky"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 122042367431481, sigil_seed: 182443725980959,
+    dex: (height_dm: 10, weight_hg: 249, entry_key: "dex.soarprano"),
+)

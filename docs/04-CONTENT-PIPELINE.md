@@ -28,18 +28,21 @@ UI strings. A region pack may add, never modify, core content.
 ```ron
 Species(
     id: "fanfyre", name_key: "motif.fanfyre", types: [Ember],
-    base_stats: (hp: 58, atk: 64, def: 50, spa: 80, spd: 58, spe: 80),
+    base_stats: (hp: 46, atk: 51, def: 40, spa: 64, spd: 46, spe: 63),
     abilities: ["crescendo_ember"], hidden_ability: Some("amplify"),
-    growth_curve: MediumSlow, catch_rate: 45, base_exp_yield: 142,
-    ev_yield: {spa: 2},
+    growth_curve: MediumSlow, catch_rate: 45, base_exp_yield: 62,
+    ev_yield: {spa: 1},
     learnset: [(1,"tackle"),(1,"ember_note"),(7,"dampen"),(13,"gale_riff"),
                (19,"flare_brass"),(28,"crescendo"),(36,"resonate")],
-    tm_set: ["tm01","tm05","tm11"],
-    evolution: Some((method: Level(34), target: "maestroar")),
+    tm_set: [],
+    evolution: Some((method: Level(16), target: "embaritone")),
     cry_seed: 0xFA9F_1E22, sigil_seed: 0xFA9F_1E22,
-    dex: (height_m: 0.9, weight_kg: 19.5, entry_key: "dex.fanfyre"),
+    // integer law: height/weight in decimeters/hectograms
+    dex: (height_dm: 6, weight_hg: 95, entry_key: "dex.fanfyre"),
     tags: ["performer.light", "habitat.urban"],
 )
+// (Sample updated at P3 to the shipped three-stage line:
+// fanfyre 310 BST → embaritone @16 → maestroar @34.)
 ```
 
 ### Trainer (`trainers/maestro_mirelle.ron`)
@@ -51,7 +54,7 @@ Trainer(
     party: [
         (species: "solfawn",  level: 14, moves: Some(["leaf_pick","dampen","quick_step"])),
         (species: "vinebrato",level: 17, ivs: Some((hp:31,atk:20,def:25,spa:31,spd:25,spe:31)),
-         moves: Some(["root_chord","leaf_pick","frost_lull","crescendo"]),
+         moves: Some(["root_chord","leaf_pick","dampen","quick_step"]),
          held_item: Some("oran_chime")),
     ],
     defeat_flag: "hall.2.cleared", reward: (money_mult: 1.0, items: [("tm05", 1)]),

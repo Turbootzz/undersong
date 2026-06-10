@@ -1,0 +1,16 @@
+// Pipling — Early bird, stage 1 (pipe/piccolo x nestling; name is doc-canon from 0
+Motif(
+    id: "pipling", name_key: "motif.pipling", types: [Feral, Gale],
+    base_stats: (hp: 45, atk: 45, def: 38, spa: 55, spd: 37, spe: 80),
+    catch_rate: 255, base_exp_yield: 55,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (5, "grace_gust"), (9, "dampen"), (13, "ember_note"), (18, "gale_riff"), (23, "crescendo"), (28, "volt_pluck"), (35, "tempest_coda")],
+    abilities: ["floating"],
+    hidden_ability: None,
+    tags: ["habitat.sky"],
+    tm_set: [],
+    evolution: Some((method: Level(16), target: "soarprano")),
+    cry_seed: 122042367431481, sigil_seed: 122042367431481,
+    dex: (height_dm: 7, weight_hg: 191, entry_key: "dex.pipling"),
+)

@@ -1,0 +1,16 @@
+// Tremole — Regional rodent, stage 1 (tremolo × vole). A twitch-furred field vole 
+Motif(
+    id: "tremole", name_key: "motif.tremole", types: [Feral],
+    base_stats: (hp: 42, atk: 56, def: 40, spa: 30, spd: 37, spe: 85),
+    catch_rate: 255, base_exp_yield: 52,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (5, "dampen"), (8, "quick_step"), (12, "leaf_pick"), (15, "downbeat"), (19, "quick_march"), (24, "stone_toll"), (30, "fortissimo_slam")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("vigor"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: Some((method: Level(14), target: "rattacca")),
+    cry_seed: 29096669115640, sigil_seed: 29096669115640,
+    dex: (height_dm: 6, weight_hg: 205, entry_key: "dex.tremole"),
+)

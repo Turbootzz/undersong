@@ -1,0 +1,16 @@
+// Vinebrato — Bloom middle stage (canon doc 01 §9 example name; doc 04 §2 trainer sa
+Motif(
+    id: "vinebrato", name_key: "motif.vinebrato", types: [Bloom],
+    base_stats: (hp: 65, atk: 82, def: 65, spa: 62, spd: 65, spe: 81),
+    catch_rate: 45, base_exp_yield: 142,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "bud_strum"), (1, "tackle"), (6, "quick_step"), (10, "dampen"), (13, "leaf_pick"), (17, "root_chord"), (26, "frost_lull"), (36, "briar_bow")],
+    abilities: ["crescendo_bloom"],
+    hidden_ability: Some("thorn_coat"),
+    tags: ["performer.clear", "habitat.forest"],
+    tm_set: [],
+    evolution: Some((method: Level(34), target: "sonatler")),
+    cry_seed: 210841023521502, sigil_seed: 89850089658867,
+    dex: (height_dm: 10, weight_hg: 257, entry_key: "dex.vinebrato"),
+)

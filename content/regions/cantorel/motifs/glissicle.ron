@@ -1,0 +1,16 @@
+// Glissicle — Glissando × icicle. An oddity-Mote: a hanging rack of hollow ice pipes
+Motif(
+    id: "glissicle", name_key: "motif.glissicle", types: [Frost],
+    base_stats: (hp: 50, atk: 30, def: 65, spa: 80, spd: 85, spe: 44),
+    catch_rate: 140, base_exp_yield: 76,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (5, "sleet_staccato"), (9, "frost_lull"), (14, "gale_riff"), (18, "hail_chorale"), (24, "crescendo"), (35, "shatter_aria")],
+    abilities: ["vigor"],
+    hidden_ability: None,
+    tags: ["performer.glass", "habitat.alpine"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 173994936525706, sigil_seed: 173994936525706,
+    dex: (height_dm: 9, weight_hg: 251, entry_key: "dex.glissicle"),
+)

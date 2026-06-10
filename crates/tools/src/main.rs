@@ -6,8 +6,11 @@
 //! No CLI dependency: the closed dependency list (doc 03 §7) has no
 //! argument parser, and a handful of flags doesn't justify one.
 
+mod cries;
 mod importmap;
+mod melody;
 mod render;
+mod sigils;
 mod sim;
 
 use std::path::PathBuf;
@@ -20,7 +23,8 @@ const USAGE: &str = "usage:
   tools validate  [--content <dir>]
   tools simulate  [--battles <n>] [--pool <file>] [--level <n>] [--seed <n>] [--content <dir>]
   tools battle    --seed <n> [--pool <file>] [--level <n>] [--content <dir>]
-  tools importmap --in <project.ldtk> --out <maps dir>";
+  tools importmap --in <project.ldtk> --out <maps dir>
+  tools assets    --region <id> [--content <dir>] [--out <dir>]";
 
 fn main() -> ExitCode {
     match run() {
@@ -45,6 +49,7 @@ struct Options {
     battles: u32,
     level: u8,
     seed: Option<u64>,
+    region: Option<String>,
 }
 
 impl Default for Options {
@@ -55,6 +60,7 @@ impl Default for Options {
             battles: 1000,
             level: 30,
             seed: None,
+            region: None,
         }
     }
 }
@@ -92,6 +98,7 @@ fn parse_options(args: impl Iterator<Item = String>, allowed: &[&str]) -> Result
                         .with_context(|| format!("--seed expects a number, got `{raw}`"))?,
                 );
             }
+            "--region" => options.region = Some(value("--region")?),
             other => bail!("unknown argument `{other}`\n{USAGE}"),
         }
     }
@@ -117,13 +124,34 @@ fn run() -> Result<bool> {
         Some("simulate") => {
             let options = parse_options(
                 args,
-                &["--battles", "--pool", "--level", "--seed", "--content"],
+                &[
+                    "--battles",
+                    "--pool",
+                    "--level",
+                    "--seed",
+                    "--content",
+                    "--region",
+                ],
             )?;
             simulate(&options)
         }
         Some("battle") => {
             let options = parse_options(args, &["--seed", "--pool", "--level", "--content"])?;
             run_battle(&options)
+        }
+        Some("assets") => {
+            let rest: Vec<String> = args.collect();
+            let value = |flag: &str, default: &str| -> String {
+                rest.iter()
+                    .position(|a| a == flag)
+                    .and_then(|i| rest.get(i + 1))
+                    .cloned()
+                    .unwrap_or_else(|| default.to_string())
+            };
+            let region = value("--region", "cantorel");
+            let content = PathBuf::from(value("--content", "content"));
+            let out = PathBuf::from(value("--out", "assets"));
+            generate_assets(&content, &region, &out)
         }
         Some("importmap") => {
             let rest: Vec<String> = args.collect();
@@ -302,6 +330,48 @@ fn check_script_cmds(
     }
 }
 
+/// `tools assets`: renders every motif's sigil sprites + cry from its
+/// seeds (doc 04 §5–§6). Same melody feeds both — the signature trick.
+fn generate_assets(content_root: &PathBuf, region: &str, out: &PathBuf) -> Result<bool> {
+    let pack = data::load_region(content_root, region)
+        .with_context(|| format!("loading region `{region}`"))?;
+    let palette = data::load_palette(content_root).context("loading palette")?;
+    let sigil_dir = out.join("sigils").join(region);
+    let cry_dir = out.join("cries").join(region);
+    let mut count = 0usize;
+    for motif in pack.motifs.values() {
+        let primary = motif.types[0];
+        let tune = melody::melody(
+            motif.cry_seed,
+            primary,
+            motif.base_stats.spe,
+            motif.dex.weight_hg,
+        );
+        let type_hex = palette
+            .type_colors
+            .get(&primary)
+            .cloned()
+            .unwrap_or_else(|| "#7d4f9e".to_string());
+        sigils::render_sigil(
+            motif.id.as_str(),
+            motif.sigil_seed,
+            primary,
+            &type_hex,
+            &palette.gilt,
+            &tune,
+            &sigil_dir,
+        )?;
+        cries::render_cry(motif.id.as_str(), &tune, &cry_dir)?;
+        count += 1;
+    }
+    println!(
+        "assets: {count} motifs → {} + {}",
+        sigil_dir.display(),
+        cry_dir.display()
+    );
+    Ok(true)
+}
+
 fn load_pool(options: &Options) -> Result<(data::SpeciesPool, data::CoreContent)> {
     let content = data::load_core(&options.content)
         .with_context(|| format!("loading content pack at {}", options.content.display()))?;
@@ -321,7 +391,34 @@ fn load_pool(options: &Options) -> Result<(data::SpeciesPool, data::CoreContent)
 }
 
 fn simulate(options: &Options) -> Result<bool> {
-    let (pool, content) = load_pool(options)?;
+    let (pool, content) = if let Some(region) = &options.region {
+        // Region pool: motifs' battle specs + core moves extended with
+        // the region's own (doc 04 §4 balance loop). An explicit --pool
+        // narrows the species set (band runs) while keeping the region's
+        // move table.
+        let pack = data::load_region(&options.content, region)
+            .with_context(|| format!("loading region `{region}`"))?;
+        let mut content = data::load_core(&options.content)?;
+        content.moves.moves.extend(pack.moves.iter().cloned());
+        let pool = if options.pool != Options::default().pool {
+            data::load_species_pool(&options.pool)
+                .with_context(|| format!("loading pool {}", options.pool.display()))?
+        } else {
+            data::SpeciesPool {
+                species: pack.motifs.values().map(data::Motif::spec).collect(),
+            }
+        };
+        let findings = data::validate_species_pool(&pool, &content.moves);
+        if findings.iter().any(|f| f.severity == data::Severity::Error) {
+            for finding in &findings {
+                eprintln!("{finding}");
+            }
+            anyhow::bail!("species pool failed validation");
+        }
+        (pool, content)
+    } else {
+        load_pool(options)?
+    };
     let config = sim::SimConfig {
         battles: options.battles,
         level: options.level,
