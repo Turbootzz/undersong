@@ -9,6 +9,7 @@
 pub mod chart;
 pub mod collections;
 pub mod ids;
+pub mod individual;
 pub mod moves;
 pub mod rng;
 pub mod species;

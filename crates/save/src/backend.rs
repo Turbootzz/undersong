@@ -1,0 +1,68 @@
+//! Save backends: filesystem now, LocalStorage at P7 (doc 03 §9).
+
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+use crate::model::SaveError;
+
+pub trait SaveBackend {
+    fn write(&mut self, name: &str, contents: &str) -> Result<(), SaveError>;
+    fn read(&self, name: &str) -> Result<Option<String>, SaveError>;
+}
+
+/// Filesystem backend rooted at the platform save dir
+/// (`ProjectDirs("com", "turboot", "undersong")/saves`, doc 03 §4).
+pub struct FsBackend {
+    dir: PathBuf,
+}
+
+impl FsBackend {
+    /// Platform-default location. `None` only on exotic systems with no
+    /// home directory at all.
+    pub fn platform_default() -> Option<Self> {
+        directories::ProjectDirs::from("com", "turboot", "undersong")
+            .map(|dirs| Self::at(dirs.data_dir().join("saves")))
+    }
+
+    /// Explicit root — tests and the future replay harness use this.
+    pub fn at(dir: PathBuf) -> Self {
+        Self { dir }
+    }
+}
+
+impl SaveBackend for FsBackend {
+    fn write(&mut self, name: &str, contents: &str) -> Result<(), SaveError> {
+        std::fs::create_dir_all(&self.dir).map_err(|e| SaveError::Io(e.to_string()))?;
+        // Write-then-rename so a crash mid-write can't truncate the only
+        // copy of a player's save.
+        let tmp = self.dir.join(format!("{name}.tmp"));
+        let target = self.dir.join(name);
+        std::fs::write(&tmp, contents).map_err(|e| SaveError::Io(e.to_string()))?;
+        std::fs::rename(&tmp, &target).map_err(|e| SaveError::Io(e.to_string()))
+    }
+
+    fn read(&self, name: &str) -> Result<Option<String>, SaveError> {
+        match std::fs::read_to_string(self.dir.join(name)) {
+            Ok(text) => Ok(Some(text)),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(e) => Err(SaveError::Io(e.to_string())),
+        }
+    }
+}
+
+/// In-memory backend for tests (and the shape of the web backend later).
+#[derive(Debug, Default)]
+pub struct MemBackend {
+    files: BTreeMap<String, String>,
+}
+
+impl SaveBackend for MemBackend {
+    fn write(&mut self, name: &str, contents: &str) -> Result<(), SaveError> {
+        self.files.insert(name.to_string(), contents.to_string());
+        Ok(())
+    }
+
+    fn read(&self, name: &str) -> Result<Option<String>, SaveError> {
+        Ok(self.files.get(name).cloned())
+    }
+}
