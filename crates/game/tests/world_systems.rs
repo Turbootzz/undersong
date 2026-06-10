@@ -330,7 +330,7 @@ fn performance_gates_check_badge_then_tag() {
 #[test]
 fn water_blocks_without_ferry_song_and_carries_with_it() {
     let mut map = void_map();
-    map.ground[1 * 8 + 2] = 5; // water at (2,1)
+    map.ground[8 + 2] = 5; // water at (2,1)
     let mut world = world_with(map);
     world.party = vec![member(&world, "rippeggio", 10)]; // tide starter is no ferry
     world.apply(Input::Step(undersong_core::world::Facing::Right)); // face
@@ -384,7 +384,7 @@ fn duet_stone_evolves_the_flagged_species() {
     )));
     assert_eq!(world.party[0].species.as_str(), "embaritone");
     assert!(
-        world.bag.get(&"duet_stone".into()).is_none(),
+        !world.bag.contains_key(&"duet_stone".into()),
         "stone consumed"
     );
 }

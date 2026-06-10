@@ -387,7 +387,7 @@ impl WorldState {
             .count() as u8;
         if badges > self.badge_count {
             for member in &mut self.party {
-                member.friendship = member.friendship.saturating_add(1).min(255);
+                member.friendship = member.friendship.saturating_add(1);
             }
             self.badge_count = badges;
         }
@@ -1260,7 +1260,7 @@ impl WorldState {
                     if let Some(party_index) = session.party_map.get(usize::from(*slot))
                         && let Some(member) = self.party.get_mut(*party_index)
                     {
-                        member.friendship = member.friendship.saturating_add(2).min(255);
+                        member.friendship = member.friendship.saturating_add(2);
                     }
                 }
                 battle::BattleEvent::Fainted {
@@ -1439,7 +1439,7 @@ impl WorldState {
                         .sum();
                     if current < 100 && total + 10 <= 510 {
                         member.evs.set(*stat, current + 10);
-                        member.friendship = member.friendship.saturating_add(5).min(255);
+                        member.friendship = member.friendship.saturating_add(5);
                         consumed = true;
                         message = "ui.item.vitamin_used".into();
                     } else {
@@ -1449,7 +1449,7 @@ impl WorldState {
             }
             data::ItemKind::Tm { move_id } => {
                 if let Some(member) = self.party.get_mut(target_index) {
-                    let allowed = registry.species.get(&member.species).is_some()
+                    let allowed = registry.species.contains_key(&member.species)
                         && registry
                             .tm_sets
                             .get(&member.species)
@@ -1513,12 +1513,12 @@ impl WorldState {
             }
             _ => {}
         }
-        if consumed {
-            if let Some(count) = self.bag.get_mut(item) {
-                *count -= 1;
-                if *count == 0 {
-                    self.bag.remove(item);
-                }
+        if consumed
+            && let Some(count) = self.bag.get_mut(item)
+        {
+            *count -= 1;
+            if *count == 0 {
+                self.bag.remove(item);
             }
         }
         if !message.is_empty() {
