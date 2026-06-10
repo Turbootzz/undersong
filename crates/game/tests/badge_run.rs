@@ -13,7 +13,7 @@ fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-const SEED: u64 = 0x0BAD_9E1; // chosen once; the artifact pins it
+const SEED: u64 = 0x00BA_D9E1; // chosen once; the artifact pins it
 
 struct Driver {
     world: WorldState,
@@ -179,7 +179,7 @@ impl Driver {
             // Bounce between two patch tiles — raw inputs, NOT step():
             // step() drains, and drain's T1 policy would KO the wild
             // before the bell logic ever saw it.
-            let dir = if self.world.player.1 % 2 == 0 {
+            let dir = if self.world.player.1.is_multiple_of(2) {
                 Up
             } else {
                 Down
@@ -242,7 +242,7 @@ fn run_to_badge() -> Driver {
             driver.retrek_to_patches();
             continue;
         }
-        let dir = if driver.world.player.1 % 2 == 0 {
+        let dir = if driver.world.player.1.is_multiple_of(2) {
             Up
         } else {
             Down
