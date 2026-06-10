@@ -89,7 +89,7 @@ pub fn queue_battle_events(
                 for battle_event in stream {
                     use battle::BattleEvent as E;
                     let line = match battle_event {
-                        E::MoveUsed { side, move_id } => Some(format!(
+                        E::MoveUsed { side, move_id, .. } => Some(format!(
                             "{} uses {}",
                             if *side == 0 { "you" } else { "foe" },
                             move_name(move_id)
@@ -103,6 +103,7 @@ pub fn queue_battle_events(
                             amount,
                             crit,
                             effectiveness,
+                            ..
                         } => {
                             let mut line = format!(
                                 "{} takes {amount}",
@@ -119,7 +120,7 @@ pub fn queue_battle_events(
                             }
                             Some(line)
                         }
-                        E::StatusApplied { target, status } => Some(format!(
+                        E::StatusApplied { target, status, .. } => Some(format!(
                             "{} is {}!",
                             if *target == 0 { "your mote" } else { "the foe" },
                             world.text(&format!(
@@ -134,7 +135,7 @@ pub fn queue_battle_events(
                                 }
                             ))
                         )),
-                        E::Fainted { target } => Some(format!(
+                        E::Fainted { target, .. } => Some(format!(
                             "{} faints!",
                             if *target == 0 { "your mote" } else { "the foe" }
                         )),

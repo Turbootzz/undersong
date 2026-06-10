@@ -5,7 +5,8 @@
 
 use battle::stats::{StageStat, Stages};
 use battle::{
-    Action, BattleKind, BattleMote, BattleState, MoteBuilder, TurnActions, step, turn::TURN_LIMIT,
+    Action, BattleKind, BattleMote, BattleState, MoteBuilder, PositionAction, TurnActions, step,
+    turn::TURN_LIMIT,
 };
 use proptest::prelude::*;
 use undersong_core::chart::TypeChart;
@@ -269,12 +270,94 @@ fn run_random_battle(seed: u64) -> u16 {
                 assert!(mote.ev_sum() <= 510, "EV sum ≤ 510 (seed {seed})");
                 assert!(mote.level <= 100, "level cap (seed {seed})");
             }
-            for stage in side.active_state.stages.0 {
-                assert!((-6..=6).contains(&stage), "stage clamp (seed {seed})");
+            for position in &side.positions {
+                for stage in position.state.stages.0 {
+                    assert!((-6..=6).contains(&stage), "stage clamp (seed {seed})");
+                }
             }
         }
     }
     state.turn
+}
+
+/// Random per-position doubles action: mostly moves with random targets
+/// (including fainted and out-of-range slots — the engine must retarget,
+/// fizzle, or resolve deterministically), sometimes switches or passes.
+fn random_doubles_action(side: u8, position: u8, rng: &mut BattleRng) -> PositionAction {
+    let action = match rng.below(10) {
+        0..=7 => Action::Move {
+            slot: u8::try_from(rng.below(4)).expect("0..4"),
+        },
+        8 => Action::Switch {
+            to: u8::try_from(rng.below(5)).expect("0..5"),
+        },
+        _ => Action::None,
+    };
+    PositionAction {
+        side,
+        position,
+        action,
+        // 0..3: slot 1 may not exist and slot 2 never does — engine
+        // policy must resolve both without panicking.
+        target_position: u8::try_from(rng.below(3)).expect("0..3"),
+    }
+}
+
+/// Drives one fully random doubles battle, asserting the same invariants
+/// as the singles fuzz. Returns the serialized event stream so the
+/// determinism check can compare reruns.
+fn run_random_doubles_battle(seed: u64) -> String {
+    let mut rng = BattleRng::from_seed(seed);
+    let chart = if rng.chance(1, 2) {
+        random_chart(&mut rng)
+    } else {
+        full_neutral_chart()
+    };
+    let party = |rng: &mut BattleRng, base: u32| -> Vec<BattleMote> {
+        (0..2 + rng.below(3))
+            .map(|i| random_battle_mote(base + i, rng))
+            .collect()
+    };
+    let side0 = party(&mut rng, 200);
+    let side1 = party(&mut rng, 300);
+    let mut state = BattleState::new_double(BattleKind::Trainer, side0, side1, chart);
+
+    let mut all_events = Vec::new();
+    let mut steps = 0u32;
+    while state.outcome.is_none() {
+        let mut declared = Vec::new();
+        for side in 0..2u8 {
+            for position in 0..state.sides[usize::from(side)].position_count() {
+                declared.push(random_doubles_action(side, position, &mut rng));
+            }
+        }
+        let (next, events) = step(&state, &TurnActions::doubles(declared), &mut rng);
+        all_events.extend(events);
+        state = next;
+        steps += 1;
+        assert!(
+            steps <= u32::from(TURN_LIMIT) + 1,
+            "doubles battle failed to terminate (seed {seed})"
+        );
+        for side in &state.sides {
+            assert!(side.positions.len() <= 2, "≤ 2 positions (seed {seed})");
+            for position in &side.positions {
+                assert!(
+                    usize::from(position.party_index) < side.party.len(),
+                    "fielded index in range (seed {seed})"
+                );
+                for stage in position.state.stages.0 {
+                    assert!((-6..=6).contains(&stage), "stage clamp (seed {seed})");
+                }
+            }
+            for mote in &side.party {
+                assert!(mote.hp <= mote.max_hp(), "hp ≤ max (seed {seed})");
+                assert!(mote.ev_sum() <= 510, "EV sum ≤ 510 (seed {seed})");
+                assert!(mote.level <= 100, "level cap (seed {seed})");
+            }
+        }
+    }
+    ron::to_string(&all_events).expect("serialize")
 }
 
 // ---- the 10,000-battle fuzz gate (doc 03 §2) ---------------------------
@@ -285,6 +368,24 @@ fn run_random_battle(seed: u64) -> u16 {
 fn fuzz_ten_thousand_battles_no_panics_all_terminate() {
     for seed in 0..10_000u64 {
         run_random_battle(seed);
+    }
+}
+
+/// Doubles gate: 2,000 random doubles battles — zero panics, all
+/// terminate, invariants hold; every 16th seed reruns to pin
+/// same-seed determinism across the doubles paths (retarget, fizzle,
+/// per-position ordering).
+#[test]
+fn fuzz_two_thousand_doubles_battles_no_panics_deterministic() {
+    for seed in 0..2_000u64 {
+        let stream = run_random_doubles_battle(seed);
+        if seed.is_multiple_of(16) {
+            assert_eq!(
+                stream,
+                run_random_doubles_battle(seed),
+                "same seed must replay byte-identically (seed {seed})"
+            );
+        }
     }
 }
 

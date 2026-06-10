@@ -25,7 +25,7 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::SwitchedIn { side, species, .. } => {
             format!("{} {species} takes the stage", side_tag(*side))
         }
-        BattleEvent::MoveUsed { side, move_id } => {
+        BattleEvent::MoveUsed { side, move_id, .. } => {
             format!("{} uses {move_id}", side_tag(*side))
         }
         BattleEvent::LastResortUsed { side } => {
@@ -41,6 +41,7 @@ fn render_event(event: &BattleEvent) -> String {
             amount,
             crit,
             effectiveness,
+            ..
         } => {
             let mut line = format!("  → {} takes {amount}", side_tag(*target));
             if *crit {
@@ -60,6 +61,7 @@ fn render_event(event: &BattleEvent) -> String {
             stat,
             delta,
             new_stage,
+            ..
         } => format!(
             "  {} {stat:?} {} (now {new_stage:+})",
             side_tag(*target),
@@ -68,7 +70,7 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::StatStageClamped { target, stat } => {
             format!("  {} {stat:?} can't go further", side_tag(*target))
         }
-        BattleEvent::StatusApplied { target, status } => {
+        BattleEvent::StatusApplied { target, status, .. } => {
             format!("  {} is {status:?}!", side_tag(*target))
         }
         BattleEvent::StatusTicked {
@@ -79,10 +81,10 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::StatusCured { target, status } => {
             format!("  {} shakes off {status:?}", side_tag(*target))
         }
-        BattleEvent::ActionLost { side, status } => {
+        BattleEvent::ActionLost { side, status, .. } => {
             format!("{} can't act ({status:?})", side_tag(*side))
         }
-        BattleEvent::Flinched { side } => format!("{} flinched!", side_tag(*side)),
+        BattleEvent::Flinched { side, .. } => format!("{} flinched!", side_tag(*side)),
         BattleEvent::ConfusionStarted { target } => {
             format!("  {} is confused!", side_tag(*target))
         }
@@ -92,13 +94,13 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::HurtItselfInConfusion { side, damage } => {
             format!("{} hurt itself in confusion ({damage})", side_tag(*side))
         }
-        BattleEvent::Healed { target, amount } => {
+        BattleEvent::Healed { target, amount, .. } => {
             format!("  {} restores {amount} HP", side_tag(*target))
         }
         BattleEvent::Drained { from, amount } => {
             format!("  drains {amount} from {}", side_tag(*from))
         }
-        BattleEvent::Recoiled { side, amount } => {
+        BattleEvent::Recoiled { side, amount, .. } => {
             format!("  {} hit by recoil ({amount})", side_tag(*side))
         }
         BattleEvent::SeededDrain { from, amount } => {
@@ -117,7 +119,7 @@ fn render_event(event: &BattleEvent) -> String {
         BattleEvent::WeatherChip { target, amount } => {
             format!("  weather wears {} ({amount})", side_tag(*target))
         }
-        BattleEvent::Fainted { target } => format!("{} faints!", side_tag(*target)),
+        BattleEvent::Fainted { target, .. } => format!("{} faints!", side_tag(*target)),
         BattleEvent::ExpGained { side, amount, .. } => {
             format!("  {} gains {amount} exp", side_tag(*side))
         }

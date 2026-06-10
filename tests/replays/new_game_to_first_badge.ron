@@ -1,5 +1,5 @@
 // P3 gate replay — recorded by badge_run.rs (UPDATE_REPLAYS=1).
-// 1054 inputs from one seed; do not hand-edit.
+// 1061 inputs from one seed; do not hand-edit.
 (
     seed: 12245473,
     world: Game,
@@ -1179,6 +1179,13 @@
         Step(Up),
         Step(Up),
         Interact,
+        ShopCursor(1),
+        ShopCursor(1),
+        ShopCursor(1),
+        ShopCursor(1),
+        ShopCursor(1),
+        ShopCursor(1),
+        ShopCursor(1),
         ShopCursor(1),
         ShopCursor(1),
         ShopCursor(1),

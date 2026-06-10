@@ -106,7 +106,7 @@ fn priority_beats_speed() {
     let first_move = position(&events, |e| matches!(e, BattleEvent::MoveUsed { .. }));
     let quick_used = position(
         &events,
-        |e| matches!(e, BattleEvent::MoveUsed { side: 0, move_id } if move_id.as_str() == "quick_step"),
+        |e| matches!(e, BattleEvent::MoveUsed { side: 0, move_id, .. } if move_id.as_str() == "quick_step"),
     );
     assert_eq!(first_move, quick_used, "priority move acts first");
 }
@@ -178,7 +178,7 @@ fn switch_resolves_before_moves() {
     })
     .expect("foe moved");
     assert!(switch_at < move_at, "switch resolves before any move");
-    assert_eq!(next.sides[0].active, 1);
+    assert_eq!(next.sides[0].positions[0].party_index, 1);
     // The incoming Mote took the hit.
     assert!(next.sides[0].party[1].hp < next.sides[0].party[1].max_hp());
     assert_eq!(next.sides[0].party[0].hp, next.sides[0].party[0].max_hp());
@@ -194,7 +194,7 @@ fn end_of_turn_tick_order_is_law() {
         vec![mote(&sp, 30, vec![tackle.clone()])],
     );
     state.weather = Some((undersong_core::moves::WeatherKind::Flurry, 3));
-    state.sides[0].active_state.seeded = true;
+    state.sides[0].positions[0].state.seeded = true;
     state.sides[0].party[0].status = Some(battle::mote::MajorStatus::Poison);
 
     let mut rng = BattleRng::from_seed(4);
@@ -379,7 +379,8 @@ fn sleep_counts_down_on_action_and_wakes() {
             e,
             BattleEvent::ActionLost {
                 side: 0,
-                status: Ailment::Sleep
+                status: Ailment::Sleep,
+                ..
             }
         )),
         "turn 1: still lulled"
@@ -446,7 +447,7 @@ fn flinch_costs_the_target_its_action() {
     assert!(
         events
             .iter()
-            .any(|e| matches!(e, BattleEvent::Flinched { side: 1 }))
+            .any(|e| matches!(e, BattleEvent::Flinched { side: 1, .. }))
     );
     assert!(
         !events
@@ -607,7 +608,7 @@ fn faint_awards_exp_and_levels_up() {
     assert!(
         events
             .iter()
-            .any(|e| matches!(e, BattleEvent::Fainted { target: 1 }))
+            .any(|e| matches!(e, BattleEvent::Fainted { target: 1, .. }))
     );
     // ΔExp = floor(100·30/7)·1.5 (trainer) = 428·1.5 = 642
     assert!(events.iter().any(|e| matches!(
@@ -672,7 +673,7 @@ fn confusion_can_cause_deterministic_self_hit() {
         vec![mote(&sp, 20, vec![tackle.clone()])],
         vec![mote(&sp, 20, vec![tackle.clone()])],
     );
-    state.sides[0].active_state.confusion = 4;
+    state.sides[0].positions[0].state.confusion = 4;
 
     // Find a seed where the 1/3 self-hit fires, then assert the v1.1 #4
     // deterministic damage: floor(floor(2·20/5+2)·40·atk/def/50)+2 with
@@ -768,8 +769,14 @@ fn stat_stage_effects_apply_and_clamp() {
         state = next;
     }
     use battle::stats::StageStat;
-    assert_eq!(state.sides[0].active_state.stages.get(StageStat::Spa), 6);
-    assert_eq!(state.sides[0].active_state.stages.get(StageStat::Spe), 6);
+    assert_eq!(
+        state.sides[0].positions[0].state.stages.get(StageStat::Spa),
+        6
+    );
+    assert_eq!(
+        state.sides[0].positions[0].state.stages.get(StageStat::Spe),
+        6
+    );
 }
 
 #[test]
@@ -822,7 +829,7 @@ fn two_turn_charges_once_commits_slot_and_costs_one_pp() {
         "no strike on the charge turn"
     );
     assert_eq!(mid.sides[0].party[0].moves[0].pp, 4, "1 PP at charge");
-    assert_eq!(mid.sides[0].active_state.charging, Some(0));
+    assert_eq!(mid.sides[0].positions[0].state.charging, Some(0));
 
     // Turn 2: submit the OTHER slot — the committed slot strikes anyway,
     // no second PP cost, no second MoveUsed (doc 02 v1.2 #5).
@@ -844,7 +851,7 @@ fn two_turn_charges_once_commits_slot_and_costs_one_pp() {
         after.sides[0].party[0].moves[1].pp, tackle.pp,
         "tackle untouched"
     );
-    assert_eq!(after.sides[0].active_state.charging, None);
+    assert_eq!(after.sides[0].positions[0].state.charging, None);
 }
 
 #[test]
@@ -865,7 +872,7 @@ fn two_turn_switch_cancels_the_charge() {
     );
     let mut rng = BattleRng::from_seed(22);
     let (mid, _) = step(&state, &both_move(0, 0), &mut rng);
-    assert_eq!(mid.sides[0].active_state.charging, Some(0));
+    assert_eq!(mid.sides[0].positions[0].state.charging, Some(0));
 
     let (after, events) = step(
         &mid,
@@ -873,7 +880,7 @@ fn two_turn_switch_cancels_the_charge() {
         &mut rng,
     );
     assert_eq!(
-        after.sides[0].active_state.charging, None,
+        after.sides[0].positions[0].state.charging, None,
         "volatiles clear on exit"
     );
     assert!(
@@ -904,8 +911,10 @@ fn force_switch_does_not_eclipse_a_faint() {
     let mut rng = BattleRng::from_seed(23);
     let (next, events) = step(&state, &both_move(0, 0), &mut rng);
 
-    let faint = position(&events, |e| matches!(e, BattleEvent::Fainted { target: 1 }))
-        .expect("the KO is visible in the stream");
+    let faint = position(&events, |e| {
+        matches!(e, BattleEvent::Fainted { target: 1, .. })
+    })
+    .expect("the KO is visible in the stream");
     assert!(
         events
             .iter()
@@ -918,7 +927,7 @@ fn force_switch_does_not_eclipse_a_faint() {
     })
     .expect("replacement arrives");
     assert!(faint < switched);
-    assert_eq!(next.sides[1].active, 1);
+    assert_eq!(next.sides[1].positions[0].party_index, 1);
 }
 
 #[test]
@@ -943,7 +952,7 @@ fn self_switch_after_lethal_recoil_faints_the_user() {
     assert!(
         events
             .iter()
-            .any(|e| matches!(e, BattleEvent::Fainted { target: 0 })),
+            .any(|e| matches!(e, BattleEvent::Fainted { target: 0, .. })),
         "recoil faint is visible, not hidden by the self-switch"
     );
 }

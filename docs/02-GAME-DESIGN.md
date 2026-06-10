@@ -498,3 +498,18 @@ Specifications P4 needs that earlier sections left open. Doc is law.
 6. **Weather zones.** A map may declare ambient weather; battles started
    there open with it active (5 turns refreshing each round the zone's
    weather — i.e. effectively permanent in-zone).
+
+### v1.7 — 2026-06-10 (doubles implementation rulings)
+
+1. **Replacement timing is end-of-turn** in both formats — a position
+   whose Mote fainted refills from the bench when the turn ends, never
+   mid-turn (keeps v1.5 #2's retarget/fizzle reachable and one policy
+   across formats).
+2. **EV yield in doubles**: every conscious fielded player Mote receives
+   the full `ev_yield` of a fainted foe; §9's split applies to exp only.
+3. **Multi-way speed ties** resolve with one rng draw per tied adjacent
+   pair after a stable descending sort (pairwise, not a uniform
+   shuffle); degenerates to the single coin flip in singles (v1.1 #1d).
+4. **Dissonance in doubles** drops atk on both foe positions on entry.
+5. **Benchless fainted positions** stay on the field as silent (fainted)
+   slots; single-target moves declared at them retarget per v1.5 #2.

@@ -345,7 +345,7 @@ impl BattleSession {
                 // Item use spends the turn: heal lands first, then the
                 // foe acts against a passing player.
                 if let Some(amount) = heal {
-                    let active = usize::from(self.state.sides[0].active);
+                    let active = usize::from(self.state.sides[0].positions[0].party_index);
                     self.state.sides[0].party[active].heal(u32::from(amount));
                 }
                 Action::None

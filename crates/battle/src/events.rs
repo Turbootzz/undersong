@@ -38,6 +38,9 @@ pub enum BattleEvent {
     },
     MoveUsed {
         side: SideId,
+        /// Acting position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         move_id: MoveId,
     },
     /// The built-in no-PP fallback (doc 02 v1.1 #3).
@@ -56,6 +59,9 @@ pub enum BattleEvent {
     },
     DamageDealt {
         target: SideId,
+        /// Struck position on `target`'s side (0 in singles).
+        #[serde(default)]
+        target_slot: u8,
         amount: u16,
         crit: bool,
         effectiveness: Eff,
@@ -66,6 +72,9 @@ pub enum BattleEvent {
     },
     StatStageChanged {
         target: SideId,
+        /// Affected position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         stat: Stat,
         delta: i8,
         new_stage: i8,
@@ -76,6 +85,9 @@ pub enum BattleEvent {
     },
     StatusApplied {
         target: SideId,
+        /// Affected position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         status: Ailment,
     },
     /// An ability visibly acted (presenter shows its name).
@@ -100,10 +112,16 @@ pub enum BattleEvent {
     /// Sleep skip, freeze skip, paralysis full stop.
     ActionLost {
         side: SideId,
+        /// Acting position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         status: Ailment,
     },
     Flinched {
         side: SideId,
+        /// Acting position (0 in singles).
+        #[serde(default)]
+        slot: u8,
     },
     ConfusionStarted {
         target: SideId,
@@ -117,6 +135,9 @@ pub enum BattleEvent {
     },
     Healed {
         target: SideId,
+        /// Affected position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         amount: u16,
     },
     Drained {
@@ -125,6 +146,9 @@ pub enum BattleEvent {
     },
     Recoiled {
         side: SideId,
+        /// Acting position (0 in singles).
+        #[serde(default)]
+        slot: u8,
         amount: u16,
     },
     SeededDrain {
@@ -140,6 +164,9 @@ pub enum BattleEvent {
     },
     Fainted {
         target: SideId,
+        /// Fainted position (0 in singles).
+        #[serde(default)]
+        slot: u8,
     },
     ExpGained {
         side: SideId,

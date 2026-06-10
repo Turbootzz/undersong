@@ -220,6 +220,14 @@ autoplay needs a first-interaction gate on web — title screen press handles it
 
 - 2026-06: Stack locked (this doc v1). Hand-rolled tilemap over plugins. RON over
   JSON (comments + enums). Integer-only battle math. Event-stream battle rendering.
+- 2026-06-10 (P4): doubles refactor — `Side.positions: Vec<Position>` keys the
+  whole engine by (side, position); `TurnActions` is a list of per-position
+  declarations with target slots; nine event variants carry serde-default
+  position slots so v3 replay streams still parse (REPLAY_VERSION 4). The
+  remaining side-keyed variants (StatusTicked, Drained, …) need slots only
+  when a doubles presenter must disambiguate them — deferred until then.
+  Caller-error policy: duplicate (side, position) declarations are
+  first-wins; missing ones act as None; out-of-range targets resolve to 0.
 - 2026-06-10 (P3 review): `tools assets` ships loose per-species PNGs/WAVs;
   **atlas packing is deferred** until a perf pass needs it (doc 03 §8's
   one-draw-per-layer rule is waived for sigils meanwhile). The committed

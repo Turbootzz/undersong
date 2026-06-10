@@ -1,4 +1,4 @@
-// golden replay `chaos` — REPLAY_VERSION 3
+// golden replay `chaos` — REPLAY_VERSION 4
 // regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
 [
     TurnStarted(
@@ -6,6 +6,7 @@
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "kindle",
     ),
     WeatherChanged(
@@ -13,16 +14,19 @@
     ),
     MoveUsed(
         side: 0,
+        slot: 0,
         move_id: "swell",
     ),
     StatStageChanged(
         target: 0,
+        slot: 0,
         stat: spa,
         delta: 1,
         new_stage: 1,
     ),
     StatStageChanged(
         target: 0,
+        slot: 0,
         stat: spe,
         delta: 1,
         new_stage: 1,
@@ -32,32 +36,38 @@
     ),
     MoveUsed(
         side: 0,
+        slot: 0,
         move_id: "chord",
     ),
     DamageDealt(
         target: 1,
+        target_slot: 0,
         amount: 20,
         crit: false,
         effectiveness: Half,
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "flurry_hits",
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 20,
         crit: false,
         effectiveness: Double,
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 20,
         crit: false,
         effectiveness: Double,
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 20,
         crit: false,
         effectiveness: Double,
@@ -70,22 +80,26 @@
     ),
     MoveUsed(
         side: 0,
+        slot: 0,
         move_id: "swell",
     ),
     StatStageChanged(
         target: 0,
+        slot: 0,
         stat: spa,
         delta: 1,
         new_stage: 2,
     ),
     StatStageChanged(
         target: 0,
+        slot: 0,
         stat: spe,
         delta: 1,
         new_stage: 2,
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "kindle",
     ),
     WeatherChanged(
@@ -96,10 +110,12 @@
     ),
     MoveUsed(
         side: 0,
+        slot: 0,
         move_id: "chord",
     ),
     DamageDealt(
         target: 1,
+        target_slot: 0,
         amount: 30,
         crit: false,
         effectiveness: Half,
@@ -110,16 +126,19 @@
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "flurry_hits",
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 20,
         crit: false,
         effectiveness: Double,
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 15,
         crit: true,
         effectiveness: Double,
@@ -129,6 +148,7 @@
     ),
     Fainted(
         target: 0,
+        slot: 0,
     ),
     BattleEnded(
         outcome: Won(

@@ -25,14 +25,18 @@ pub mod state;
 pub mod stats;
 pub mod turn;
 
-pub use actions::{Action, TurnActions};
+pub use actions::{Action, PositionAction, TurnActions};
 pub use events::{BattleEvent, Outcome, SideId};
 pub use mote::{BattleMote, BattleMove, MoteBuilder};
-pub use state::{BattleKind, BattleState, Side};
+pub use state::{BattleKind, BattleState, Format, Position, Side};
 pub use turn::step;
 
 /// Bump consciously when a rule change breaks golden replays
 /// (docs/03-ARCHITECTURE.md §2); regenerate goldens in the same commit.
 /// v2: doc 02 v1.2 — player-side-only exp awards, two-turn commitment,
 /// faint-before-switch ordering.
-pub const REPLAY_VERSION: u32 = 3;
+/// v3: doc 02 v1.5 — held items, weather setters, AI scoring updates.
+/// v4: doc 02 v1.5 #2 — doubles: position slots serialized into nine
+/// event variants (`#[serde(default)]`, so v3 streams still parse; the
+/// singles rng stream itself is unchanged).
+pub const REPLAY_VERSION: u32 = 4;

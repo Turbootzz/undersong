@@ -1,4 +1,4 @@
-// golden replay `pivot` — REPLAY_VERSION 3
+// golden replay `pivot` — REPLAY_VERSION 4
 // regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
 [
     TurnStarted(
@@ -11,10 +11,12 @@
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "bolt",
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 0,
         crit: false,
         effectiveness: Zero,
@@ -24,26 +26,31 @@
     ),
     MoveUsed(
         side: 1,
+        slot: 0,
         move_id: "bolt",
     ),
     DamageDealt(
         target: 0,
+        target_slot: 0,
         amount: 0,
         crit: false,
         effectiveness: Zero,
     ),
     MoveUsed(
         side: 0,
+        slot: 0,
         move_id: "toll",
     ),
     DamageDealt(
         target: 1,
+        target_slot: 0,
         amount: 72,
         crit: false,
         effectiveness: Double,
     ),
     Fainted(
         target: 1,
+        slot: 0,
     ),
     ExpGained(
         side: 0,

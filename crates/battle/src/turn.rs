@@ -2,7 +2,13 @@
 //!
 //! Pure: `(state, actions, rng) → (state', events)`. All policy decisions
 //! cite doc 02; engine-level resolutions of caller errors (illegal slot,
-//! illegal switch) are deterministic and documented inline.
+//! illegal switch, out-of-range target) are deterministic and documented
+//! inline.
+//!
+//! Doubles (doc 02 v1.5 #2): every per-active mechanism is keyed by a
+//! `(side, position)` slot. The singles rng stream is bit-identical to
+//! the pre-doubles engine: every ordering helper degenerates to the old
+//! two-party comparison, and target resolution consumes no rng.
 
 use undersong_core::moves::{
     Ailment, Effect, EffectTarget, FixedAmount, MoveCategory, MoveFlags, MoveSpec, MoveTarget,
@@ -18,7 +24,8 @@ use crate::damage::{DamageContext, compute_damage, crit_chance};
 use crate::events::{BattleEvent, Outcome, SideId};
 use crate::exp::{apply_exp, exp_gain};
 use crate::mote::MajorStatus;
-use crate::state::{BattleKind, BattleState};
+use crate::state::{BattleKind, BattleState, Format};
+
 use crate::stats::{StageStat, acc_stage_factor, stage_multiplied};
 
 /// Maximum turns before a forced draw (doc 03 §2: battles always
@@ -53,7 +60,7 @@ pub fn step(
     let mut engine = Engine {
         state: state.clone(),
         events: Vec::new(),
-        cancelled: [false; 2],
+        cancelled: [[false; 2]; 2],
     };
     if engine.state.is_over() {
         return (engine.state, engine.events);
@@ -62,23 +69,111 @@ pub fn step(
     (engine.state, engine.events)
 }
 
+/// A `(side, position)` field slot.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Slot {
+    side: SideId,
+    pos: u8,
+}
+
+/// One position's normalized intent for the turn.
+#[derive(Debug, Clone, Copy)]
+struct Intent {
+    action: Action,
+    target: u8,
+}
+
 struct Engine {
     state: BattleState,
     events: Vec<BattleEvent>,
-    /// Set when a side's pending action is consumed mid-turn
-    /// (ForceSwitch drag, doc 02 v1.2 #10).
-    cancelled: [bool; 2],
+    /// `[side][position]`: set when the slot's pending action is consumed
+    /// mid-turn (ForceSwitch drag, doc 02 v1.2 #10).
+    cancelled: [[bool; 2]; 2],
 }
 
 impl Engine {
+    // ----- slot plumbing ----------------------------------------------
+
+    fn mote(&self, slot: Slot) -> &crate::mote::BattleMote {
+        self.state.side(slot.side).mote_at(slot.pos)
+    }
+
+    fn mote_mut(&mut self, slot: Slot) -> &mut crate::mote::BattleMote {
+        self.state.side_mut(slot.side).mote_at_mut(slot.pos)
+    }
+
+    fn pstate(&self, slot: Slot) -> &crate::state::ActiveState {
+        &self.state.side(slot.side).positions[usize::from(slot.pos)].state
+    }
+
+    fn pstate_mut(&mut self, slot: Slot) -> &mut crate::state::ActiveState {
+        &mut self.state.side_mut(slot.side).positions[usize::from(slot.pos)].state
+    }
+
+    fn position_count(&self, side: SideId) -> u8 {
+        self.state.side(side).position_count()
+    }
+
+    /// All field slots in canonical `(side asc, position asc)` order.
+    fn all_slots(&self) -> Vec<Slot> {
+        let mut slots = Vec::with_capacity(4);
+        for side in 0..2u8 {
+            for pos in 0..self.position_count(side) {
+                slots.push(Slot { side, pos });
+            }
+        }
+        slots
+    }
+
+    fn cancelled(&self, slot: Slot) -> bool {
+        self.cancelled[usize::from(slot.side)][usize::from(slot.pos)]
+    }
+
+    fn cancel(&mut self, slot: Slot) {
+        self.cancelled[usize::from(slot.side)][usize::from(slot.pos)] = true;
+    }
+
+    /// Normalizes the submitted actions into a per-slot grid. Duplicate
+    /// `(side, position)` declarations resolve first-wins; missing or
+    /// out-of-range ones act as `Action::None` (deterministic caller-error
+    /// policy, like illegal switches).
+    fn normalize(&self, actions: &TurnActions) -> [[Intent; 2]; 2] {
+        let mut grid = [[Intent {
+            action: Action::None,
+            target: 0,
+        }; 2]; 2];
+        let mut set = [[false; 2]; 2];
+        for declared in &actions.actions {
+            let (side, pos) = (usize::from(declared.side), usize::from(declared.position));
+            if declared.side < 2
+                && declared.position < self.position_count(declared.side)
+                && !set[side][pos]
+            {
+                set[side][pos] = true;
+                grid[side][pos] = Intent {
+                    action: declared.action,
+                    target: declared.target_position,
+                };
+            }
+        }
+        grid
+    }
+
+    fn intent(grid: &[[Intent; 2]; 2], slot: Slot) -> Intent {
+        grid[usize::from(slot.side)][usize::from(slot.pos)]
+    }
+
+    // ----- the turn ----------------------------------------------------
+
     fn run_turn(&mut self, actions: &TurnActions, rng: &mut BattleRng) {
+        let grid = self.normalize(actions);
         if self.state.turn == 0 {
-            // Battle start: leads' entry abilities, fast side first
+            // Battle start: leads' entry abilities, fast slots first
             // (doc 02 §10/v1.5 #4).
-            let mut order = [0u8, 1u8];
+            let mut order = self.all_slots();
             self.order_by_speed(&mut order, rng);
-            for side in order {
-                self.on_entry(side);
+            for slot in order {
+                self.on_entry(slot);
             }
         }
         self.state.turn += 1;
@@ -90,95 +185,130 @@ impl Engine {
         }
 
         // Stale per-turn volatiles from any previous turn.
-        for side in 0..2u8 {
-            let st = &mut self.state.side_mut(side).active_state;
+        for slot in self.all_slots() {
+            let st = self.pstate_mut(slot);
             st.flinched = false;
             st.protected = false;
         }
 
         // Phase a — escape attempts (doc 02 v1.1 #1a; formula §12).
-        for side in 0..2u8 {
-            if matches!(actions.get(side), Action::Run) {
-                self.try_escape(side, rng);
+        for slot in self.all_slots() {
+            if matches!(Self::intent(&grid, slot).action, Action::Run) {
+                self.try_escape(slot.side, rng);
                 if self.state.is_over() {
                     return;
                 }
             }
         }
 
-        // Phase b — switches, faster side first (v1.1 #1b).
-        let mut switchers: Vec<SideId> = (0..2u8)
-            .filter(|&s| matches!(actions.get(s), Action::Switch { .. }))
+        // Phase b — switches, faster slots first (v1.1 #1b).
+        let mut switchers: Vec<Slot> = self
+            .all_slots()
+            .into_iter()
+            .filter(|&s| matches!(Self::intent(&grid, s).action, Action::Switch { .. }))
             .collect();
-        if switchers.len() == 2 {
-            self.order_by_speed(&mut switchers, rng);
-        }
-        for side in switchers {
-            if let Action::Switch { to } = actions.get(side) {
-                self.try_switch(side, to);
+        self.order_by_speed(&mut switchers, rng);
+        for slot in switchers {
+            if let Action::Switch { to } = Self::intent(&grid, slot).action {
+                self.try_switch(slot, to);
             }
         }
 
         // Phase c — bell use (v1.1 #1c; doc 02 §8). Player side only:
         // attunement is a trainer verb, the wild side has no bells.
-        if let Action::UseBell { mut bell_mod } = actions.get(0) {
-            // keysmith: ×2 catch-assist (doc 02 §10).
-            if self.state.side(0).active_mote().ability == Ability::Keysmith {
-                bell_mod = undersong_core::moves::Frac(bell_mod.0 * 2, bell_mod.1);
-            }
-            if matches!(self.state.kind, BattleKind::Wild) {
-                let result = attune(self.state.side(1).active_mote(), bell_mod, rng);
-                self.events.push(BattleEvent::AttuneAttempt {
-                    rings: result.rings,
-                    caught: result.caught,
-                });
-                if result.caught {
-                    self.end(Outcome::Caught);
-                    return;
+        for pos in 0..self.position_count(0) {
+            let ringer = Slot { side: 0, pos };
+            if let Action::UseBell { mut bell_mod } = Self::intent(&grid, ringer).action {
+                // keysmith: ×2 catch-assist (doc 02 §10).
+                if self.mote(ringer).ability == Ability::Keysmith {
+                    bell_mod = undersong_core::moves::Frac(bell_mod.0 * 2, bell_mod.1);
                 }
-            } else {
-                self.events.push(BattleEvent::MoveFailed { side: 0 });
+                if matches!(self.state.kind, BattleKind::Wild) {
+                    let result = attune(self.state.side(1).active_mote(), bell_mod, rng);
+                    self.events.push(BattleEvent::AttuneAttempt {
+                        rings: result.rings,
+                        caught: result.caught,
+                    });
+                    if result.caught {
+                        self.end(Outcome::Caught);
+                        return;
+                    }
+                } else {
+                    self.events.push(BattleEvent::MoveFailed { side: 0 });
+                }
             }
         }
-        if matches!(actions.get(1), Action::UseBell { .. }) {
-            self.events.push(BattleEvent::MoveFailed { side: 1 });
+        for pos in 0..self.position_count(1) {
+            if matches!(
+                Self::intent(&grid, Slot { side: 1, pos }).action,
+                Action::UseBell { .. }
+            ) {
+                self.events.push(BattleEvent::MoveFailed { side: 1 });
+            }
         }
 
         // Phase d — moves (v1.1 #1d): priority desc → speed desc → rng.
-        let mut movers: Vec<(SideId, u8, i8)> = (0..2u8)
-            .filter_map(|side| match actions.get(side) {
-                Action::Move { slot } => {
-                    let slot = self.resolve_slot(side, slot);
-                    let priority = match slot {
-                        Some(s) => {
-                            self.state.side(side).active_mote().moves[usize::from(s)]
-                                .spec
-                                .priority
-                        }
-                        None => 0, // Last Resort Hum
-                    };
-                    Some((side, slot.unwrap_or(u8::MAX), priority))
-                }
-                _ => None,
-            })
-            .collect();
-        movers.sort_by_key(|&(_, _, priority)| std::cmp::Reverse(priority));
-        if movers.len() == 2 && movers[0].2 == movers[1].2 {
-            let mut order: Vec<SideId> = movers.iter().map(|&(s, ..)| s).collect();
-            self.order_by_speed(&mut order, rng);
-            if order[0] != movers[0].0 {
-                movers.swap(0, 1);
+        struct Mover {
+            slot: Slot,
+            move_slot: u8,
+            target: u8,
+            priority: i8,
+        }
+        let mut movers: Vec<Mover> = Vec::new();
+        for slot in self.all_slots() {
+            let intent = Self::intent(&grid, slot);
+            if let Action::Move { slot: move_slot } = intent.action {
+                let resolved = self.resolve_slot(slot, move_slot);
+                let priority = match resolved {
+                    Some(s) => self.mote(slot).moves[usize::from(s)].spec.priority,
+                    None => 0, // Last Resort Hum
+                };
+                movers.push(Mover {
+                    slot,
+                    move_slot: resolved.unwrap_or(u8::MAX),
+                    target: intent.target,
+                    priority,
+                });
             }
         }
-        for (side, slot, _) in movers {
+        // Stable: equal priority keeps (side, position) order until the
+        // speed pass below.
+        movers.sort_by_key(|m| std::cmp::Reverse(m.priority));
+        // Speed-order each maximal equal-priority run, rng on exact ties.
+        let mut start = 0usize;
+        while start < movers.len() {
+            let mut end = start + 1;
+            while end < movers.len() && movers[end].priority == movers[start].priority {
+                end += 1;
+            }
+            if end - start >= 2 {
+                let mut run: Vec<Slot> = movers[start..end].iter().map(|m| m.slot).collect();
+                self.order_by_speed(&mut run, rng);
+                let mut reordered: Vec<Mover> = Vec::with_capacity(end - start);
+                for want in &run {
+                    let at = movers[start..end]
+                        .iter()
+                        .position(|m| m.slot == *want)
+                        .expect("run member");
+                    reordered.push(Mover {
+                        slot: movers[start + at].slot,
+                        move_slot: movers[start + at].move_slot,
+                        target: movers[start + at].target,
+                        priority: movers[start + at].priority,
+                    });
+                }
+                movers.splice(start..end, reordered);
+            }
+            start = end;
+        }
+        for mover in &movers {
             if self.state.is_over() {
                 return;
             }
-            if self.state.side(side).active_mote().is_fainted() || self.cancelled[usize::from(side)]
-            {
+            if self.mote(mover.slot).is_fainted() || self.cancelled(mover.slot) {
                 continue;
             }
-            self.act(side, slot, rng);
+            self.act(mover.slot, mover.move_slot, mover.target, rng);
         }
         if self.state.is_over() {
             return;
@@ -190,14 +320,16 @@ impl Engine {
             return;
         }
 
-        // Auto-replace fainted actives (engine policy for the headless
+        // Auto-replace fainted positions (engine policy for the headless
         // sim; the game layer will route a player choice through Switch
-        // actions when the presenter exists).
-        for side in 0..2u8 {
-            if self.state.side(side).active_mote().is_fainted()
-                && let Some(replacement) = self.state.side(side).first_replacement()
+        // actions when the presenter exists). End-of-turn in both formats
+        // so doc 02 v1.5 #2's mid-turn retarget/fizzle rules stay
+        // meaningful; a benchless doubles position keeps its fainted Mote.
+        for slot in self.all_slots() {
+            if self.mote(slot).is_fainted()
+                && let Some(replacement) = self.state.side(slot.side).first_replacement()
             {
-                self.perform_switch(side, replacement);
+                self.perform_switch(slot, replacement);
             }
         }
 
@@ -208,12 +340,11 @@ impl Engine {
 
     /// Effective speed (doc 02 v1.1 #7): stage-modified, then paralysis
     /// quarters it.
-    fn effective_speed(&self, side: SideId) -> u32 {
-        let s = self.state.side(side);
-        let mote = s.active_mote();
+    fn effective_speed(&self, slot: Slot) -> u32 {
+        let mote = self.mote(slot);
         let mut spe = stage_multiplied(
             u32::from(mote.stats.spe),
-            s.active_state.stages.get(StageStat::Spe),
+            self.pstate(slot).stages.get(StageStat::Spe),
         );
         if matches!(mote.status, Some(MajorStatus::Paralysis))
             && mote.ability != Ability::MetronomeSoul
@@ -223,21 +354,23 @@ impl Engine {
         spe
     }
 
-    /// Sorts side ids by effective speed desc; exact ties get one rng
-    /// coin flip (doc 02 v1.1 #1d).
-    fn order_by_speed(&mut self, sides: &mut [SideId], rng: &mut BattleRng) {
-        if sides.len() < 2 {
+    /// Sorts slots by effective speed desc (stable: equal speeds keep
+    /// submission order), then resolves exact ties with one rng draw per
+    /// tied adjacent pair, left to right; a true draw swaps that pair.
+    /// With two participants this is exactly the legacy coin flip
+    /// (doc 02 v1.1 #1d); with more it is a deterministic, documented
+    /// shuffle — not uniform, but stable across replays.
+    fn order_by_speed(&self, slots: &mut [Slot], rng: &mut BattleRng) {
+        if slots.len() < 2 {
             return;
         }
-        let speed0 = self.effective_speed(sides[0]);
-        let speed1 = self.effective_speed(sides[1]);
-        let swap = match speed0.cmp(&speed1) {
-            std::cmp::Ordering::Less => true,
-            std::cmp::Ordering::Greater => false,
-            std::cmp::Ordering::Equal => rng.chance(1, 2),
-        };
-        if swap {
-            sides.swap(0, 1);
+        slots.sort_by_key(|&s| std::cmp::Reverse(self.effective_speed(s)));
+        for i in 0..slots.len() - 1 {
+            if self.effective_speed(slots[i]) == self.effective_speed(slots[i + 1])
+                && rng.chance(1, 2)
+            {
+                slots.swap(i, i + 1);
+            }
         }
     }
 
@@ -265,24 +398,26 @@ impl Engine {
 
     // ----- phase b: switches ------------------------------------------
 
-    fn try_switch(&mut self, side: SideId, to: u8) {
-        let s = self.state.side(side);
+    fn try_switch(&mut self, slot: Slot, to: u8) {
+        let s = self.state.side(slot.side);
         let legal = usize::from(to) < s.party.len()
-            && to != s.active
+            && !s.is_fielded(to)
             && !s.party[usize::from(to)].is_fainted()
-            && !s.active_state.trapped;
+            && !self.pstate(slot).trapped;
         if legal {
-            self.perform_switch(side, to);
+            self.perform_switch(slot, to);
         } else {
             // Illegal switch resolves as a loud no-op, deterministically.
-            self.events.push(BattleEvent::MoveFailed { side });
+            self.events
+                .push(BattleEvent::MoveFailed { side: slot.side });
         }
     }
 
     /// Entry abilities (doc 02 §10): weather callers, dissonance,
     /// stage_fright. Runs at battle start and on every switch-in.
-    fn on_entry(&mut self, side: SideId) {
-        let ability = self.state.side(side).active_mote().ability;
+    fn on_entry(&mut self, slot: Slot) {
+        let side = slot.side;
+        let ability = self.mote(slot).ability;
         if let Some(kind) = ability.called_weather() {
             // Callers never fail; replace whatever is up (v1.5 #4).
             self.state.weather = Some((kind, 5));
@@ -291,31 +426,38 @@ impl Engine {
                 .push(BattleEvent::WeatherChanged { kind: Some(kind) });
         }
         if ability == Ability::Dissonance {
-            let foe = 1 - side;
-            if !self.state.side(foe).active_mote().is_fainted() {
-                let foe_state = self.state.side_mut(foe);
-                let before = foe_state.active_state.stages.get(StageStat::Atk);
-                foe_state.active_state.stages.bump(StageStat::Atk, -1);
-                let after = foe_state.active_state.stages.get(StageStat::Atk);
-                if after != before {
-                    self.events.push(BattleEvent::AbilityNote { side, ability });
-                    self.events.push(BattleEvent::StatStageChanged {
-                        target: foe,
-                        stat: undersong_core::stats::Stat::Atk,
-                        delta: -1,
-                        new_stage: after,
-                    });
+            // Doc 02 §10: "foes' atk −1" — every foe position in doubles.
+            let foe_side = 1 - side;
+            for foe_pos in 0..self.position_count(foe_side) {
+                let foe = Slot {
+                    side: foe_side,
+                    pos: foe_pos,
+                };
+                if !self.mote(foe).is_fainted() {
+                    let before = self.pstate(foe).stages.get(StageStat::Atk);
+                    self.pstate_mut(foe).stages.bump(StageStat::Atk, -1);
+                    let after = self.pstate(foe).stages.get(StageStat::Atk);
+                    if after != before {
+                        self.events.push(BattleEvent::AbilityNote { side, ability });
+                        self.events.push(BattleEvent::StatStageChanged {
+                            target: foe_side,
+                            slot: foe_pos,
+                            stat: undersong_core::stats::Stat::Atk,
+                            delta: -1,
+                            new_stage: after,
+                        });
+                    }
                 }
             }
         }
-        if ability == Ability::StageFright && !self.state.side(side).active_mote().entry_boosted {
-            self.state.side_mut(side).active_mote_mut().entry_boosted = true;
-            let own = self.state.side_mut(side);
-            own.active_state.stages.bump(StageStat::Spe, 1);
-            let new_stage = own.active_state.stages.get(StageStat::Spe);
+        if ability == Ability::StageFright && !self.mote(slot).entry_boosted {
+            self.mote_mut(slot).entry_boosted = true;
+            self.pstate_mut(slot).stages.bump(StageStat::Spe, 1);
+            let new_stage = self.pstate(slot).stages.get(StageStat::Spe);
             self.events.push(BattleEvent::AbilityNote { side, ability });
             self.events.push(BattleEvent::StatStageChanged {
                 target: side,
+                slot: slot.pos,
                 stat: undersong_core::stats::Stat::Spe,
                 delta: 1,
                 new_stage,
@@ -324,43 +466,44 @@ impl Engine {
     }
 
     /// Oran Chime (doc 02 v1.5 #1): once per battle at ≤ 1/2 max HP.
-    fn check_oran(&mut self, side: SideId) {
-        let mote = self.state.side(side).active_mote();
+    fn check_oran(&mut self, slot: Slot) {
+        let mote = self.mote(slot);
         if mote.is_fainted() || u32::from(mote.hp) * 2 > u32::from(mote.max_hp()) {
             return;
         }
         if let HeldItem::OranChime { used: false } = mote.held {
-            let mote = self.state.side_mut(side).active_mote_mut();
+            let mote = self.mote_mut(slot);
             mote.held = HeldItem::OranChime { used: true };
             let healed = mote.heal(20);
             if healed > 0 {
                 self.events.push(BattleEvent::ItemNote {
-                    side,
+                    side: slot.side,
                     item: HeldItem::OranChime { used: true },
                 });
                 self.events.push(BattleEvent::Healed {
-                    target: side,
+                    target: slot.side,
+                    slot: slot.pos,
                     amount: healed,
                 });
             }
         }
     }
 
-    fn perform_switch(&mut self, side: SideId, to: u8) {
-        let s = self.state.side_mut(side);
+    fn perform_switch(&mut self, slot: Slot, to: u8) {
         // Toxic's counter resets on switch-out (doc 02 v1.1 #9).
-        if let Some(MajorStatus::Toxic { n }) = &mut s.active_mote_mut().status {
+        if let Some(MajorStatus::Toxic { n }) = &mut self.mote_mut(slot).status {
             *n = 1;
         }
-        s.active_state = Default::default();
-        s.active = to;
-        let species = s.active_mote().species.clone();
+        let position = &mut self.state.side_mut(slot.side).positions[usize::from(slot.pos)];
+        position.state = Default::default();
+        position.party_index = to;
+        let species = self.mote(slot).species.clone();
         self.events.push(BattleEvent::SwitchedIn {
-            side,
+            side: slot.side,
             slot: to,
             species,
         });
-        self.on_entry(side);
+        self.on_entry(slot);
     }
 
     // ----- phase d: acting --------------------------------------------
@@ -368,12 +511,12 @@ impl Engine {
     /// Resolves the chosen slot to a usable one: chosen if usable, else
     /// the first slot with PP, else `None` = Last Resort Hum
     /// (doc 02 v1.1 #3). Deterministic so fuzzed actions stay replayable.
-    fn resolve_slot(&self, side: SideId, slot: u8) -> Option<u8> {
-        let moves = &self.state.side(side).active_mote().moves;
-        if let Some(battle_move) = moves.get(usize::from(slot))
+    fn resolve_slot(&self, slot: Slot, move_slot: u8) -> Option<u8> {
+        let moves = &self.mote(slot).moves;
+        if let Some(battle_move) = moves.get(usize::from(move_slot))
             && battle_move.pp > 0
         {
-            return Some(slot);
+            return Some(move_slot);
         }
         moves
             .iter()
@@ -381,28 +524,73 @@ impl Engine {
             .map(|i| u8::try_from(i).expect("≤ 4 moves"))
     }
 
-    fn act(&mut self, side: SideId, slot: u8, rng: &mut BattleRng) {
+    /// Resolves the declared target (doc 02 v1.5 #2): the declared foe
+    /// slot; if that Mote has fainted by execution, retarget to the
+    /// surviving foe slot; else `None` — the move fizzles. Allies cannot
+    /// be targeted at launch. Singles keeps the locked pre-doubles
+    /// semantics: always foe position 0, even if it fainted mid-turn (the
+    /// damage loop and effects no-op against it) — the golden corpus pins
+    /// this, and the rng stream must not shift.
+    fn resolve_target(&self, foe_side: SideId, declared: u8) -> Option<Slot> {
+        if !matches!(self.state.format, Format::Double) {
+            return Some(Slot {
+                side: foe_side,
+                pos: 0,
+            });
+        }
+        let count = self.position_count(foe_side);
+        // Out-of-range declarations resolve to slot 0 (deterministic
+        // caller-error policy).
+        let declared = if declared < count { declared } else { 0 };
+        let slot = Slot {
+            side: foe_side,
+            pos: declared,
+        };
+        if !self.mote(slot).is_fainted() {
+            return Some(slot);
+        }
+        (0..count)
+            .find(|&p| {
+                p != declared
+                    && !self
+                        .mote(Slot {
+                            side: foe_side,
+                            pos: p,
+                        })
+                        .is_fainted()
+            })
+            .map(|p| Slot {
+                side: foe_side,
+                pos: p,
+            })
+    }
+
+    fn act(&mut self, user: Slot, move_slot: u8, declared_target: u8, rng: &mut BattleRng) {
+        let side = user.side;
         // Volatile gate order (doc 02 v1.1 #8):
         // flinch → sleep → freeze → paralysis → confusion.
-        if self.state.side(side).active_state.flinched {
-            self.events.push(BattleEvent::Flinched { side });
-            self.state.side_mut(side).active_state.flinched = false;
+        if self.pstate(user).flinched {
+            self.events.push(BattleEvent::Flinched {
+                side,
+                slot: user.pos,
+            });
+            self.pstate_mut(user).flinched = false;
             return;
         }
-        match self.state.side(side).active_mote().status {
+        match self.mote(user).status {
             Some(MajorStatus::Sleep { turns }) => {
                 let turns = turns.saturating_sub(1);
                 if turns == 0 {
-                    self.state.side_mut(side).active_mote_mut().status = None;
+                    self.mote_mut(user).status = None;
                     self.events.push(BattleEvent::StatusCured {
                         target: side,
                         status: Ailment::Sleep,
                     });
                 } else {
-                    self.state.side_mut(side).active_mote_mut().status =
-                        Some(MajorStatus::Sleep { turns });
+                    self.mote_mut(user).status = Some(MajorStatus::Sleep { turns });
                     self.events.push(BattleEvent::ActionLost {
                         side,
+                        slot: user.pos,
                         status: Ailment::Sleep,
                     });
                     return;
@@ -410,7 +598,7 @@ impl Engine {
             }
             Some(MajorStatus::Freeze) => {
                 if rng.chance(1, 5) {
-                    self.state.side_mut(side).active_mote_mut().status = None;
+                    self.mote_mut(user).status = None;
                     self.events.push(BattleEvent::StatusCured {
                         target: side,
                         status: Ailment::Freeze,
@@ -418,6 +606,7 @@ impl Engine {
                 } else {
                     self.events.push(BattleEvent::ActionLost {
                         side,
+                        slot: user.pos,
                         status: Ailment::Freeze,
                     });
                     return;
@@ -425,41 +614,34 @@ impl Engine {
             }
             _ => {}
         }
-        if matches!(
-            self.state.side(side).active_mote().status,
-            Some(MajorStatus::Paralysis)
-        ) && rng.chance(1, 4)
-        {
+        if matches!(self.mote(user).status, Some(MajorStatus::Paralysis)) && rng.chance(1, 4) {
             self.events.push(BattleEvent::ActionLost {
                 side,
+                slot: user.pos,
                 status: Ailment::Paralysis,
             });
             return;
         }
-        if self.state.side(side).active_state.confusion > 0 {
-            let confusion = self.state.side(side).active_state.confusion - 1;
-            self.state.side_mut(side).active_state.confusion = confusion;
+        if self.pstate(user).confusion > 0 {
+            let confusion = self.pstate(user).confusion - 1;
+            self.pstate_mut(user).confusion = confusion;
             if confusion == 0 {
                 self.events
                     .push(BattleEvent::ConfusionEnded { target: side });
             } else if rng.chance(1, 3) {
                 // Self-hit (doc 02 v1.1 #4): 40 power, own atk vs own def,
                 // deterministic base damage only.
-                let mote = self.state.side(side).active_mote();
+                let mote = self.mote(user);
                 let level_term = 2 * u32::from(mote.level) / 5 + 2;
                 let atk = u32::from(mote.stats.atk);
                 let def = u32::from(mote.stats.def).max(1);
                 let damage = (level_term * 40 * atk / def / 50 + 2).max(1);
-                let dealt = self
-                    .state
-                    .side_mut(side)
-                    .active_mote_mut()
-                    .take_damage(damage);
+                let dealt = self.mote_mut(user).take_damage(damage);
                 self.events.push(BattleEvent::HurtItselfInConfusion {
                     side,
                     damage: dealt,
                 });
-                self.faint_check(side);
+                self.faint_check(user);
                 return;
             }
         }
@@ -469,22 +651,22 @@ impl Engine {
         // resolve the submitted slot (or the no-PP fallback), and a
         // two-turn move's first use charges: 1 PP, MoveUsed +
         // ChargeStarted, action over.
-        let committed = self.state.side(side).active_state.charging;
+        let committed = self.pstate(user).charging;
         let (spec, typeless) = if let Some(committed_slot) = committed {
-            self.state.side_mut(side).active_state.charging = None;
-            let spec = self.state.side(side).active_mote().moves[usize::from(committed_slot)]
+            self.pstate_mut(user).charging = None;
+            let spec = self.mote(user).moves[usize::from(committed_slot)]
                 .spec
                 .clone();
             (spec, false)
         } else {
-            match self.resolve_slot(side, slot) {
+            match self.resolve_slot(user, move_slot) {
                 Some(s) => {
-                    let battle_move =
-                        &mut self.state.side_mut(side).active_mote_mut().moves[usize::from(s)];
+                    let battle_move = &mut self.mote_mut(user).moves[usize::from(s)];
                     battle_move.pp -= 1;
                     let spec = battle_move.spec.clone();
                     self.events.push(BattleEvent::MoveUsed {
                         side,
+                        slot: user.pos,
                         move_id: spec.id.clone(),
                     });
                     if spec
@@ -492,7 +674,7 @@ impl Engine {
                         .iter()
                         .any(|e| matches!(e, Effect::TwoTurn { .. }))
                     {
-                        self.state.side_mut(side).active_state.charging = Some(s);
+                        self.pstate_mut(user).charging = Some(s);
                         self.events.push(BattleEvent::ChargeStarted { side });
                         return;
                     }
@@ -505,10 +687,16 @@ impl Engine {
             }
         };
 
-        let foe: SideId = 1 - side;
+        // Doubles targeting (doc 02 v1.5 #2): declared slot, retarget to
+        // the survivor, else fizzle. Consumes no rng.
+        let foe_side: SideId = 1 - side;
+        let Some(foe) = self.resolve_target(foe_side, declared_target) else {
+            self.events.push(BattleEvent::MoveFailed { side });
+            return;
+        };
 
         // Protect (engine support; no canon P1 move sets it).
-        if spec.flags.protectable && self.state.side(foe).active_state.protected {
+        if spec.flags.protectable && self.pstate(foe).protected {
             self.events.push(BattleEvent::MoveFailed { side });
             return;
         }
@@ -522,19 +710,13 @@ impl Engine {
                 Some((undersong_core::moves::WeatherKind::Flurry, _))
             );
         if spec.accuracy > 0 && matches!(spec.target, MoveTarget::Foe) && !flurry_frost {
-            let user_stage = self
-                .state
-                .side(side)
-                .active_state
-                .stages
-                .get(StageStat::Acc);
-            let eva_stage = if spec.flags.ignore_evasion
-                || self.state.side(side).active_mote().ability == Ability::PerfectPitch
-            {
-                0
-            } else {
-                self.state.side(foe).active_state.stages.get(StageStat::Eva)
-            };
+            let user_stage = self.pstate(user).stages.get(StageStat::Acc);
+            let eva_stage =
+                if spec.flags.ignore_evasion || self.mote(user).ability == Ability::PerfectPitch {
+                    0
+                } else {
+                    self.pstate(foe).stages.get(StageStat::Eva)
+                };
             let (acc_n, acc_d) = acc_stage_factor(user_stage);
             let (eva_n, eva_d) = acc_stage_factor(eva_stage);
             let threshold = (u32::from(spec.accuracy) * acc_n * eva_d / (acc_d * eva_n)).min(100);
@@ -547,16 +729,17 @@ impl Engine {
         // Ability immunities (doc 02 §10): damper blanks sound moves,
         // floating blanks stone moves — turn consumed, nothing happens.
         {
-            let defender_ability = self.state.side(foe).active_mote().ability;
+            let defender_ability = self.mote(foe).ability;
             let blanked = (defender_ability == Ability::Damper && spec.flags.sound)
                 || (defender_ability == Ability::Floating && spec.r#type == Type::Stone);
             if blanked && matches!(spec.target, MoveTarget::Foe) {
                 self.events.push(BattleEvent::AbilityNote {
-                    side: foe,
+                    side: foe.side,
                     ability: defender_ability,
                 });
                 self.events.push(BattleEvent::DamageDealt {
-                    target: foe,
+                    target: foe.side,
+                    target_slot: foe.pos,
                     amount: 0,
                     crit: false,
                     effectiveness: undersong_core::types::Eff::Zero,
@@ -566,6 +749,7 @@ impl Engine {
         }
 
         // Damage.
+        let doubles = matches!(self.state.format, Format::Double);
         let mut total_dealt: u32 = 0;
         let mut immune = false;
         if spec.power > 0 && !matches!(spec.category, MoveCategory::Status) {
@@ -583,7 +767,7 @@ impl Engine {
             };
             let mut landed: u8 = 0;
             for _ in 0..planned_hits {
-                if self.state.side(foe).active_mote().is_fainted() {
+                if self.mote(foe).is_fainted() {
                     break;
                 }
                 let crit_stage = u8::from(spec.flags.high_crit);
@@ -591,54 +775,42 @@ impl Engine {
                 let crit_roll = rng.chance(crit_n, crit_d);
                 // thick_hide: the roll still consumes rng (stream-stable)
                 // but can never land (doc 02 §10).
-                let crit = !typeless
-                    && crit_roll
-                    && self.state.side(foe).active_mote().ability != Ability::ThickHide;
+                let crit = !typeless && crit_roll && self.mote(foe).ability != Ability::ThickHide;
                 let rand_roll =
                     u8::try_from(rng.range_inclusive(85, 100)).expect("85..=100 fits u8");
 
                 let (amount, effectiveness, product_zero) = if typeless {
                     // Last Resort Hum / typeless: product 1, no STAB, no
                     // crit, base pipeline with the rand roll only.
-                    let attacker = self.state.side(side).active_mote();
-                    let defender_stats = self.state.side(foe);
+                    let attacker = self.mote(user);
                     let level_term = 2 * u32::from(attacker.level) / 5 + 2;
                     let a = stage_multiplied(
                         u32::from(attacker.stats.atk),
-                        self.state
-                            .side(side)
-                            .active_state
-                            .stages
-                            .get(StageStat::Atk),
+                        self.pstate(user).stages.get(StageStat::Atk),
                     );
                     let d = stage_multiplied(
-                        u32::from(defender_stats.active_mote().stats.def),
-                        defender_stats.active_state.stages.get(StageStat::Def),
+                        u32::from(self.mote(foe).stats.def),
+                        self.pstate(foe).stages.get(StageStat::Def),
                     )
                     .max(1);
                     let mut damage = level_term * u32::from(spec.power) * a / d / 50 + 2;
                     damage = damage * u32::from(rand_roll) / 100;
-                    if matches!(
-                        self.state.side(side).active_mote().status,
-                        Some(MajorStatus::Burn)
-                    ) {
+                    if matches!(self.mote(user).status, Some(MajorStatus::Burn)) {
                         damage /= 2;
                     }
                     (damage.max(1), undersong_core::types::Eff::Neutral, false)
                 } else {
-                    let attacker_side = self.state.side(side);
-                    let defender_side = self.state.side(foe);
                     let context = DamageContext {
-                        attacker: attacker_side.active_mote(),
-                        defender: defender_side.active_mote(),
-                        attacker_stages: &attacker_side.active_state.stages,
-                        defender_stages: &defender_side.active_state.stages,
+                        attacker: self.mote(user),
+                        defender: self.mote(foe),
+                        attacker_stages: &self.pstate(user).stages,
+                        defender_stages: &self.pstate(foe).stages,
                         chart: &self.state.chart,
                         weather: self.state.weather.map(|(kind, _)| kind),
                         crit,
                         rand: rand_roll,
                         spread: false,
-                        doubles: false,
+                        doubles,
                     };
                     let outcome = compute_damage(&spec, &context).expect("damaging move");
                     (
@@ -651,7 +823,8 @@ impl Engine {
                 if product_zero {
                     immune = true;
                     self.events.push(BattleEvent::DamageDealt {
-                        target: foe,
+                        target: foe.side,
+                        target_slot: foe.pos,
                         amount: 0,
                         crit: false,
                         effectiveness,
@@ -659,15 +832,12 @@ impl Engine {
                     break;
                 }
 
-                let dealt = self
-                    .state
-                    .side_mut(foe)
-                    .active_mote_mut()
-                    .take_damage(amount);
+                let dealt = self.mote_mut(foe).take_damage(amount);
                 total_dealt += u32::from(dealt);
                 landed += 1;
                 self.events.push(BattleEvent::DamageDealt {
-                    target: foe,
+                    target: foe.side,
+                    target_slot: foe.pos,
                     amount: dealt,
                     crit,
                     effectiveness,
@@ -675,14 +845,11 @@ impl Engine {
 
                 // Ember moves thaw a frozen target (doc 02 §5).
                 if spec.r#type == Type::Ember
-                    && matches!(
-                        self.state.side(foe).active_mote().status,
-                        Some(MajorStatus::Freeze)
-                    )
+                    && matches!(self.mote(foe).status, Some(MajorStatus::Freeze))
                 {
-                    self.state.side_mut(foe).active_mote_mut().status = None;
+                    self.mote_mut(foe).status = None;
                     self.events.push(BattleEvent::StatusCured {
-                        target: foe,
+                        target: foe.side,
                         status: Ailment::Freeze,
                     });
                 }
@@ -696,37 +863,31 @@ impl Engine {
             if total_dealt > 0 {
                 self.check_oran(foe);
             }
-            if spec.flags.contact
-                && total_dealt > 0
-                && !self.state.side(side).active_mote().is_fainted()
-            {
-                let defender_ability = self.state.side(foe).active_mote().ability;
+            if spec.flags.contact && total_dealt > 0 && !self.mote(user).is_fainted() {
+                let defender_ability = self.mote(foe).ability;
                 if defender_ability == Ability::LiveWire
                     && rng.chance(3, 10)
-                    && self.try_apply_status(side, Ailment::Paralysis, rng)
+                    && self.try_apply_status(user, Ailment::Paralysis, rng)
                 {
                     self.events.push(BattleEvent::AbilityNote {
-                        side: foe,
+                        side: foe.side,
                         ability: defender_ability,
                     });
                 }
                 if defender_ability == Ability::ThornCoat {
-                    let recoil = u32::from(self.state.side(side).active_mote().max_hp()) / 8;
+                    let recoil = u32::from(self.mote(user).max_hp()) / 8;
                     if recoil > 0 {
-                        let dealt = self
-                            .state
-                            .side_mut(side)
-                            .active_mote_mut()
-                            .take_damage(recoil);
+                        let dealt = self.mote_mut(user).take_damage(recoil);
                         self.events.push(BattleEvent::AbilityNote {
-                            side: foe,
+                            side: foe.side,
                             ability: defender_ability,
                         });
                         self.events.push(BattleEvent::Recoiled {
                             side,
+                            slot: user.pos,
                             amount: dealt,
                         });
-                        self.check_oran(side);
+                        self.check_oran(user);
                     }
                 }
             }
@@ -735,7 +896,7 @@ impl Engine {
         // Effects in list order (doc 02 §6), skipped entirely on immunity.
         if !immune {
             for effect in spec.effects.clone() {
-                self.apply_effect(&spec, &effect, side, foe, total_dealt, typeless, rng);
+                self.apply_effect(&spec, &effect, user, foe, total_dealt, rng);
             }
         }
 
@@ -743,34 +904,30 @@ impl Engine {
         if typeless && total_dealt > 0 {
             let recoil = total_dealt / 4;
             if recoil > 0 {
-                let dealt = self
-                    .state
-                    .side_mut(side)
-                    .active_mote_mut()
-                    .take_damage(recoil);
+                let dealt = self.mote_mut(user).take_damage(recoil);
                 self.events.push(BattleEvent::Recoiled {
                     side,
+                    slot: user.pos,
                     amount: dealt,
                 });
             }
         }
 
         self.faint_check(foe);
-        self.faint_check(side);
+        self.faint_check(user);
         self.check_outcome();
     }
 
-    #[allow(clippy::too_many_arguments, reason = "internal dispatcher, not API")]
     fn apply_effect(
         &mut self,
         spec: &MoveSpec,
         effect: &Effect,
-        side: SideId,
-        foe: SideId,
+        user: Slot,
+        foe: Slot,
         total_dealt: u32,
-        typeless: bool,
         rng: &mut BattleRng,
     ) {
+        let side = user.side;
         match effect {
             Effect::StatStage {
                 target,
@@ -781,11 +938,11 @@ impl Engine {
                 if !rng.chance(u32::from(*chance), 100) {
                     return;
                 }
-                let target_side = match target {
-                    EffectTarget::User => side,
+                let target_slot = match target {
+                    EffectTarget::User => user,
                     EffectTarget::Target => foe,
                 };
-                if self.state.side(target_side).active_mote().is_fainted() {
+                if self.mote(target_slot).is_fainted() {
                     return;
                 }
                 // Drop guards (doc 02 §10): metronome_soul pins speed.
@@ -793,12 +950,12 @@ impl Engine {
                 // StatStage effect carries core::Stat, which has no Acc
                 // variant — no launch move can lower accuracy.)
                 if *delta < 0 {
-                    let guard = self.state.side(target_side).active_mote().ability;
+                    let guard = self.mote(target_slot).ability;
                     let blocked = guard == Ability::MetronomeSoul
                         && *stat == undersong_core::stats::Stat::Spe;
                     if blocked {
                         self.events.push(BattleEvent::AbilityNote {
-                            side: target_side,
+                            side: target_slot.side,
                             ability: guard,
                         });
                         return;
@@ -807,20 +964,17 @@ impl Engine {
                 let Some(stage_stat) = StageStat::from_stat(*stat) else {
                     return; // HP has no stage
                 };
-                let (new_stage, clamped) = self
-                    .state
-                    .side_mut(target_side)
-                    .active_state
-                    .stages
-                    .bump(stage_stat, *delta);
+                let (new_stage, clamped) =
+                    self.pstate_mut(target_slot).stages.bump(stage_stat, *delta);
                 self.events.push(if clamped {
                     BattleEvent::StatStageClamped {
-                        target: target_side,
+                        target: target_slot.side,
                         stat: *stat,
                     }
                 } else {
                     BattleEvent::StatStageChanged {
-                        target: target_side,
+                        target: target_slot.side,
+                        slot: target_slot.pos,
                         stat: *stat,
                         delta: *delta,
                         new_stage,
@@ -838,15 +992,12 @@ impl Engine {
                 }
             }
             Effect::Heal { frac } => {
-                let max_hp = u32::from(self.state.side(side).active_mote().max_hp());
-                let healed = self
-                    .state
-                    .side_mut(side)
-                    .active_mote_mut()
-                    .heal(frac.apply(max_hp));
+                let max_hp = u32::from(self.mote(user).max_hp());
+                let healed = self.mote_mut(user).heal(frac.apply(max_hp));
                 if healed > 0 {
                     self.events.push(BattleEvent::Healed {
                         target: side,
+                        slot: user.pos,
                         amount: healed,
                     });
                 }
@@ -854,10 +1005,10 @@ impl Engine {
             Effect::Drain { frac } => {
                 let amount = frac.apply(total_dealt);
                 if amount > 0 {
-                    let healed = self.state.side_mut(side).active_mote_mut().heal(amount);
+                    let healed = self.mote_mut(user).heal(amount);
                     if healed > 0 {
                         self.events.push(BattleEvent::Drained {
-                            from: foe,
+                            from: foe.side,
                             amount: healed,
                         });
                     }
@@ -866,13 +1017,10 @@ impl Engine {
             Effect::Recoil { frac } => {
                 let amount = frac.apply(total_dealt);
                 if amount > 0 {
-                    let dealt = self
-                        .state
-                        .side_mut(side)
-                        .active_mote_mut()
-                        .take_damage(amount);
+                    let dealt = self.mote_mut(user).take_damage(amount);
                     self.events.push(BattleEvent::Recoiled {
                         side,
+                        slot: user.pos,
                         amount: dealt,
                     });
                 }
@@ -880,16 +1028,14 @@ impl Engine {
             Effect::Flinch { chance } => {
                 // keysmith: +10% flinch on sound moves (doc 02 §10).
                 let mut chance = u32::from(*chance);
-                if self.state.side(side).active_mote().ability == Ability::Keysmith
-                    && spec.flags.sound
-                {
+                if self.mote(user).ability == Ability::Keysmith && spec.flags.sound {
                     chance += 10;
                 }
                 if rng.chance(chance, 100)
-                    && !self.state.side(foe).active_mote().is_fainted()
-                    && self.state.side(foe).active_mote().ability != Ability::IronEar
+                    && !self.mote(foe).is_fainted()
+                    && self.mote(foe).ability != Ability::IronEar
                 {
-                    self.state.side_mut(foe).active_state.flinched = true;
+                    self.pstate_mut(foe).flinched = true;
                 }
             }
             Effect::Weather { kind } => {
@@ -898,23 +1044,24 @@ impl Engine {
                     .push(BattleEvent::WeatherChanged { kind: Some(*kind) });
             }
             Effect::Protect => {
-                self.state.side_mut(side).active_state.protected = true;
+                self.pstate_mut(user).protected = true;
             }
             Effect::ForceSwitch => {
                 // A KO from this same move wins over the drag: the faint
                 // must reach the event stream before any switch could
                 // hide it (doc 03 §2; v1.2 #1/#3 award rules).
                 self.faint_check(foe);
-                if self.state.side(foe).active_mote().is_fainted() {
+                if self.mote(foe).is_fainted() {
                     return;
                 }
                 let bench: Vec<u8> = {
-                    let s = self.state.side(foe);
+                    let s = self.state.side(foe.side);
                     s.party
                         .iter()
                         .enumerate()
-                        .filter(|(i, m)| *i != usize::from(s.active) && !m.is_fainted())
-                        .map(|(i, _)| u8::try_from(i).expect("party ≤ 6"))
+                        .map(|(i, m)| (u8::try_from(i).expect("party ≤ 6"), m))
+                        .filter(|(i, m)| !s.is_fielded(*i) && !m.is_fainted())
+                        .map(|(i, _)| i)
                         .collect()
                 };
                 if !bench.is_empty() {
@@ -924,25 +1071,26 @@ impl Engine {
                     self.perform_switch(foe, pick);
                     // v1.2 #10: the dragged-in Mote does not act with its
                     // predecessor's queued action.
-                    self.cancelled[usize::from(foe)] = true;
+                    self.cancel(foe);
                 }
             }
             Effect::SelfSwitch => {
                 // Same faint-before-switch rule as ForceSwitch.
-                self.faint_check(side);
-                if self.state.side(side).active_mote().is_fainted() {
+                self.faint_check(user);
+                if self.mote(user).is_fainted() {
                     return;
                 }
-                if let Some(replacement) = self.state.side(side).first_replacement() {
-                    self.perform_switch(side, replacement);
+                if let Some(replacement) = self.state.side(user.side).first_replacement() {
+                    self.perform_switch(user, replacement);
                 }
             }
             Effect::Ohko => {
-                let hp = u32::from(self.state.side(foe).active_mote().hp);
+                let hp = u32::from(self.mote(foe).hp);
                 if hp > 0 {
-                    let dealt = self.state.side_mut(foe).active_mote_mut().take_damage(hp);
+                    let dealt = self.mote_mut(foe).take_damage(hp);
                     self.events.push(BattleEvent::DamageDealt {
-                        target: foe,
+                        target: foe.side,
+                        target_slot: foe.pos,
                         amount: dealt,
                         crit: false,
                         effectiveness: undersong_core::types::Eff::Neutral,
@@ -952,11 +1100,12 @@ impl Engine {
             Effect::FixedDamage { amount } => {
                 let raw = match amount {
                     FixedAmount::Amount(n) => u32::from(*n),
-                    FixedAmount::UserLevel => u32::from(self.state.side(side).active_mote().level),
+                    FixedAmount::UserLevel => u32::from(self.mote(user).level),
                 };
-                let dealt = self.state.side_mut(foe).active_mote_mut().take_damage(raw);
+                let dealt = self.mote_mut(foe).take_damage(raw);
                 self.events.push(BattleEvent::DamageDealt {
-                    target: foe,
+                    target: foe.side,
+                    target_slot: foe.pos,
                     amount: dealt,
                     crit: false,
                     effectiveness: undersong_core::types::Eff::Neutral,
@@ -965,19 +1114,16 @@ impl Engine {
             // Handled in the act() flow, not as post-damage effects.
             Effect::MultiHit | Effect::TwoTurn { .. } => {}
         }
-        let _ = typeless;
     }
 
     /// Applies a major status respecting one-at-a-time and the type
     /// immunities of doc 02 §5. Returns whether it stuck.
-    fn try_apply_status(&mut self, target: SideId, ailment: Ailment, rng: &mut BattleRng) -> bool {
+    fn try_apply_status(&mut self, target: Slot, ailment: Ailment, rng: &mut BattleRng) -> bool {
         // vigor: immune to sleep (doc 02 §10).
-        if ailment == Ailment::Sleep
-            && self.state.side(target).active_mote().ability == Ability::Vigor
-        {
+        if ailment == Ailment::Sleep && self.mote(target).ability == Ability::Vigor {
             return false;
         }
-        let mote = self.state.side(target).active_mote();
+        let mote = self.mote(target);
         if mote.is_fainted() || mote.status.is_some() {
             return false;
         }
@@ -1003,9 +1149,10 @@ impl Engine {
             },
             Ailment::Freeze => MajorStatus::Freeze,
         };
-        self.state.side_mut(target).active_mote_mut().status = Some(status);
+        self.mote_mut(target).status = Some(status);
         self.events.push(BattleEvent::StatusApplied {
-            target,
+            target: target.side,
+            slot: target.pos,
             status: ailment,
         });
         true
@@ -1016,11 +1163,11 @@ impl Engine {
     fn end_of_turn(&mut self, _rng: &mut BattleRng) {
         use undersong_core::moves::WeatherKind;
 
-        // 1) Weather chip (v1.1 #2.1), side 0's active first. All EOT
+        // 1) Weather chip (v1.1 #2.1), side 0's positions first. All EOT
         // fraction damage has a 1 HP minimum (v1.2 #7).
         if let Some((kind, _)) = self.state.weather {
-            for side in 0..2u8 {
-                let mote = self.state.side(side).active_mote();
+            for slot in self.all_slots() {
+                let mote = self.mote(slot);
                 if mote.is_fainted() {
                     continue;
                 }
@@ -1037,52 +1184,49 @@ impl Engine {
                 };
                 if !exempt {
                     let chip = u32::from(mote.max_hp()) / 16;
-                    let dealt = self
-                        .state
-                        .side_mut(side)
-                        .active_mote_mut()
-                        .take_damage(chip.max(1));
+                    let dealt = self.mote_mut(slot).take_damage(chip.max(1));
                     self.events.push(BattleEvent::WeatherChip {
-                        target: side,
+                        target: slot.side,
                         amount: dealt,
                     });
-                    self.faint_check(side);
+                    self.faint_check(slot);
                 }
             }
         }
 
-        // 2) Seeded drain (doc 02 §5: 1/8 to the opposer).
-        for side in 0..2u8 {
-            if !self.state.side(side).active_state.seeded {
+        // 2) Seeded drain (doc 02 §5: 1/8 to the opposer). In doubles the
+        // drain heals the foe's first conscious position (engine policy:
+        // the seeded volatile does not track its planter).
+        for slot in self.all_slots() {
+            if !self.pstate(slot).seeded {
                 continue;
             }
-            let mote = self.state.side(side).active_mote();
+            let mote = self.mote(slot);
             if mote.is_fainted() {
                 continue;
             }
             let amount = (u32::from(mote.max_hp()) / 8).max(1);
-            let dealt = self
-                .state
-                .side_mut(side)
-                .active_mote_mut()
-                .take_damage(amount);
+            let dealt = self.mote_mut(slot).take_damage(amount);
             self.events.push(BattleEvent::SeededDrain {
-                from: side,
+                from: slot.side,
                 amount: dealt,
             });
-            let foe = 1 - side;
-            if !self.state.side(foe).active_mote().is_fainted() {
-                self.state
-                    .side_mut(foe)
-                    .active_mote_mut()
-                    .heal(u32::from(dealt));
+            let foe_side = 1 - slot.side;
+            let drinker = (0..self.position_count(foe_side))
+                .map(|p| Slot {
+                    side: foe_side,
+                    pos: p,
+                })
+                .find(|&s| !self.mote(s).is_fainted());
+            if let Some(drinker) = drinker {
+                self.mote_mut(drinker).heal(u32::from(dealt));
             }
-            self.faint_check(side);
+            self.faint_check(slot);
         }
 
         // 3) Burn / poison / toxic (doc 02 §5; order v1.1 #2.3).
-        for side in 0..2u8 {
-            let mote = self.state.side(side).active_mote();
+        for slot in self.all_slots() {
+            let mote = self.mote(slot);
             if mote.is_fainted() {
                 continue;
             }
@@ -1101,35 +1245,32 @@ impl Engine {
                 ),
                 _ => continue,
             };
-            let dealt = self
-                .state
-                .side_mut(side)
-                .active_mote_mut()
-                .take_damage(amount.max(1));
-            self.state.side_mut(side).active_mote_mut().status = next;
+            let dealt = self.mote_mut(slot).take_damage(amount.max(1));
+            self.mote_mut(slot).status = next;
             self.events.push(BattleEvent::StatusTicked {
-                target: side,
+                target: slot.side,
                 status: ailment,
                 damage: dealt,
             });
-            self.faint_check(side);
+            self.faint_check(slot);
         }
 
         // 4) Weather countdown.
         // encore_heart: 1/16 max HP each turn in any weather (doc 02 §10).
         if self.state.weather.is_some() {
-            for side in [0u8, 1u8] {
-                let mote = self.state.side(side).active_mote();
+            for slot in self.all_slots() {
+                let mote = self.mote(slot);
                 if !mote.is_fainted() && mote.ability == Ability::EncoreHeart {
                     let amount = u32::from(mote.max_hp()) / 16;
-                    let healed = self.state.side_mut(side).active_mote_mut().heal(amount);
+                    let healed = self.mote_mut(slot).heal(amount);
                     if healed > 0 {
                         self.events.push(BattleEvent::AbilityNote {
-                            side,
+                            side: slot.side,
                             ability: Ability::EncoreHeart,
                         });
                         self.events.push(BattleEvent::Healed {
-                            target: side,
+                            target: slot.side,
+                            slot: slot.pos,
                             amount: healed,
                         });
                     }
@@ -1149,46 +1290,66 @@ impl Engine {
 
     // ----- faints, exp, outcome ----------------------------------------
 
-    /// Emits Fainted (once) and awards exp/EVs to the opposing active
-    /// (doc 02 §9, v1.1 #13–14).
-    fn faint_check(&mut self, side: SideId) {
-        let mote = self.state.side(side).active_mote();
-        if !mote.is_fainted() {
+    /// Emits Fainted (once per faint, tracked by the position's
+    /// `fainted_emitted` flag — reset on switch-in), fires understudy on
+    /// the surviving ally (doc 02 §10), and awards exp/EVs to the
+    /// opposing fielded Motes (doc 02 §9, v1.1 #13–14; doubles split
+    /// evenly among conscious player positions, floor).
+    fn faint_check(&mut self, slot: Slot) {
+        if !self.mote(slot).is_fainted() || self.pstate(slot).fainted_emitted {
             return;
         }
-        // Already emitted for this faint?
-        let already =
-            self.events
-                .iter()
-                .rev()
-                .any(|e| matches!(e, BattleEvent::Fainted { target } if *target == side))
-                && {
-                    // A new switch-in resets the "already fainted" detection.
-                    let last_switch = self.events.iter().rposition(
-                        |e| matches!(e, BattleEvent::SwitchedIn { side: s, .. } if *s == side),
-                    );
-                    let last_faint = self.events.iter().rposition(
-                        |e| matches!(e, BattleEvent::Fainted { target } if *target == side),
-                    );
-                    match (last_faint, last_switch) {
-                        (Some(f), Some(s)) => f > s,
-                        (Some(_), None) => true,
-                        _ => false,
-                    }
-                };
-        if already {
-            return;
-        }
-        self.events.push(BattleEvent::Fainted { target: side });
+        self.pstate_mut(slot).fainted_emitted = true;
+        self.events.push(BattleEvent::Fainted {
+            target: slot.side,
+            slot: slot.pos,
+        });
 
-        let victor: SideId = 1 - side;
+        // understudy (doc 02 §10): +1 atk/+1 spa to the surviving ally,
+        // per ally faint.
+        for ally_pos in 0..self.position_count(slot.side) {
+            if ally_pos == slot.pos {
+                continue;
+            }
+            let ally = Slot {
+                side: slot.side,
+                pos: ally_pos,
+            };
+            if self.mote(ally).is_fainted() || self.mote(ally).ability != Ability::Understudy {
+                continue;
+            }
+            self.events.push(BattleEvent::AbilityNote {
+                side: slot.side,
+                ability: Ability::Understudy,
+            });
+            for stat in [Stat::Atk, Stat::Spa] {
+                let stage_stat = StageStat::from_stat(stat).expect("atk/spa have stages");
+                let (new_stage, clamped) = self.pstate_mut(ally).stages.bump(stage_stat, 1);
+                self.events.push(if clamped {
+                    BattleEvent::StatStageClamped {
+                        target: slot.side,
+                        stat,
+                    }
+                } else {
+                    BattleEvent::StatStageChanged {
+                        target: slot.side,
+                        slot: ally_pos,
+                        stat,
+                        delta: 1,
+                        new_stage,
+                    }
+                });
+            }
+        }
+
+        let victor: SideId = 1 - slot.side;
         // Exp/EV awards are player-side only (doc 02 v1.2 #1); the Fainted
         // event above is unconditional.
         if victor != 0 {
             return;
         }
         let (yield_base, level, ev_yield) = {
-            let fainted = self.state.side(side).active_mote();
+            let fainted = self.mote(slot);
             (
                 fainted.base_exp_yield,
                 fainted.level,
@@ -1196,56 +1357,67 @@ impl Engine {
             )
         };
         let trainer = matches!(self.state.kind, BattleKind::Trainer);
-        let victor_slot = self.state.side(victor).active;
-        let victor_mote = self.state.side_mut(victor).active_mote_mut();
-        if victor_mote.is_fainted() {
-            return;
-        }
-
-        // EVs first (v1.1 #14): per-stat cap 252, total cap 510, excess
-        // dropped in canonical stat order.
-        for (stat, amount) in ev_yield {
-            let total = victor_mote.ev_sum();
-            if total >= 510 {
-                break;
-            }
-            let room_total = 510 - total;
-            let current = victor_mote.evs.get(stat);
-            let room_stat = u32::from(252u16.saturating_sub(current));
-            let grant = u32::from(amount).min(room_total).min(room_stat);
-            let new = current + u16::try_from(grant).expect("≤ 252");
-            match stat {
-                Stat::Hp => victor_mote.evs.hp = new,
-                Stat::Atk => victor_mote.evs.atk = new,
-                Stat::Def => victor_mote.evs.def = new,
-                Stat::Spa => victor_mote.evs.spa = new,
-                Stat::Spd => victor_mote.evs.spd = new,
-                Stat::Spe => victor_mote.evs.spe = new,
-            }
-        }
-        // EVs take effect at the next level-up recompute (v1.2 #4); no
-        // mid-battle stat bump from the award itself.
-
-        let gained = exp_gain(yield_base, level, 1, trainer, false);
-        if gained > 0 {
-            self.events.push(BattleEvent::ExpGained {
+        // Participants (doc 02 §9): the player positions on the field and
+        // conscious when the foe fainted; the gain splits evenly (floor).
+        let recipients: Vec<Slot> = (0..self.position_count(victor))
+            .map(|p| Slot {
                 side: victor,
-                slot: victor_slot,
-                amount: gained,
-            });
-            let ups = apply_exp(self.state.side_mut(victor).active_mote_mut(), gained);
-            for up in ups {
-                self.events.push(BattleEvent::LeveledUp {
+                pos: p,
+            })
+            .filter(|&s| !self.mote(s).is_fainted())
+            .collect();
+        let participants = u32::try_from(recipients.len()).expect("≤ 2");
+        let gained = exp_gain(yield_base, level, participants.max(1), trainer, false);
+        for recipient in recipients {
+            let victor_slot =
+                self.state.side(victor).positions[usize::from(recipient.pos)].party_index;
+            let victor_mote = self.mote_mut(recipient);
+
+            // EVs first (v1.1 #14): per-stat cap 252, total cap 510,
+            // excess dropped in canonical stat order. Every participant
+            // receives the full yield (doc 02 §9 split covers exp only).
+            for (stat, amount) in &ev_yield {
+                let total = victor_mote.ev_sum();
+                if total >= 510 {
+                    break;
+                }
+                let room_total = 510 - total;
+                let current = victor_mote.evs.get(*stat);
+                let room_stat = u32::from(252u16.saturating_sub(current));
+                let grant = u32::from(*amount).min(room_total).min(room_stat);
+                let new = current + u16::try_from(grant).expect("≤ 252");
+                match stat {
+                    Stat::Hp => victor_mote.evs.hp = new,
+                    Stat::Atk => victor_mote.evs.atk = new,
+                    Stat::Def => victor_mote.evs.def = new,
+                    Stat::Spa => victor_mote.evs.spa = new,
+                    Stat::Spd => victor_mote.evs.spd = new,
+                    Stat::Spe => victor_mote.evs.spe = new,
+                }
+            }
+            // EVs take effect at the next level-up recompute (v1.2 #4); no
+            // mid-battle stat bump from the award itself.
+
+            if gained > 0 {
+                self.events.push(BattleEvent::ExpGained {
                     side: victor,
                     slot: victor_slot,
-                    level: up.new_level,
+                    amount: gained,
                 });
-                for move_id in up.learnable {
-                    self.events.push(BattleEvent::MoveLearnable {
+                let ups = apply_exp(self.mote_mut(recipient), gained);
+                for up in ups {
+                    self.events.push(BattleEvent::LeveledUp {
                         side: victor,
                         slot: victor_slot,
-                        move_id,
+                        level: up.new_level,
                     });
+                    for move_id in up.learnable {
+                        self.events.push(BattleEvent::MoveLearnable {
+                            side: victor,
+                            slot: victor_slot,
+                            move_id,
+                        });
+                    }
                 }
             }
         }

@@ -20,8 +20,10 @@ pub enum AiTier {
     T3,
 }
 
-/// Picks an action for `side`. Only T0 consumes rng (uniform choice);
-/// T1/T2 are deterministic given the state, per the law's tie-breaks.
+/// Picks an action for `side` in a singles battle. Only T0 consumes rng
+/// (uniform choice); T1/T2 are deterministic given the state, per the
+/// law's tie-breaks. The rng draw pattern is part of the locked replay
+/// stream — doubles selection lives in `choose_doubles`.
 pub fn choose(tier: AiTier, state: &BattleState, side: SideId, rng: &mut BattleRng) -> Action {
     match tier {
         AiTier::T0 => tier0(state, side, rng),
@@ -31,10 +33,53 @@ pub fn choose(tier: AiTier, state: &BattleState, side: SideId, rng: &mut BattleR
     }
 }
 
+/// Picks `(action, target_position)` for one doubles position
+/// (doc 02 v1.5 #2: the actor declares a foe slot). T0 draws a uniform
+/// usable move and a uniform conscious foe slot; T1/T2 evaluate every
+/// `(move, target)` pair with the singles scoring law, ties resolving to
+/// the lower move slot, then the lower target slot.
+pub fn choose_doubles(
+    tier: AiTier,
+    state: &BattleState,
+    side: SideId,
+    position: u8,
+    rng: &mut BattleRng,
+) -> (Action, u8) {
+    let foe: SideId = 1 - side;
+    let targets: Vec<u8> = (0..state.side(foe).position_count())
+        .filter(|&p| !state.side(foe).mote_at(p).is_fainted())
+        .collect();
+    match tier {
+        AiTier::T0 => {
+            let usable = usable_slots_at(state, side, position);
+            let slot = if usable.is_empty() {
+                0 // engine resolves to Last Resort
+            } else {
+                usable[usize::try_from(rng.below(u32::try_from(usable.len()).expect("≤ 4")))
+                    .expect("index")]
+            };
+            let target = if targets.is_empty() {
+                0
+            } else {
+                targets[usize::try_from(rng.below(u32::try_from(targets.len()).expect("≤ 2")))
+                    .expect("index")]
+            };
+            (Action::Move { slot }, target)
+        }
+        AiTier::T1 => tier1_doubles(state, side, position, &targets),
+        // T3 stub returns tier 2 until P5 (roadmap).
+        AiTier::T2 | AiTier::T3 => tier2_doubles(state, side, position, &targets),
+    }
+}
+
 fn usable_slots(state: &BattleState, side: SideId) -> Vec<u8> {
+    usable_slots_at(state, side, 0)
+}
+
+fn usable_slots_at(state: &BattleState, side: SideId, position: u8) -> Vec<u8> {
     state
         .side(side)
-        .active_mote()
+        .mote_at(position)
         .moves
         .iter()
         .enumerate()
@@ -57,26 +102,166 @@ fn tier0(state: &BattleState, side: SideId, rng: &mut BattleRng) -> Action {
 /// Expected damage for T1/T2 (law v1.1 #15): full pipeline, rand fixed
 /// at 92, no crit.
 fn expected_damage(state: &BattleState, side: SideId, slot: u8) -> u32 {
+    expected_damage_at(state, side, 0, slot, 0)
+}
+
+/// Position-aware expected damage: `(side, position)` attacks the foe's
+/// `target` position. `ctx.doubles` follows the format flag so
+/// soloist/chorister score correctly (doc 02 §10).
+fn expected_damage_at(
+    state: &BattleState,
+    side: SideId,
+    position: u8,
+    slot: u8,
+    target: u8,
+) -> u32 {
     let foe: SideId = 1 - side;
     let attacker_side = state.side(side);
     let defender_side = state.side(foe);
-    let spec = &attacker_side.active_mote().moves[usize::from(slot)].spec;
+    let spec = &attacker_side.mote_at(position).moves[usize::from(slot)].spec;
     if spec.power == 0 || matches!(spec.category, MoveCategory::Status) {
         return 0;
     }
     let context = DamageContext {
-        attacker: attacker_side.active_mote(),
-        defender: defender_side.active_mote(),
-        attacker_stages: &attacker_side.active_state.stages,
-        defender_stages: &defender_side.active_state.stages,
+        attacker: attacker_side.mote_at(position),
+        defender: defender_side.mote_at(target),
+        attacker_stages: &attacker_side.positions[usize::from(position)].state.stages,
+        defender_stages: &defender_side.positions[usize::from(target)].state.stages,
         chart: &state.chart,
         weather: state.weather.map(|(kind, _)| kind),
         crit: false,
         rand: 92,
         spread: false,
-        doubles: false,
+        doubles: matches!(state.format, crate::state::Format::Double),
     };
     compute_damage(spec, &context).map_or(0, |outcome| outcome.amount)
+}
+
+/// T1 over `(move, target)` pairs: greedy max expected damage; ties →
+/// lowest slot, then lowest target; nothing damaging → slot 0 at the
+/// first conscious foe slot.
+fn tier1_doubles(state: &BattleState, side: SideId, position: u8, targets: &[u8]) -> (Action, u8) {
+    let usable = usable_slots_at(state, side, position);
+    let mut best: Option<(u8, u8, u32)> = None;
+    for &slot in &usable {
+        for &target in targets {
+            let damage = expected_damage_at(state, side, position, slot, target);
+            if damage == 0 {
+                continue;
+            }
+            // Iteration is (slot asc, target asc): strictly-greater keeps
+            // the lowest slot, then the lowest target on ties.
+            if best.is_none_or(|(_, _, b)| damage > b) {
+                best = Some((slot, target, damage));
+            }
+        }
+    }
+    match best {
+        Some((slot, target, _)) => (Action::Move { slot }, target),
+        None => (
+            Action::Move { slot: 0 },
+            targets.first().copied().unwrap_or(0),
+        ),
+    }
+}
+
+/// T2 over `(move, target)` pairs (law v1.1 #16 scoring per target), with
+/// the hard-counter switch rule checked against every conscious foe slot.
+fn tier2_doubles(state: &BattleState, side: SideId, position: u8, targets: &[u8]) -> (Action, u8) {
+    let foe: SideId = 1 - side;
+    let fallback_target = targets.first().copied().unwrap_or(0);
+
+    // Switch rule: any foe slot's best STAB product vs us ≥ 4 and a bench
+    // Mote resists it (defensive product ≤ 1) → switch to the first such.
+    let our_types = state.side(side).mote_at(position).types.clone();
+    let best_threat = targets
+        .iter()
+        .flat_map(|&t| state.side(foe).mote_at(t).types.clone())
+        .map(|t| (t, state.chart.product(t, &our_types)))
+        .max_by_key(|&(_, (num, den))| u64::from(num) * 1000 / u64::from(den.max(1)));
+    if let Some((threat_type, (num, den))) = best_threat
+        && num >= 4 * den
+    {
+        let s = state.side(side);
+        let resists = s.party.iter().enumerate().find(|(i, m)| {
+            !s.is_fielded(u8::try_from(*i).expect("party ≤ 6")) && !m.is_fainted() && {
+                let (n, d) = resist_product(state, threat_type, &m.types);
+                n <= d
+            }
+        });
+        if let Some((index, _)) = resists {
+            return (
+                Action::Switch {
+                    to: u8::try_from(index).expect("party ≤ 6"),
+                },
+                fallback_target,
+            );
+        }
+    }
+
+    let usable = usable_slots_at(state, side, position);
+    if usable.is_empty() {
+        return (Action::Move { slot: 0 }, fallback_target);
+    }
+    let at_full_hp = {
+        let m = state.side(side).mote_at(position);
+        m.hp == m.max_hp()
+    };
+    let mut best: Option<(u8, u8, u64)> = None;
+    for &slot in &usable {
+        let spec = &state.side(side).mote_at(position).moves[usize::from(slot)].spec;
+        for &target in targets {
+            let target_mote = state.side(foe).mote_at(target);
+            let target_hp = u32::from(target_mote.hp);
+            let target_healthy = u32::from(target_mote.hp) * 2 > u32::from(target_mote.max_hp());
+            let target_unstatused = target_mote.status.is_none();
+
+            let damage = expected_damage_at(state, side, position, slot, target);
+            let mut score = (u64::from(damage) * 100)
+                .checked_div(u64::from(target_hp))
+                .unwrap_or(0)
+                .min(100);
+            if damage >= target_hp && damage > 0 {
+                score += 25; // can KO
+            }
+            let is_major_status = spec.effects.iter().any(
+                |e| matches!(e, undersong_core::moves::Effect::Status { chance, .. } if *chance == 100),
+            );
+            if matches!(spec.category, MoveCategory::Status)
+                && is_major_status
+                && target_healthy
+                && target_unstatused
+            {
+                score += 15;
+            }
+            let is_self_setup = spec.effects.iter().any(|e| {
+                matches!(
+                    e,
+                    undersong_core::moves::Effect::StatStage {
+                        target: undersong_core::moves::EffectTarget::User,
+                        delta,
+                        ..
+                    } if *delta > 0
+                )
+            });
+            if matches!(spec.category, MoveCategory::Status) && is_self_setup && at_full_hp {
+                score += 10;
+            }
+            // (slot asc, target asc) iteration + strictly-greater: ties
+            // keep the lowest slot, then the lowest target.
+            if best.is_none_or(|(_, _, b)| score > b) {
+                best = Some((slot, target, score));
+            }
+        }
+        // A status move with no conscious target still scores 0 once.
+        if targets.is_empty() && best.is_none() {
+            best = Some((slot, 0, 0));
+        }
+    }
+    match best {
+        Some((slot, target, _)) => (Action::Move { slot }, target),
+        None => (Action::Move { slot: 0 }, fallback_target),
+    }
 }
 
 /// T1: greedy max expected damage; never uses status moves; no damaging
@@ -111,7 +296,7 @@ fn tier2(state: &BattleState, side: SideId) -> Action {
     {
         let s = state.side(side);
         let resists = s.party.iter().enumerate().find(|(i, m)| {
-            *i != usize::from(s.active) && !m.is_fainted() && {
+            !s.is_fielded(u8::try_from(*i).expect("party ≤ 6")) && !m.is_fainted() && {
                 let (n, d) = resist_product(state, threat_type, &m.types);
                 n <= d
             }

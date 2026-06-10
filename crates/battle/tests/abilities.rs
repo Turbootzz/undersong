@@ -210,7 +210,8 @@ fn live_wire_can_paralyze_contacters() {
                 e,
                 BattleEvent::StatusApplied {
                     target: 0,
-                    status: undersong_core::moves::Ailment::Paralysis
+                    status: undersong_core::moves::Ailment::Paralysis,
+                    ..
                 }
             )
         }) {
@@ -232,7 +233,9 @@ fn thorn_coat_recoils_contacters_for_an_eighth() {
     let recoil: u32 = events
         .iter()
         .filter_map(|e| match e {
-            BattleEvent::Recoiled { side: 0, amount } => Some(u32::from(*amount)),
+            BattleEvent::Recoiled {
+                side: 0, amount, ..
+            } => Some(u32::from(*amount)),
             _ => None,
         })
         .sum();
@@ -375,7 +378,8 @@ fn vigor_is_immune_to_sleep() {
         e,
         BattleEvent::StatusApplied {
             target: 1,
-            status: undersong_core::moves::Ailment::Sleep
+            status: undersong_core::moves::Ailment::Sleep,
+            ..
         }
     )));
 }
@@ -399,7 +403,7 @@ fn iron_ear_cannot_flinch() {
         Action::Move { slot: 0 },
         Action::Move { slot: 0 },
     );
-    assert!(!fight.state.sides[1].active_state.flinched);
+    assert!(!fight.state.sides[1].positions[0].state.flinched);
 }
 
 #[test]

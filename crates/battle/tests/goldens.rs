@@ -8,7 +8,9 @@
 
 use std::path::PathBuf;
 
-use battle::{Action, BattleKind, BattleMote, BattleState, MoteBuilder, TurnActions, step};
+use battle::{
+    Action, BattleKind, BattleMote, BattleState, MoteBuilder, PositionAction, TurnActions, step,
+};
 use undersong_core::chart::TypeChart;
 use undersong_core::moves::{
     Ailment, Effect, EffectTarget, Frac, MoveCategory, MoveFlags, MoveSpec, MoveTarget, WeatherKind,
@@ -284,6 +286,65 @@ fn scenarios() -> Vec<Scenario> {
         });
     }
 
+    // 6 — tandem (doubles, doc 02 v1.5 #2): declared targets, a mid-turn
+    // KO, and the retarget-to-survivor rule.
+    {
+        let lead = species("golden_lead", &[Type::Ember], [60, 70, 55, 70, 55, 90]);
+        let anchor = species("golden_anchor", &[Type::Tide], [70, 60, 70, 60, 70, 40]);
+        let frail = species("golden_frail", &[Type::Bloom], [45, 55, 40, 55, 40, 60]);
+        let bulwark = species("golden_bulwark", &[Type::Stone], [85, 70, 90, 40, 70, 20]);
+        let singe = attack("singe", Type::Ember, MoveCategory::Special, 70, 100);
+        let surge = attack("surge", Type::Tide, MoveCategory::Special, 60, 100);
+        let pick = attack("pick", Type::Bloom, MoveCategory::Physical, 50, 100);
+        let toll = attack("toll", Type::Stone, MoveCategory::Physical, 60, 90);
+        let chart = chart_with(
+            "TypeChart(entries: {
+                Ember: { Bloom: Double, Stone: Half },
+                Tide:  { Stone: Double },
+                Stone: { Ember: Double },
+            })",
+        );
+        // Both player positions pile onto foe slot 0: if the first strike
+        // KOs, the second retargets to the survivor (v1.5 #2).
+        let pile_on = TurnActions::doubles(vec![
+            PositionAction {
+                side: 0,
+                position: 0,
+                action: Action::Move { slot: 0 },
+                target_position: 0,
+            },
+            PositionAction {
+                side: 0,
+                position: 1,
+                action: Action::Move { slot: 0 },
+                target_position: 0,
+            },
+            PositionAction {
+                side: 1,
+                position: 0,
+                action: Action::Move { slot: 0 },
+                target_position: 1,
+            },
+            PositionAction {
+                side: 1,
+                position: 1,
+                action: Action::Move { slot: 0 },
+                target_position: 0,
+            },
+        ]);
+        list.push(Scenario {
+            name: "tandem",
+            seed: 0x0006_D0B1,
+            state: BattleState::new_double(
+                BattleKind::Trainer,
+                vec![mote(&lead, 25, vec![singe]), mote(&anchor, 25, vec![surge])],
+                vec![mote(&frail, 25, vec![pick]), mote(&bulwark, 25, vec![toll])],
+                chart,
+            ),
+            script: vec![pile_on],
+        });
+    }
+
     list
 }
 
@@ -295,8 +356,8 @@ fn play(scenario: &Scenario) -> String {
     let mut events = Vec::new();
     let mut turn = 0usize;
     while state.outcome.is_none() && turn < 40 {
-        let actions = scenario.script[turn % scenario.script.len()];
-        let (next, step_events) = step(&state, &actions, &mut rng);
+        let actions = &scenario.script[turn % scenario.script.len()];
+        let (next, step_events) = step(&state, actions, &mut rng);
         events.extend(step_events);
         state = next;
         turn += 1;
@@ -340,6 +401,7 @@ fn golden_replays_are_locked() {
 }
 
 #[test]
-fn corpus_has_five_scenarios() {
-    assert_eq!(scenarios().len(), 5, "doc 06 P1: five scripted battles");
+fn corpus_has_six_scenarios() {
+    // Doc 06 P1 locked five singles battles; doubles (P4) adds `tandem`.
+    assert_eq!(scenarios().len(), 6, "5 singles + 1 doubles");
 }
