@@ -266,6 +266,175 @@ pub fn validate_species_pool(
     findings
 }
 
+/// Palette rules (doc 05 §2): every color is `#rrggbb`, all 12 type
+/// colors present.
+pub fn validate_palette(palette: &crate::content::Palette) -> Vec<Finding> {
+    fn check(findings: &mut Vec<Finding>, name: &str, value: &str) {
+        let ok = value.len() == 7
+            && value.starts_with('#')
+            && value[1..].chars().all(|c| c.is_ascii_hexdigit());
+        if !ok {
+            findings.push(Finding::error(
+                "palette.color",
+                format!("`{name}` is `{value}`, expected #rrggbb"),
+            ));
+        }
+    }
+    let mut findings = Vec::new();
+    for (name, value) in [
+        ("ink", &palette.ink),
+        ("ink_soft", &palette.ink_soft),
+        ("parchment", &palette.parchment),
+        ("parchment_dim", &palette.parchment_dim),
+        ("gilt", &palette.gilt),
+        ("cantorel_accent", &palette.cantorel_accent),
+        ("hp_high", &palette.hp_high),
+        ("hp_mid", &palette.hp_mid),
+        ("hp_low", &palette.hp_low),
+        ("night", &palette.night),
+    ] {
+        check(&mut findings, name, value);
+    }
+    for ty in Type::ALL {
+        match palette.type_colors.get(&ty) {
+            Some(color) => check(&mut findings, &format!("type.{ty:?}"), color),
+            None => findings.push(Finding::error(
+                "palette.types",
+                format!("missing type color for {ty:?}"),
+            )),
+        }
+    }
+    findings
+}
+
+/// Map rules (doc 04 §3 #2–3 subset for the loaded set): layer lengths,
+/// in-bounds coordinates, warp targets exist + in-bounds + non-solid,
+/// encounter table shape (12 slots, weights sum 100, levels ≥ 1, species
+/// resolve), referenced scripts exist.
+pub fn validate_maps(
+    maps: &std::collections::BTreeMap<undersong_core::ids::MapId, crate::map::MapDef>,
+    pool: &crate::content::SpeciesPool,
+    script_exists: &dyn Fn(&undersong_core::ids::MapId, &str) -> bool,
+) -> Vec<Finding> {
+    use crate::map::TriggerKind;
+
+    let mut findings = Vec::new();
+    for (id, map) in maps {
+        let cells = usize::try_from(map.width * map.height).expect("fits");
+        let mid = id.as_str();
+        for (layer, len, required) in [
+            ("ground", map.ground.len(), true),
+            ("decor", map.decor.len(), false),
+            ("overhang", map.overhang.len(), false),
+            ("collision", map.collision.len(), true),
+            ("patches", map.patches.len(), false),
+        ] {
+            let ok = len == cells || (!required && len == 0);
+            if !ok {
+                findings.push(Finding::error(
+                    "map.layers",
+                    format!("`{mid}` layer {layer} has {len} cells, expected {cells} (or empty)"),
+                ));
+            }
+        }
+        for trigger in &map.triggers {
+            let (x, y) = trigger.at;
+            if !map.in_bounds(x, y) {
+                findings.push(Finding::error(
+                    "map.bounds",
+                    format!("`{mid}` trigger at ({x},{y}) out of bounds"),
+                ));
+            }
+            match &trigger.kind {
+                TriggerKind::Warp {
+                    map: target,
+                    to,
+                    facing: _,
+                } => match maps.get(target) {
+                    None => findings.push(Finding::error(
+                        "map.warp_target",
+                        format!("`{mid}` warps to unknown map `{target}`"),
+                    )),
+                    Some(dest) => {
+                        if !dest.in_bounds(to.0, to.1) {
+                            findings.push(Finding::error(
+                                "map.warp_target",
+                                format!("`{mid}` warp lands out of bounds in `{target}`"),
+                            ));
+                        } else if dest.is_solid(to.0, to.1) {
+                            findings.push(Finding::error(
+                                "map.warp_target",
+                                format!("`{mid}` warp lands on a solid tile in `{target}`"),
+                            ));
+                        }
+                    }
+                },
+                TriggerKind::Script { path } => {
+                    if !script_exists(id, path) {
+                        findings.push(Finding::error(
+                            "map.script_ref",
+                            format!("`{mid}` trigger references missing script `{path}`"),
+                        ));
+                    }
+                }
+            }
+        }
+        for npc in &map.npcs {
+            let (x, y) = npc.at;
+            if !map.in_bounds(x, y) {
+                findings.push(Finding::error(
+                    "map.bounds",
+                    format!("`{mid}` npc `{}` at ({x},{y}) out of bounds", npc.id),
+                ));
+            }
+            if let Some(path) = &npc.script
+                && !script_exists(id, path)
+            {
+                findings.push(Finding::error(
+                    "map.script_ref",
+                    format!(
+                        "`{mid}` npc `{}` references missing script `{path}`",
+                        npc.id
+                    ),
+                ));
+            }
+        }
+        if let Some(encounters) = &map.encounters {
+            if encounters.slots.len() != 12 {
+                findings.push(Finding::error(
+                    "map.encounters",
+                    format!(
+                        "`{mid}` has {} encounter slots, doc 02 §12 requires exactly 12",
+                        encounters.slots.len()
+                    ),
+                ));
+            }
+            let weight_sum: u32 = encounters.slots.iter().map(|s| u32::from(s.3)).sum();
+            if weight_sum != 100 {
+                findings.push(Finding::error(
+                    "map.encounters",
+                    format!("`{mid}` encounter weights sum to {weight_sum}, expected 100"),
+                ));
+            }
+            for (species, lo, hi, _) in &encounters.slots {
+                if *lo < 1 || hi < lo {
+                    findings.push(Finding::error(
+                        "map.encounters",
+                        format!("`{mid}` slot `{species}` level range {lo}..{hi} invalid"),
+                    ));
+                }
+                if !pool.species.iter().any(|sp| &sp.id == species) {
+                    findings.push(Finding::error(
+                        "map.encounters",
+                        format!("`{mid}` slot references unknown species `{species}`"),
+                    ));
+                }
+            }
+        }
+    }
+    findings
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;

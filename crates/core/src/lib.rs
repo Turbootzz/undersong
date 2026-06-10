@@ -15,3 +15,4 @@ pub mod rng;
 pub mod species;
 pub mod stats;
 pub mod types;
+pub mod world;

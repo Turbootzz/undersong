@@ -142,7 +142,27 @@ fn validate(options: &Options) -> Result<bool> {
         let pool = data::load_species_pool(&dev_pool)
             .with_context(|| format!("loading {}", dev_pool.display()))?;
         findings.extend(data::validate_species_pool(&pool, &content.moves));
+
+        // Dev maps validate against the same pool.
+        let maps_root = options.content.join("dev/maps");
+        if maps_root.exists() {
+            let maps = data::load_maps(&maps_root)
+                .with_context(|| format!("loading maps under {}", maps_root.display()))?;
+            let script_exists = |map: &undersong_core::ids::MapId, path: &str| {
+                maps_root
+                    .join(map.as_str())
+                    .join("scripts")
+                    .join(path)
+                    .exists()
+            };
+            findings.extend(data::validate_maps(&maps, &pool, &script_exists));
+        }
     }
+
+    // Palette (doc 05 §2) is core content.
+    let palette = data::load_palette(&options.content)
+        .with_context(|| format!("loading palette under {}", options.content.display()))?;
+    findings.extend(data::validate_palette(&palette));
 
     for finding in &findings {
         println!("{finding}");

@@ -30,13 +30,8 @@ pub enum SaveError {
     UnsupportedVersion(u32),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Facing {
-    Up,
-    Down,
-    Left,
-    Right,
-}
+/// Re-exported from core: facing is shared overworld vocabulary.
+pub use undersong_core::world::Facing;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {

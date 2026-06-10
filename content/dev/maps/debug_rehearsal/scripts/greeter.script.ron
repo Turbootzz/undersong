@@ -1,0 +1,10 @@
+// DEV-ONLY greeter: exercises Say, If/recontext, SetFlag — the gate
+// replay asserts `met.greeter` after this conversation.
+[
+    Say(who: "greeter", key: "debug.greeter.hello"),
+    If(flag: "met.greeter",
+       then: [Say(who: "greeter", key: "debug.greeter.again")],
+       else: [Say(who: "greeter", key: "debug.greeter.first")]),
+    SetFlag(flag: "met.greeter"),
+    End,
+]

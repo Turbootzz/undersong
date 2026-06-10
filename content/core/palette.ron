@@ -1,0 +1,31 @@
+// Ink-and-parchment palette — docs/05-UI-STYLE.md §2. Nothing is
+// hardcoded in systems: the game's UiTheme loads this file (doc 05 §9).
+Palette(
+    ink: "#1a1822",
+    ink_soft: "#3c3a4a",
+    parchment: "#f2e9d8",
+    parchment_dim: "#d9cfba",
+    gilt: "#c9a227",
+    cantorel_accent: "#7d4f9e",
+    hp_high: "#46b06a",
+    hp_mid: "#d8a534",
+    hp_low: "#c0392b",
+    night: "#9aa0c8",
+    // One per type, ≥ 4.5:1 contrast on parchment (doc 05 §2). Chosen as
+    // darkened instrument-family hues; the contrast audit is a P3 UI task
+    // when these first render as move-grid tints.
+    type_colors: {
+        Feral: "#6b5d45",
+        Ember: "#a83c1e",
+        Tide: "#1f5f8f",
+        Bloom: "#3d7a33",
+        Volt: "#8f7411",
+        Gale: "#3f7d80",
+        Stone: "#6e5849",
+        Frost: "#3b6d96",
+        Venom: "#6d3f7e",
+        Phantom: "#54467c",
+        Alloy: "#5c6066",
+        Resonant: "#8a3d6b",
+    },
+)

@@ -8,10 +8,15 @@
 #![forbid(unsafe_code)]
 
 pub mod content;
+pub mod map;
 pub mod validate;
 
 pub use content::{
-    CoreContent, LoadError, Natures, SpeciesPool, TypeChart, load_core, load_species_pool,
+    CoreContent, LoadError, Natures, Palette, SpeciesPool, TypeChart, load_core, load_palette,
+    load_species_pool,
 };
+pub use map::{EncounterDef, MapDef, NpcBehavior, NpcDef, Trigger, TriggerKind, load_maps};
 pub use undersong_core::collections::UniqueMap;
-pub use validate::{Finding, Severity, validate_core, validate_species_pool};
+pub use validate::{
+    Finding, Severity, validate_core, validate_maps, validate_palette, validate_species_pool,
+};

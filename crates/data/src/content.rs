@@ -95,6 +95,11 @@ pub fn load_core(content_root: &Path) -> Result<CoreContent, LoadError> {
     })
 }
 
+/// Crate-internal RON file loader shared by the schema modules.
+pub(crate) fn load_ron_file<T: DeserializeOwned>(path: &Path) -> Result<T, LoadError> {
+    load_ron(path.to_path_buf())
+}
+
 fn load_ron<T: DeserializeOwned>(path: PathBuf) -> Result<T, LoadError> {
     let text = std::fs::read_to_string(&path).map_err(|source| LoadError::Io {
         path: path.clone(),
@@ -104,4 +109,28 @@ fn load_ron<T: DeserializeOwned>(path: PathBuf) -> Result<T, LoadError> {
         path,
         source: Box::new(source),
     })
+}
+
+/// The ink-and-parchment palette (doc 05 §2); colors as `#rrggbb`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Palette {
+    pub ink: String,
+    pub ink_soft: String,
+    pub parchment: String,
+    pub parchment_dim: String,
+    pub gilt: String,
+    pub cantorel_accent: String,
+    pub hp_high: String,
+    pub hp_mid: String,
+    pub hp_low: String,
+    /// Night multiply color (doc 05 §2).
+    pub night: String,
+    /// One color per type; totality validated.
+    pub type_colors: undersong_core::collections::UniqueMap<undersong_core::types::Type, String>,
+}
+
+/// Loads `content/core/palette.ron`.
+pub fn load_palette(content_root: &Path) -> Result<Palette, LoadError> {
+    load_ron(content_root.join("core/palette.ron"))
 }

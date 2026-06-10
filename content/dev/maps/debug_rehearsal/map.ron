@@ -1,0 +1,106 @@
+// DEV-ONLY debug map ("the rehearsal room") — P2 overworld testbed.
+// 12×10 tiles. Tile vocabulary for the debug renderer:
+//   ground: 1 = grass, 2 = path, 3 = water(solid), 4 = floor
+//   decor:  5 = bush, 6 = sign
+//   overhang: 7 = tree canopy (drawn above actors)
+// Rows are listed bottom-first: the first row of each array is y = 0
+// (the south edge); index math is y*width+x with y growing upward.
+MapDef(
+    id: "debug_rehearsal",
+    name_key: "map.debug_rehearsal",
+    width: 12,
+    height: 10,
+    ground: [
+        3, 3, 3, 3, 3, 2, 2, 3, 3, 3, 3, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 3,
+        3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    ],
+    decor: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0,
+        0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ],
+    overhang: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ],
+    collision: [
+        1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1,
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ],
+    patches: [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0,
+        0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ],
+    triggers: [
+        // South gate on the path: warp to the annex.
+        (at: (5, 0), kind: Warp(map: "debug_annex", to: (3, 4), facing: Down)),
+        (at: (6, 0), kind: Warp(map: "debug_annex", to: (4, 4), facing: Down)),
+    ],
+    npcs: [
+        (
+            id: "greeter", at: (7, 5), facing: Left, sprite: "npc.greeter",
+            script: Some("greeter.script.ron"), behavior: Static, sight_range: 0,
+        ),
+        (
+            id: "stroller", at: (2, 6), facing: Down, sprite: "npc.stroller",
+            script: None, behavior: Wander(radius: 2), sight_range: 0,
+        ),
+    ],
+    encounters: Some((
+        patch_rate_pct: 12,
+        slots: [
+            ("testbed_feral", 3, 5, 20),
+            ("testbed_bloom", 3, 5, 20),
+            ("testbed_gale", 3, 5, 10),
+            ("testbed_ember", 3, 5, 10),
+            ("testbed_tide", 3, 5, 10),
+            ("testbed_volt", 3, 5, 10),
+            ("testbed_stone", 4, 5, 5),
+            ("testbed_frost", 4, 5, 5),
+            ("testbed_venom", 4, 5, 4),
+            ("testbed_phantom", 4, 6, 4),
+            ("testbed_alloy", 5, 6, 1),
+            ("testbed_resonant", 5, 6, 1),
+        ],
+    )),
+    music: None,
+)

@@ -1,0 +1,30 @@
+// DEV-ONLY annex room: warp target for the rehearsal map (6×6 floor).
+MapDef(
+    id: "debug_annex",
+    name_key: "map.debug_annex",
+    width: 8,
+    height: 6,
+    ground: [
+        4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4,
+        4, 4, 4, 4, 4, 4, 4, 4,
+    ],
+    collision: [
+        1, 1, 1, 1, 1, 1, 1, 1,
+        1, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 1,
+        1, 0, 0, 0, 0, 0, 0, 1,
+        1, 1, 1, 0, 0, 1, 1, 1,
+    ],
+    triggers: [
+        // North doorway back to the rehearsal yard.
+        (at: (3, 5), kind: Warp(map: "debug_rehearsal", to: (5, 1), facing: Up)),
+        (at: (4, 5), kind: Warp(map: "debug_rehearsal", to: (6, 1), facing: Up)),
+    ],
+    npcs: [],
+    music: None,
+)
