@@ -250,6 +250,9 @@ pub struct BattleSession {
     pub last_events_all: Vec<battle::BattleEvent>,
     /// Overworld night at battle start (Vesper Bell, doc 02 v1.6 #4).
     pub night: bool,
+    /// Doubles: position-0 declaration parked until position 1 declares
+    /// (the pure session collects both before stepping).
+    pub pending_declaration: Option<battle::PositionAction>,
 }
 
 /// Player battle intentions (replay vocabulary).
@@ -265,6 +268,11 @@ pub enum BattleCmd {
     Bell,
     /// Use a healing item on the active Mote (consumes the turn).
     Item,
+    /// Doubles: a move with an explicit foe-position target.
+    MoveAt {
+        slot: u8,
+        target: u8,
+    },
     Run,
 }
 
@@ -294,6 +302,7 @@ impl BattleSession {
             pending_learn: Vec::new(),
             last_events_all: Vec::new(),
             night: false,
+            pending_declaration: None,
         })
     }
 
@@ -335,8 +344,16 @@ impl BattleSession {
             2 => AiTier::T2,
             _ => AiTier::T3,
         };
+        // Doubles when the data says so and both benches can field two
+        // (doc 02 v1.5 #2; doc 06 P4).
+        let conscious = motes.iter().filter(|m| !m.is_fainted()).count();
+        let state = if trainer.double_battle && conscious >= 2 && foes.len() >= 2 {
+            BattleState::new_double(BattleKind::Trainer, motes, foes, registry.chart.clone())
+        } else {
+            BattleState::new(BattleKind::Trainer, motes, foes, registry.chart.clone())
+        };
         Some(BattleSession {
-            state: BattleState::new(BattleKind::Trainer, motes, foes, registry.chart.clone()),
+            state,
             context: BattleContext::Trainer {
                 id: trainer.id.clone(),
             },
@@ -346,10 +363,13 @@ impl BattleSession {
             pending_learn: Vec::new(),
             last_events_all: Vec::new(),
             night: false,
+            pending_declaration: None,
         })
     }
 
     /// One battle turn from a player command. Returns the event stream.
+    /// In doubles the first call parks position 0's declaration and
+    /// returns empty; the second steps the turn (doc 02 v1.5 #2).
     pub fn turn(
         &mut self,
         command: BattleCmd,
@@ -357,8 +377,13 @@ impl BattleSession {
         heal: Option<u16>,
         rng: &mut BattleRng,
     ) -> Vec<battle::BattleEvent> {
+        if self.state.format == battle::Format::Double {
+            return self.turn_doubles(command, heal, rng);
+        }
         let player_action = match command {
             BattleCmd::Move { slot } => Action::Move { slot },
+            // Singles ignores the target (one foe position).
+            BattleCmd::MoveAt { slot, .. } => Action::Move { slot },
             BattleCmd::Switch { to } => Action::Switch { to },
             BattleCmd::Bell => match bell_mod {
                 Some(bell_mod) => Action::UseBell { bell_mod },
@@ -381,6 +406,73 @@ impl BattleSession {
             &TurnActions::new(player_action, foe_action),
             rng,
         );
+        self.state = next;
+        self.last_events_all.extend(events.iter().cloned());
+        events
+    }
+
+    /// Doubles driving: collect both player positions, then step with
+    /// AI declarations for every foe position.
+    fn turn_doubles(
+        &mut self,
+        command: BattleCmd,
+        heal: Option<u16>,
+        rng: &mut BattleRng,
+    ) -> Vec<battle::BattleEvent> {
+        let position = u8::from(self.pending_declaration.is_some());
+        let (action, target) = match command {
+            BattleCmd::Move { slot } => (Action::Move { slot }, 0),
+            BattleCmd::MoveAt { slot, target } => (Action::Move { slot }, target),
+            BattleCmd::Switch { to } => (Action::Switch { to }, 0),
+            BattleCmd::Item => {
+                if let Some(amount) = heal {
+                    let index = usize::from(
+                        self.state.sides[0].positions[usize::from(position)].party_index,
+                    );
+                    self.state.sides[0].party[index].heal(u32::from(amount));
+                }
+                (Action::None, 0)
+            }
+            // Bells and running are illegal in trainer doubles; the
+            // world layer rejects before reaching here.
+            BattleCmd::Bell | BattleCmd::Run => (Action::None, 0),
+        };
+        let declaration = battle::PositionAction {
+            side: 0,
+            position,
+            action,
+            target_position: target,
+        };
+        let player_alive_positions = self.state.sides[0]
+            .positions
+            .iter()
+            .filter(|p| !self.state.sides[0].party[usize::from(p.party_index)].is_fainted())
+            .count();
+        if position == 0 && player_alive_positions > 1 {
+            self.pending_declaration = Some(declaration);
+            return Vec::new();
+        }
+        let mut declarations = Vec::new();
+        if let Some(parked) = self.pending_declaration.take() {
+            declarations.push(parked);
+        }
+        declarations.push(declaration);
+        for foe_position in 0..self.state.sides[1].positions.len() as u8 {
+            let index =
+                usize::from(self.state.sides[1].positions[usize::from(foe_position)].party_index);
+            if self.state.sides[1].party[index].is_fainted() {
+                continue;
+            }
+            let (foe_action, foe_target) =
+                battle::ai::choose_doubles(self.foe_tier, &self.state, 1, foe_position, rng);
+            declarations.push(battle::PositionAction {
+                side: 1,
+                position: foe_position,
+                action: foe_action,
+                target_position: foe_target,
+            });
+        }
+        let (next, events) = step(&self.state, &TurnActions::doubles(declarations), rng);
         self.state = next;
         self.last_events_all.extend(events.iter().cloned());
         events

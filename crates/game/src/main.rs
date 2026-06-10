@@ -8,6 +8,8 @@
 mod app;
 #[cfg(not(feature = "headless"))]
 mod battle_ui;
+#[cfg(not(feature = "headless"))]
+mod screens;
 
 use bevy::prelude::AppExit;
 #[cfg(not(feature = "headless"))]
@@ -95,5 +97,6 @@ fn main() -> AppExit {
         .init_state::<AppState>()
         .add_plugins(app::UndersongPlugin)
         .add_plugins(battle_ui::BattleUiPlugin)
+        .add_plugins(screens::ScreensPlugin)
         .run()
 }

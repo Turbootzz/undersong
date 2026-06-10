@@ -523,6 +523,8 @@ impl WorldState {
                         break;
                     }
                     self.pending_encounter = Some((species.clone(), level));
+                    // Score (dex) registry: seen on encounter.
+                    self.vars.flags.insert(format!("dex.seen.{species}"));
                     events.push(WorldEvent::EncounterStarted {
                         species: species.clone(),
                         level,
@@ -774,6 +776,8 @@ impl WorldState {
                     {
                         given.ot = "player".into();
                         self.party.push(given);
+                        self.vars.flags.insert(format!("dex.seen.{species}"));
+                        self.vars.flags.insert(format!("dex.caught.{species}"));
                         events.push(WorldEvent::MoteJoined { species });
                     }
                 }
@@ -923,6 +927,9 @@ impl WorldState {
                 session.state.weather = Some((kind, 5));
             }
             session.night = self.is_night();
+            for foe in &session.state.sides[1].party {
+                self.vars.flags.insert(format!("dex.seen.{}", foe.species));
+            }
             self.battle = Some(session);
         }
     }
@@ -1185,6 +1192,10 @@ impl WorldState {
                         }
                     }
                     wild.ot = "player".into();
+                    self.vars.flags.insert(format!("dex.seen.{}", wild.species));
+                    self.vars
+                        .flags
+                        .insert(format!("dex.caught.{}", wild.species));
                     events.push(WorldEvent::MoteCaught {
                         species: wild.species.clone(),
                     });
@@ -1513,9 +1524,7 @@ impl WorldState {
             }
             _ => {}
         }
-        if consumed
-            && let Some(count) = self.bag.get_mut(item)
-        {
+        if consumed && let Some(count) = self.bag.get_mut(item) {
             *count -= 1;
             if *count == 0 {
                 self.bag.remove(item);

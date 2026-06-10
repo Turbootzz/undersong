@@ -415,6 +415,7 @@ fn battle_enter(
 fn pump_messages(
     time: Res<Time>,
     keys: Res<ButtonInput<KeyCode>>,
+    settings: Res<crate::app::SettingsRes>,
     mut queue: ResMut<MessageQueue>,
     mut text: Query<&mut Text, With<MessageText>>,
 ) {
@@ -424,7 +425,16 @@ fn pump_messages(
     }
     queue.timer += time.delta_secs();
     let skip = keys.just_pressed(KeyCode::KeyZ);
-    if queue.timer >= 0.5 || skip {
+    let pace = if settings.0.battle_animations {
+        match settings.0.text_speed {
+            0 => 0.8,
+            30 => 0.5,
+            _ => 0.3,
+        }
+    } else {
+        0.05 // animations off: near-instant pacing
+    };
+    if queue.timer >= pace || skip {
         queue.timer = 0.0;
         if let Some(line) = queue.lines.pop_front()
             && let Ok(mut message) = text.single_mut()
@@ -441,6 +451,7 @@ fn pump_messages(
 fn battle_input(
     keys: Res<ButtonInput<KeyCode>>,
     theme: Res<Theme>,
+    settings: Res<crate::app::SettingsRes>,
     mut world: ResMut<WorldRes>,
     mut queue: ResMut<MessageQueue>,
     mut cursor: ResMut<BattleCursor>,
@@ -453,6 +464,45 @@ fn battle_input(
     if !queue.lines.is_empty() || queue.popped_this_frame {
         return;
     }
+    // Era Shift offer: free switch after a foe replacement (Set mode
+    // auto-declines without surfacing it).
+    if world.0.pending_shift {
+        if settings.0.set_mode {
+            world.0.apply(WorldInput::Shift(None));
+            return;
+        }
+        let bench: Vec<u8> = world
+            .0
+            .battle
+            .as_ref()
+            .map(|session| {
+                (0..session.state.sides[0].party.len() as u8)
+                    .filter(|i| {
+                        *i != session.state.sides[0].positions[0].party_index
+                            && !session.state.sides[0].party[usize::from(*i)].is_fainted()
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        if bench.is_empty() {
+            world.0.apply(WorldInput::Shift(None));
+            return;
+        }
+        let pick = bench[cursor.index % bench.len()];
+        if keys.just_pressed(KeyCode::ArrowRight) || keys.just_pressed(KeyCode::ArrowLeft) {
+            cursor.index = (cursor.index + 1) % bench.len();
+        }
+        if keys.just_pressed(KeyCode::KeyZ) {
+            let events = world.0.apply(WorldInput::Shift(Some(pick)));
+            queue_battle_events(&mut queue, &world.0, &events);
+            cursor.index = 0;
+        } else if keys.just_pressed(KeyCode::KeyX) {
+            world.0.apply(WorldInput::Shift(None));
+            cursor.index = 0;
+        }
+        return;
+    }
+
     // Prompts take priority: learn / evolution answered with Z/X.
     if !world.0.pending_learn_queue.is_empty() {
         if keys.just_pressed(KeyCode::KeyZ) {

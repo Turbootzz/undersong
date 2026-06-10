@@ -367,3 +367,74 @@ fn learn_prompt_replaces_a_move_when_answered() {
     )));
     assert_eq!(world.party[0].moves[2].id.as_str(), "resonate");
 }
+
+#[test]
+fn double_battle_trainers_field_two_and_resolve() {
+    let registry = registry();
+    let trainer = data::Trainer {
+        id: "duo".into(),
+        class: "Duo".into(),
+        name_key: "npc.duo".into(),
+        ai_tier: 1,
+        payout_base: 20,
+        double_battle: true,
+        party: vec![
+            data::TrainerMote {
+                species: "tremole".into(),
+                level: 5,
+                moves: None,
+                ivs: None,
+                held_item: None,
+            },
+            data::TrainerMote {
+                species: "pipling".into(),
+                level: 5,
+                moves: None,
+                ivs: None,
+                held_item: None,
+            },
+        ],
+        defeat_flag: "duo.defeated".into(),
+        rematch: false,
+        reward_items: vec![],
+        intro_key: "duo.intro".into(),
+        defeat_key: "duo.defeat".into(),
+    };
+    let mut rng = BattleRng::from_seed(77);
+    let party = vec![
+        starter(&registry, "embaritone", 25),
+        starter(&registry, "tidalegro", 25),
+    ];
+    let mut session =
+        BattleSession::trainer(&registry, &party, &trainer, &mut rng).expect("session");
+    assert_eq!(session.state.format, battle::Format::Double);
+    assert_eq!(session.state.sides[0].positions.len(), 2);
+
+    let mut turns = 0;
+    while session.outcome().is_none() && turns < 60 {
+        // Declare both positions: slot 0 at foe 0, slot 0 at foe 1.
+        let first = session.turn(
+            BattleCmd::MoveAt { slot: 0, target: 0 },
+            None,
+            None,
+            &mut rng,
+        );
+        if session.outcome().is_some() {
+            break;
+        }
+        if first.is_empty() {
+            session.turn(
+                BattleCmd::MoveAt { slot: 0, target: 1 },
+                None,
+                None,
+                &mut rng,
+            );
+        }
+        turns += 1;
+    }
+    assert_eq!(
+        session.outcome(),
+        Some(battle::Outcome::Won { winner: 0 }),
+        "level-25 duo beats the level-5 pair"
+    );
+}

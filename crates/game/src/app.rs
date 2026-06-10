@@ -47,9 +47,18 @@ impl Plugin for UndersongPlugin {
                     .chain()
                     .run_if(in_state(AppState::Overworld)),
             )
+            .insert_resource(Toast::default())
+            .add_systems(
+                Update,
+                (toast_ui, night_tint).run_if(in_state(AppState::Overworld)),
+            )
             .add_systems(
                 OnExit(AppState::Overworld),
-                (cleanup_wipe, despawn_tagged::<DialogueUi>),
+                (
+                    cleanup_wipe,
+                    despawn_tagged::<DialogueUi>,
+                    despawn_tagged::<ToastUi>,
+                ),
             )
             .add_systems(OnExit(AppState::Battle), resync_after_battle)
             .add_systems(OnEnter(AppState::Menu), menu_open)
@@ -57,10 +66,7 @@ impl Plugin for UndersongPlugin {
             .add_systems(OnExit(AppState::Menu), despawn_tagged::<MenuUi>)
             .add_systems(OnEnter(AppState::Title), title_open)
             .add_systems(Update, title_input.run_if(in_state(AppState::Title)))
-            .add_systems(OnExit(AppState::Title), despawn_tagged::<TitleUi>)
-            .add_systems(OnEnter(AppState::Dialogue), party_open)
-            .add_systems(Update, party_input.run_if(in_state(AppState::Dialogue)))
-            .add_systems(OnExit(AppState::Dialogue), despawn_tagged::<PartyUi>);
+            .add_systems(OnExit(AppState::Title), despawn_tagged::<TitleUi>);
     }
 }
 
@@ -118,7 +124,7 @@ struct MenuCursor(usize);
 
 /// Live settings (doc 05 §5 subset); persisted into saves.
 #[derive(Resource)]
-struct SettingsRes(save::Settings);
+pub struct SettingsRes(pub save::Settings);
 
 #[derive(Resource)]
 struct SettingsOpen(bool);
@@ -297,6 +303,7 @@ fn player_input(
     mut wipe: ResMut<Wipe>,
     mut next: ResMut<NextState<AppState>>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
+    mut toast: ResMut<Toast>,
 ) {
     // An open mart owns the keys (shop_ui routes them).
     if world.0.shop.is_some() {
@@ -313,6 +320,7 @@ fn player_input(
             &mut wipe,
             &mut next,
             &mut player,
+            &mut toast,
         );
         return;
     }
@@ -368,9 +376,11 @@ fn player_input(
         &mut wipe,
         &mut next,
         &mut player,
+        &mut toast,
     );
 }
 
+#[expect(clippy::too_many_arguments, reason = "event fan-out helper")]
 fn handle_events(
     events: &[WorldEvent],
     world: &mut ResMut<WorldRes>,
@@ -379,12 +389,34 @@ fn handle_events(
     wipe: &mut ResMut<Wipe>,
     next: &mut ResMut<NextState<AppState>>,
     player: &mut Query<&mut Transform, With<PlayerSprite>>,
+    toast: &mut ResMut<Toast>,
 ) {
     // Any event batch that left a live battle session moves us to the
     // battle scene (wild rolls, LoS engagements, scripted fights).
     if world.0.battle.is_some() {
         anim.0 = None;
         next.set(AppState::Battle);
+    }
+    for event in events {
+        match event {
+            WorldEvent::ItemUsed { message_key, .. } => {
+                toast.line = Some(world.0.text(message_key));
+                toast.timer = 0.0;
+            }
+            WorldEvent::Performed { performance } => {
+                toast.line = Some(world.0.text(performance));
+                toast.timer = 0.0;
+            }
+            WorldEvent::ClockPhase { night } => {
+                toast.line = Some(world.0.text(if *night {
+                    "ui.clock.night"
+                } else {
+                    "ui.clock.day"
+                }));
+                toast.timer = 0.0;
+            }
+            _ => {}
+        }
     }
     for event in events {
         match event {
@@ -875,6 +907,99 @@ fn resync_after_battle(
     }
 }
 
+#[derive(Resource, Default)]
+pub struct Toast {
+    pub line: Option<String>,
+    pub timer: f32,
+}
+
+#[derive(Component)]
+struct ToastUi;
+
+#[derive(Component)]
+struct NightTint;
+
+/// One-line transient messages (item used, performance, clock phase).
+fn toast_ui(
+    mut commands: Commands,
+    time: Res<Time>,
+    theme: Option<Res<Theme>>,
+    mut toast: ResMut<Toast>,
+    existing: Query<Entity, With<ToastUi>>,
+    mut text: Query<&mut Text, With<ToastUi>>,
+) {
+    let Some(theme) = theme else { return };
+    if let Some(line) = toast.line.clone() {
+        toast.timer += time.delta_secs();
+        if toast.timer > 2.2 {
+            toast.line = None;
+            toast.timer = 0.0;
+            for entity in &existing {
+                commands.entity(entity).despawn();
+            }
+            return;
+        }
+        if existing.is_empty() {
+            commands.spawn((
+                ToastUi,
+                Text::new(line),
+                TextFont::from_font_size(8.0),
+                TextColor(theme.color(&theme.palette.parchment)),
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(8.0),
+                    top: Val::Px(8.0),
+                    padding: UiRect::all(Val::Px(4.0)),
+                    ..default()
+                },
+                BackgroundColor(theme.color(&theme.palette.ink)),
+            ));
+        } else if let Ok(mut existing_text) = text.single_mut()
+            && existing_text.0 != line
+        {
+            existing_text.0 = line;
+        }
+    } else {
+        for entity in &existing {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+/// Night and dark-cave tint (doc 02 v1.6 #5, §11 Lumen Hum).
+fn night_tint(
+    mut commands: Commands,
+    world: Res<WorldRes>,
+    settings: Res<SettingsRes>,
+    existing: Query<Entity, With<NightTint>>,
+) {
+    let dark_map = world.0.map().dark
+        && !(world.0.vars.flags.contains("performance.lumen_hum")
+            && world.0.party_has_tag("performer.light"));
+    let wants = world.0.is_night() || dark_map;
+    let alpha = if dark_map { 0.6 } else { 0.35 };
+    let _ = &settings;
+    if wants && existing.is_empty() {
+        commands.spawn((
+            NightTint,
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                top: Val::Px(0.0),
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.05, 0.07, 0.2, alpha)),
+            GlobalZIndex(5),
+        ));
+    } else if !wants {
+        for entity in &existing {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
 /// Writes the rotating autosave (doc 03 §4: map change & post-battle).
 pub fn autosave(world: &WorldState) {
     let Some(mut backend) = save::FsBackend::platform_default() else {
@@ -997,123 +1122,4 @@ fn title_input(
         }
     }
     next.set(AppState::Overworld);
-}
-
-// ----- party screen (menu → Party) ------------------------------------------
-
-#[derive(Component)]
-pub struct PartyUi;
-
-fn party_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
-    commands
-        .spawn((
-            PartyUi,
-            Node {
-                position_type: PositionType::Absolute,
-                left: Val::Px(40.0),
-                right: Val::Px(40.0),
-                top: Val::Px(20.0),
-                bottom: Val::Px(20.0),
-                flex_direction: FlexDirection::Column,
-                padding: UiRect::all(Val::Px(8.0)),
-                row_gap: Val::Px(4.0),
-                ..default()
-            },
-            BackgroundColor(theme.color(&theme.palette.parchment)),
-        ))
-        .with_children(|panel| {
-            panel.spawn((
-                Text::new(format!("PARTY — ₵{}  (X: back)", world.0.money)),
-                TextFont::from_font_size(8.0),
-                TextColor(theme.color(&theme.palette.ink)),
-            ));
-            for member in &world.0.party {
-                let hp = member
-                    .hp
-                    .map(|hp| hp.to_string())
-                    .unwrap_or_else(|| "full".into());
-                let moves: Vec<String> = member
-                    .moves
-                    .iter()
-                    .map(|m| world.0.text(&format!("move.{}", m.id)))
-                    .collect();
-                panel.spawn((
-                    Text::new(format!(
-                        "{}  L{}  hp {}  [{}]",
-                        world.0.text(&format!("motif.{}", member.species)),
-                        member.level,
-                        hp,
-                        moves.join(" / ")
-                    )),
-                    TextFont::from_font_size(8.0),
-                    TextColor(theme.color(&theme.palette.ink_soft)),
-                ));
-                // Summary staff chart (doc 05 §4): six stat lines drawn
-                // as note runs — one ♪ per ~8 base points + IV shading.
-                if let Some(registry) = &world.0.registry
-                    && let Some(spec) = registry.species.get(&member.species)
-                {
-                    let staff = [
-                        ("hp ", spec.base_stats.hp, member.ivs.hp),
-                        ("atk", spec.base_stats.atk, member.ivs.atk),
-                        ("def", spec.base_stats.def, member.ivs.def),
-                        ("spa", spec.base_stats.spa, member.ivs.spa),
-                        ("spd", spec.base_stats.spd, member.ivs.spd),
-                        ("spe", spec.base_stats.spe, member.ivs.spe),
-                    ];
-                    for (label, base, iv) in staff {
-                        let notes = "♪".repeat(usize::from(base / 8).max(1));
-                        let timbre = if iv >= 26 {
-                            " ◆" // bright timbre: high IV (flavored, not numeric)
-                        } else {
-                            ""
-                        };
-                        panel.spawn((
-                            Text::new(format!("  {label} {notes}{timbre}")),
-                            TextFont::from_font_size(8.0),
-                            TextColor(theme.color(&theme.palette.ink_soft)),
-                        ));
-                    }
-                }
-            }
-            if !world.0.boxes.is_empty() {
-                panel.spawn((
-                    Text::new(format!("BOX — {} resting", world.0.boxes.len())),
-                    TextFont::from_font_size(8.0),
-                    TextColor(theme.color(&theme.palette.ink)),
-                ));
-                for resting in &world.0.boxes {
-                    panel.spawn((
-                        Text::new(format!(
-                            "{}  L{}",
-                            world.0.text(&format!("motif.{}", resting.species)),
-                            resting.level
-                        )),
-                        TextFont::from_font_size(8.0),
-                        TextColor(theme.color(&theme.palette.ink_soft)),
-                    ));
-                }
-            }
-            panel.spawn((
-                Text::new("BAG"),
-                TextFont::from_font_size(8.0),
-                TextColor(theme.color(&theme.palette.ink)),
-            ));
-            for (item, count) in &world.0.bag {
-                panel.spawn((
-                    Text::new(format!(
-                        "{} ×{count}",
-                        world.0.text(&format!("item.{item}"))
-                    )),
-                    TextFont::from_font_size(8.0),
-                    TextColor(theme.color(&theme.palette.ink_soft)),
-                ));
-            }
-        });
-}
-
-fn party_input(keys: Res<ButtonInput<KeyCode>>, mut next: ResMut<NextState<AppState>>) {
-    if keys.just_pressed(KeyCode::KeyX) || keys.just_pressed(KeyCode::Escape) {
-        next.set(AppState::Overworld);
-    }
 }
