@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall_aide", class: "HallAide", name_key: "npc.hall_aide",
+    ai_tier: 1, payout_base: 20,
+    party: [(species: "tremole", level: 7)],
+    defeat_flag: "trainer.hall_aide.defeated",
+    intro_key: "hall1.aide.intro", defeat_key: "hall1.aide.defeat",
+)

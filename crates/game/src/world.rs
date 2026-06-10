@@ -684,7 +684,12 @@ impl WorldState {
         } else {
             None
         };
-        let stream = session.turn(command, bell, &mut self.rng);
+        let heal = if matches!(command, BattleCmd::Item) {
+            self.consume_best_potion()
+        } else {
+            None
+        };
+        let stream = session.turn(command, bell, heal, &mut self.rng);
 
         // Learn prompts: queue events the engine surfaced this turn.
         for event in &stream {
@@ -734,6 +739,31 @@ impl WorldState {
             }
         }
         Some(frac)
+    }
+
+    /// Consumes the weakest potion that exists (era bag etiquette).
+    fn consume_best_potion(&mut self) -> Option<u16> {
+        let registry = self.registry.as_ref()?;
+        let mut best: Option<(ItemId, u16)> = None;
+        for (item_id, count) in &self.bag {
+            if *count == 0 {
+                continue;
+            }
+            if let Some(def) = registry.items.get(item_id)
+                && let data::ItemKind::Potion { hp } = &def.kind
+                && best.as_ref().is_none_or(|(_, smallest)| hp < smallest)
+            {
+                best = Some((item_id.clone(), *hp));
+            }
+        }
+        let (item_id, hp) = best?;
+        if let Some(count) = self.bag.get_mut(&item_id) {
+            *count -= 1;
+            if *count == 0 {
+                self.bag.remove(&item_id);
+            }
+        }
+        Some(hp)
     }
 
     fn finish_battle(

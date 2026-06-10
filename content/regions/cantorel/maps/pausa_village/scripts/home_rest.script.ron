@@ -1,0 +1,6 @@
+[
+    Say(who: "mom", key: "pausa.mom.hums"),
+    HealParty,
+    Say(who: "mom", key: "pausa.mom.rested"),
+    End,
+]

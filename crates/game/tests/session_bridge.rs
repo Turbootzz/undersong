@@ -64,7 +64,7 @@ fn wild_battle_runs_and_can_be_won() {
 
     let mut turns = 0;
     while session.outcome().is_none() && turns < 30 {
-        session.turn(BattleCmd::Move { slot: 0 }, None, &mut rng);
+        session.turn(BattleCmd::Move { slot: 0 }, None, None, &mut rng);
         turns += 1;
     }
     assert_eq!(

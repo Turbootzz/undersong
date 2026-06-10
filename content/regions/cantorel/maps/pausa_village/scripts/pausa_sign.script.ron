@@ -1,0 +1,4 @@
+[
+    Say(who: "signpost_keeper", key: "pausa.sign.route1"),
+    End,
+]

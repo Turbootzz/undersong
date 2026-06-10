@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt1_busker", class: "Busker", name_key: "npc.rt1_busker",
+    ai_tier: 1, payout_base: 16,
+    party: [(species: "buzzoon", level: 4)],
+    defeat_flag: "trainer.rt1_busker.defeated",
+    intro_key: "rt1.busker.intro", defeat_key: "rt1.busker.defeat",
+)

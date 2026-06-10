@@ -1,0 +1,5 @@
+[
+    Say(who: "clerk", key: "prelude.mart.welcome"),
+    OpenShop(table: "prelude"),
+    End,
+]

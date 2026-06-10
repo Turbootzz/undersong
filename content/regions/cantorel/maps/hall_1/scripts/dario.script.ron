@@ -1,0 +1,17 @@
+// Maestro Dario — Hall 1, French Violin clef (doc 01 §4): tutorial-honest.
+[
+    If(flag: "hall.1.cleared",
+       then: [Say(who: "dario", key: "hall1.dario.after"), End],
+       else: []),
+    Say(who: "dario", key: "hall1.dario.intro"),
+    StartBattle(trainer: "maestro_dario"),
+    If(flag: "hall.1.cleared",
+       then: [
+            Say(who: "dario", key: "hall1.dario.badge"),
+            SetFlag(flag: "badge.1"),
+            SetFlag(flag: "performance.lumen_hum"),
+            Say(who: "dario", key: "hall1.dario.lumen_hum"),
+       ],
+       else: []),
+    End,
+]

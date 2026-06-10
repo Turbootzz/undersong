@@ -1,0 +1,7 @@
+// "Rest Stop": the nurse hums the heal jingle (doc 06 P3).
+[
+    Say(who: "nurse", key: "prelude.rest.hum"),
+    HealParty,
+    Say(who: "nurse", key: "prelude.rest.done"),
+    End,
+]

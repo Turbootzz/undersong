@@ -11,11 +11,22 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::world::{Input, WorldState, load_dev_world};
+use crate::world::{Input, WorldState, load_dev_world, load_game_world};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum WorldKind {
+    /// The P2 dev testbed (content/dev/maps).
+    #[default]
+    Dev,
+    /// The real game world: Cantorel pack + battle registry.
+    Game,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReplayFile {
     pub seed: u64,
+    #[serde(default)]
+    pub world: WorldKind,
     pub inputs: Vec<Input>,
     pub expect: Expectations,
 }
@@ -41,7 +52,10 @@ pub struct ReplayOutcome {
 /// Runs a replay against the dev world. Returns Err with a readable
 /// message on any assertion failure (the CLI prints it; tests unwrap).
 pub fn run_replay(content_root: &Path, file: &ReplayFile) -> Result<ReplayOutcome, String> {
-    let mut world = load_dev_world(content_root, file.seed)?;
+    let mut world = match file.world {
+        WorldKind::Dev => load_dev_world(content_root, file.seed)?,
+        WorldKind::Game => load_game_world(content_root, file.seed)?,
+    };
     let mut backend = save::MemBackend::default();
     let mut outcome = ReplayOutcome {
         dialogue_lines: 0,
@@ -104,7 +118,10 @@ pub fn run_replay(content_root: &Path, file: &ReplayFile) -> Result<ReplayOutcom
         let restored = save::load(&backend, save::SlotId::Auto)
             .map_err(|e| format!("reload failed: {e}"))?
             .ok_or("autosave missing after save")?;
-        let mut fresh = load_dev_world(content_root, file.seed)?;
+        let mut fresh = match file.world {
+            WorldKind::Dev => load_dev_world(content_root, file.seed)?,
+            WorldKind::Game => load_game_world(content_root, file.seed)?,
+        };
         fresh.restore(&restored);
         assert_world(&fresh, "after reload")?;
     }

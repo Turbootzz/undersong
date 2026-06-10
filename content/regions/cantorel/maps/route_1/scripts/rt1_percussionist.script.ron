@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt1_percussionist.defeated",
+       then: [Say(who: "rt1_percussionist", key: "rt1.percussionist.after"), End],
+       else: []),
+    Say(who: "rt1_percussionist", key: "rt1.percussionist.intro"),
+    StartBattle(trainer: "rt1_percussionist"),
+    End,
+]

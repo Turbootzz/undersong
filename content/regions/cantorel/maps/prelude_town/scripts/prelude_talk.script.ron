@@ -1,0 +1,6 @@
+[
+    If(flag: "hall.1.cleared",
+       then: [Say(who: "townsfolk_ona", key: "prelude.ona.after_badge")],
+       else: [Say(who: "townsfolk_ona", key: "prelude.ona.hall_hint")]),
+    End,
+]

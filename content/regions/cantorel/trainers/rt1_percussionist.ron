@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt1_percussionist", class: "Percussionist", name_key: "npc.rt1_percussionist",
+    ai_tier: 1, payout_base: 18,
+    party: [(species: "burrbass", level: 4), (species: "tremole", level: 5)],
+    defeat_flag: "trainer.rt1_percussionist.defeated",
+    intro_key: "rt1.percussionist.intro", defeat_key: "rt1.percussionist.defeat",
+)

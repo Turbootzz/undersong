@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt1_choirboy", class: "Choirboy", name_key: "npc.rt1_choirboy",
+    ai_tier: 1, payout_base: 16,
+    party: [(species: "solfawn", level: 5)],
+    defeat_flag: "trainer.rt1_choirboy.defeated",
+    intro_key: "rt1.choirboy.intro", defeat_key: "rt1.choirboy.defeat",
+)

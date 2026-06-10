@@ -215,6 +215,8 @@ pub enum BattleCmd {
     },
     /// Use a bell item from the bag.
     Bell,
+    /// Use a healing item on the active Mote (consumes the turn).
+    Item,
     Run,
 }
 
@@ -302,6 +304,7 @@ impl BattleSession {
         &mut self,
         command: BattleCmd,
         bell_mod: Option<Frac>,
+        heal: Option<u16>,
         rng: &mut BattleRng,
     ) -> Vec<battle::BattleEvent> {
         let player_action = match command {
@@ -311,6 +314,15 @@ impl BattleSession {
                 Some(bell_mod) => Action::UseBell { bell_mod },
                 None => Action::Move { slot: 0 },
             },
+            BattleCmd::Item => {
+                // Item use spends the turn: heal lands first, then the
+                // foe acts against a passing player.
+                if let Some(amount) = heal {
+                    let active = usize::from(self.state.sides[0].active);
+                    self.state.sides[0].party[active].heal(u32::from(amount));
+                }
+                Action::None
+            }
             BattleCmd::Run => Action::Run,
         };
         let foe_action = choose(self.foe_tier, &self.state, 1, rng);

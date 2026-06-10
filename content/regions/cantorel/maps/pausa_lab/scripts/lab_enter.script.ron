@@ -1,0 +1,8 @@
+// Intro beat (doc 01 §5 beat 1): Reed's "the world is humming" talk.
+[
+    Say(who: "reed", key: "intro.reed.humming1"),
+    Say(who: "reed", key: "intro.reed.humming2"),
+    Say(who: "reed", key: "intro.reed.humming3"),
+    SetFlag(flag: "story.intro.heard"),
+    End,
+]

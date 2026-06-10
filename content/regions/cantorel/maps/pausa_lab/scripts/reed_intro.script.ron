@@ -1,0 +1,31 @@
+// Starter choice — the player picks one, Cade picks the counter, and
+// (beat 1 plant) TACET later steals the third.
+[
+    If(flag: "starter.chosen",
+       then: [Say(who: "reed", key: "lab.reed.after"), End],
+       else: []),
+    Say(who: "reed", key: "lab.reed.offer"),
+    Choice(key: "lab.starter.choice", branches: [
+        ("choice.fanfyre", [
+            GiveMote(species: "fanfyre", level: 5),
+            SetFlag(flag: "starter.fanfyre"),
+            Say(who: "reed", key: "lab.reed.picked_fanfyre"),
+        ]),
+        ("choice.rippeggio", [
+            GiveMote(species: "rippeggio", level: 5),
+            SetFlag(flag: "starter.rippeggio"),
+            Say(who: "reed", key: "lab.reed.picked_rippeggio"),
+        ]),
+        ("choice.solfawn", [
+            GiveMote(species: "solfawn", level: 5),
+            SetFlag(flag: "starter.solfawn"),
+            Say(who: "reed", key: "lab.reed.picked_solfawn"),
+        ]),
+    ]),
+    SetFlag(flag: "starter.chosen"),
+    GiveItem(id: "fermata", n: 8),
+    GiveItem(id: "potion_s", n: 3),
+    Say(who: "reed", key: "lab.reed.bells"),
+    Say(who: "cade", key: "lab.cade.counterpick"),
+    End,
+]

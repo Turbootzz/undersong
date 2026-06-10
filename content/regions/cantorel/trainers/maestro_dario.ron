@@ -1,0 +1,13 @@
+// Hall 1 Maestro (doc 01 §4: Dario, Feral, tutorial-honest crowd favorites).
+Trainer(
+    id: "maestro_dario", class: "Maestro", name_key: "npc.dario",
+    ai_tier: 2, payout_base: 60,
+    party: [
+        (species: "tremole", level: 7),
+        (species: "rattacca", level: 10,
+         moves: Some(["tackle", "quick_step", "dampen"])),
+    ],
+    defeat_flag: "hall.1.cleared",
+    reward_items: [("potion_m", 1)],
+    intro_key: "hall1.dario.battle_intro", defeat_key: "hall1.dario.battle_defeat",
+)
