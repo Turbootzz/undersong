@@ -41,19 +41,19 @@ Phase sizing assumes Claude Code sessions; each box ≈ one coherent commit-seri
 
 ## P1 — Battle core (the crown jewel, headless)
 
-- [ ] `battle`: BattleState, TurnActions, `step()` signature per 03 §2.
-- [ ] Stat math (02 §3) + unit tests with hand-computed values.
-- [ ] Damage pipeline (02 §4) exactly; integer-only; pipeline-order test vectors.
-- [ ] Action order: priority → speed → tie = rng; switch resolves before moves.
-- [ ] Status (02 §5): majors + confusion/flinch; end-of-turn tick order test.
-- [ ] Move effect interpreter for the Effect enum (02 §6); the 18 canon moves in RON.
-- [ ] Catch formula (02 §8) incl. ring-count events; exp/level/learnset (02 §9).
-- [ ] AI tiers 0–2 (02 §14); tier 3 stub returns tier-2 (full T3 in P5).
-- [ ] `tools simulate --battles N`: random legal teams from current species pool,
+- [x] `battle`: BattleState, TurnActions, `step()` signature per 03 §2.
+- [x] Stat math (02 §3) + unit tests with hand-computed values.
+- [x] Damage pipeline (02 §4) exactly; integer-only; pipeline-order test vectors.
+- [x] Action order: priority → speed → tie = rng; switch resolves before moves.
+- [x] Status (02 §5): majors + confusion/flinch; end-of-turn tick order test.
+- [x] Move effect interpreter for the Effect enum (02 §6); the 18 canon moves in RON.
+- [x] Catch formula (02 §8) incl. ring-count events; exp/level/learnset (02 §9).
+- [x] AI tiers 0–2 (02 §14); tier 3 stub returns tier-2 (full T3 in P5).
+- [x] `tools simulate --battles N`: random legal teams from current species pool,
       win-rate + turn-count report.
-- [ ] CLI battle runner (`tools battle --seed`): renders the event stream as text.
-- [ ] proptest properties + golden replay corpus (5 scripted battles) per 03 §2.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p1-start..HEAD` — all findings fixed, review clean.
+- [x] CLI battle runner (`tools battle --seed`): renders the event stream as text.
+- [x] proptest properties + golden replay corpus (5 scripted battles) per 03 §2.
+- [x] **Phase review:** `/code-review` (high effort) over `git diff p1-start..HEAD` — all findings fixed, review clean.
 
 **Gate P1:** `cargo test -p battle` green; 10,000-battle fuzz: zero panics, all
 terminate; same seed twice ⇒ byte-identical event streams (test asserts it);
@@ -200,6 +200,49 @@ Tamburra/Neonata are then "just content."
 > Template:
 > `### YYYY-MM-DD — Phase Px`
 > `Done: …` / `Gate evidence: …` / `Next: …` / `Open questions: …`
+
+### 2026-06-10 — Phase P1 (complete)
+
+**Done:** The battle crate, whole: `step()` per 03 §2 (pure, BattleRng
+the only entropy, self-contained BattleState with embedded chart/specs,
+event-stream contract). Stat math §3 + nature grid; damage pipeline §4
+exact (hand vectors pin crit-before-rand floor order, burn-physical,
+weather scaling, crit stage-cancellation, min-1); turn structure + EOT
+order per v1.1; status majors/volatiles with immunities; full §6 Effect
+interpreter incl. two-turn commitment and Last Resort Hum; catch §8 with
+ring events; exp/levels/learnsets §9 with EV caps; AI T0–T2 per §14
+(+T3 stub). Core spec vocab (MoveSpec/Effect/SpeciesSpec/TypeChart in
+core — battle and data are siblings that meet only there). 18 canon
+moves as content with full cross-transcription tests. tools simulate
+(Monte Carlo + tier regression) and tools battle (text event renderer);
+dev testbed pool (12 species, one per type). Doc 02 gained v1.1
+(mechanics completions, written before implementing) and v1.2 (phase-
+review rulings).
+
+**Gate P1 evidence:**
+- `cargo test -p battle` green — 70 battle-crate tests (102 workspace).
+- 10,000-battle fuzz: zero panics, all terminate, ~4 s; fuzz strategy
+  emits all 14 Effect variants, random charts, wild + trainer kinds.
+- Same seed twice ⇒ byte-identical streams: asserted by an engine test
+  and a 64-case property over random battles (wild + trainer).
+- `simulate --battles 1000`: **T2 beats T0 96.5%** (gate ≥ 90%); all 12
+  testbed species inside 35–65% win band; avg 8 turns, 0 draws.
+
+**Phase review:** CodeRabbit CLI (4 findings) + 50-agent adversarial
+workflow (5 lenses → per-finding refutation; ~20 confirmed, 4 refuted).
+Real engine bugs found and fixed: ForceSwitch/SelfSwitch could bench a
+KO'd Mote with no Fainted event or award; two-turn moves double-charged
+PP and ignored the committed slot; flurry/dustchord §7 primary effects
+were missing; wild/AI Motes gained exp/EVs/levels mid-battle. All fixes
+legislated in doc 02 v1.2 first, REPLAY_VERSION bumped to 2, goldens
+regenerated. Refuted findings (no action): learnset dup-move rule,
+confusion-unreachable (deferred by v1.2 #12), combined type-rational
+(legalized by v1.2 #6), UPDATE_GOLDENS CI guard.
+
+**Next:** P2 — `git tag p2-start`; hand-rolled tilemap (3 layers +
+collision + triggers) per 03 §3; grid movement + camera; debug map.
+
+**Open questions:** none.
 
 ### 2026-06-10 — Phase P0 (complete)
 
