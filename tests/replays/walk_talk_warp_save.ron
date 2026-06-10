@@ -1,0 +1,33 @@
+// P2 gate replay (docs/06-ROADMAP.md): spawn → NPC chat → warp → save →
+// reload → position/flags assert. Runs headless via
+//   cargo run -p game --features headless -- --replay tests/replays/walk_talk_warp_save.ron
+// and as the `game` crate's integration test.
+//
+// Route (debug_rehearsal, spawn (5,2) facing Down):
+//   → (7,2) → (7,4), talk to the greeter (2 lines, sets met.greeter)
+//   → back down to (6,1), south gate (6,0) warps to debug_annex (4,4)
+//   → step to (4,3), save. Reload must land on the same tile with the
+//   greeter flag intact.
+ReplayFile(
+    seed: 0xD0_5EED,
+    inputs: [
+        Step(Right), Step(Right),
+        Tick,
+        Step(Up), Step(Up),
+        Interact, Interact, Interact,
+        Tick,
+        Step(Down), Step(Down), Step(Down),
+        Step(Left),
+        Step(Down),
+        Tick,
+        Step(Down),
+        Save,
+    ],
+    expect: Expectations(
+        map: "debug_annex",
+        position: (4, 3),
+        flags: ["met.greeter"],
+        min_dialogue_lines: 2,
+        warped: true,
+    ),
+)

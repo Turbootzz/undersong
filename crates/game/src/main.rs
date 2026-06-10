@@ -1,25 +1,29 @@
 //! Undersong client (docs/03-ARCHITECTURE.md §3).
 //!
-//! P0 scope: a window at the virtual resolution with proof-of-life text and
-//! the stubbed `AppState`. The real plugin set (Boot, Overworld, Battle, …)
-//! arrives from P2.
+//! `--replay <file>` runs the pure replay driver and exits — no window,
+//! no Bevy app (the overworld core is engine-free; see `world.rs`).
+//! Otherwise the windowed app renders the world state.
+
+mod app;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
-/// Virtual resolution (docs/05-UI-STYLE.md §1): all UI is authored at
-/// 480×270 and integer-scaled to the window.
+use game::replay;
+
+/// Virtual resolution (doc 05 §1): all UI authored at 480×270,
+/// integer-scaled.
 const VIRTUAL_WIDTH: u32 = 480;
 const VIRTUAL_HEIGHT: u32 = 270;
-
-/// P0 opens at a fixed ×2 (960×540). The scale picker and letterboxed
-/// resizing arrive with Settings in P2.
+/// P2 still opens at a fixed ×2; the Settings scale picker applies it
+/// for real in P3 polish.
 const WINDOW_SCALE: u32 = 2;
 
-/// Top-level app states (doc 03 §3). Stubbed in P0: only `Boot` is ever
-/// active; transitions arrive with the state plugins from P2.
+/// Top-level app states (doc 03 §3). Dialogue is an overlay in P2 (the
+/// pure world gates movement); the variant stays reserved for the P3
+/// presenter flow.
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-#[expect(dead_code, reason = "variants are wired up by the P2 state plugins")]
+#[expect(dead_code, reason = "Title/Transition wired by the P3 flow")]
 enum AppState {
     #[default]
     Boot,
@@ -32,6 +36,30 @@ enum AppState {
 }
 
 fn main() -> AppExit {
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(index) = args.iter().position(|a| a == "--replay") {
+        let Some(path) = args.get(index + 1) else {
+            eprintln!("--replay needs a file path");
+            return AppExit::error();
+        };
+        return match replay::run_replay_file(
+            std::path::Path::new("content"),
+            std::path::Path::new(path),
+        ) {
+            Ok(outcome) => {
+                println!(
+                    "replay ok: {} dialogue lines, {} warps, {} saves",
+                    outcome.dialogue_lines, outcome.warps, outcome.saves
+                );
+                AppExit::Success
+            }
+            Err(message) => {
+                eprintln!("replay failed: {message}");
+                AppExit::error()
+            }
+        };
+    }
+
     App::new()
         .add_plugins(
             DefaultPlugins
@@ -47,20 +75,9 @@ fn main() -> AppExit {
                     }),
                     ..default()
                 })
-                // Nearest-neighbor everywhere: crisp pixels are the law
-                // (doc 05 §1).
                 .set(ImagePlugin::default_nearest()),
         )
         .init_state::<AppState>()
-        .add_systems(Startup, setup)
+        .add_plugins(app::UndersongPlugin)
         .run()
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
-    commands.spawn((
-        Text2d::new("UNDERSONG P0"),
-        TextFont::from_font_size(32.0),
-        TextColor(Color::WHITE),
-    ));
 }

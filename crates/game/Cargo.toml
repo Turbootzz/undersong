@@ -8,5 +8,17 @@ publish.workspace = true
 [lints]
 workspace = true
 
+[features]
+# Headless: replay driving and CI checks without a window. The pure
+# world core never touches Bevy, so this feature only matters for the
+# windowed app path (doc 03 §3).
+headless = []
+
 [dependencies]
+undersong-core = { workspace = true }
+data = { workspace = true }
+script = { path = "../script" }
+save = { path = "../save" }
 bevy = { workspace = true }
+serde = { workspace = true }
+ron = { workspace = true }

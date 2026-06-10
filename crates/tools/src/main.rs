@@ -6,6 +6,7 @@
 //! No CLI dependency: the closed dependency list (doc 03 §7) has no
 //! argument parser, and a handful of flags doesn't justify one.
 
+mod importmap;
 mod render;
 mod sim;
 
@@ -16,9 +17,10 @@ use anyhow::{Context, Result, bail};
 use battle::ai::AiTier;
 
 const USAGE: &str = "usage:
-  tools validate [--content <dir>]
-  tools simulate [--battles <n>] [--pool <file>] [--level <n>] [--seed <n>] [--content <dir>]
-  tools battle   --seed <n> [--pool <file>] [--level <n>] [--content <dir>]";
+  tools validate  [--content <dir>]
+  tools simulate  [--battles <n>] [--pool <file>] [--level <n>] [--seed <n>] [--content <dir>]
+  tools battle    --seed <n> [--pool <file>] [--level <n>] [--content <dir>]
+  tools importmap --in <project.ldtk> --out <maps dir>";
 
 fn main() -> ExitCode {
     match run() {
@@ -122,6 +124,25 @@ fn run() -> Result<bool> {
         Some("battle") => {
             let options = parse_options(args, &["--seed", "--pool", "--level", "--content"])?;
             run_battle(&options)
+        }
+        Some("importmap") => {
+            let rest: Vec<String> = args.collect();
+            let value = |flag: &str| -> Result<String> {
+                rest.iter()
+                    .position(|a| a == flag)
+                    .and_then(|i| rest.get(i + 1))
+                    .cloned()
+                    .with_context(|| format!("importmap needs {flag} <value>\n{USAGE}"))
+            };
+            let input = PathBuf::from(value("--in")?);
+            let out = PathBuf::from(value("--out")?);
+            let written = importmap::import(&input, &out)?;
+            println!(
+                "importmap: wrote {} map(s): {}",
+                written.len(),
+                written.join(", ")
+            );
+            Ok(true)
         }
         Some(other) => bail!("unknown command `{other}`\n{USAGE}"),
         None => bail!("{USAGE}"),

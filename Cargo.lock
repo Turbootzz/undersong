@@ -2576,6 +2576,12 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "data",
+ "ron",
+ "save",
+ "script",
+ "serde",
+ "undersong-core",
 ]
 
 [[package]]
@@ -4888,6 +4894,8 @@ dependencies = [
  "anyhow",
  "battle",
  "data",
+ "ron",
+ "serde_json",
  "undersong-core",
 ]
 

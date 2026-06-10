@@ -193,6 +193,7 @@ CI: GitHub Actions — `fmt --check`, `clippy -D warnings`, `test --workspace`,
 | fundsp | 0.23 | offline cry/jingle synthesis in `tools` only |
 | anyhow / thiserror | 1 / 2 | tools ergonomics / library errors |
 | image | latest 0.25.x | `tools sigils` + atlas packing (tools only) |
+| serde_json | 1 | `tools importmap` parses LDtk's JSON export (tools only; the engine never reads JSON) |
 
 Explicitly avoided: bevy_ecs_tilemap, bevy_ecs_ldtk, kira (for now), any scripting
 language. Each would couple us to Bevy's release cadence or add an interpreter we'd

@@ -42,6 +42,12 @@ macro_rules! define_id {
                 Self(raw.to_owned())
             }
         }
+
+        impl From<String> for $name {
+            fn from(raw: String) -> Self {
+                Self(raw)
+            }
+        }
     };
 }
 
