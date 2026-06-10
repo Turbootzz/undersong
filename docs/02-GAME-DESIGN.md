@@ -289,3 +289,67 @@ other for regression (T3 must beat T1 ≥ 85% with equal teams).
   frost **4** weaknesses (ember, stone, alloy, resonant all hit frost 2×). The
   sanity line is corrected to 4. Content ships the table as written; the
   cross-transcription test in `crates/data/tests/core_content.rs` guards it.
+- v1.1, 2026-06-10 (P1) — mechanics completions. The battle sim needs rules
+  this doc left unstated; per rule zero they are specified here before being
+  implemented. None alters an existing rule.
+  1. **Turn structure:** a turn resolves in phases:
+     (a) **escape attempts** (wild only, §12 formula; a successful escape ends
+     the battle, a failed one consumes that side's action),
+     (b) **switches** (both sides' switches resolve before any move; if both
+     switch, faster side first),
+     (c) **bell use** (Attunement, wild only; consumes the action; illegal in
+     trainer battles),
+     (d) **moves**, ordered by priority desc → effective speed desc → tie
+     broken by one rng draw (50/50),
+     (e) **end of turn**.
+  2. **End-of-turn tick order:** 1) weather chip damage (flurry/dustchord, in
+     side order: side 0 active first), 2) seeded drain, 3) burn/poison/toxic
+     damage, 4) weather counter decrement + expiry message. Faint checks run
+     after each sub-step; a fainted Mote takes no further ticks.
+  3. **No-PP fallback:** a Mote whose moves all have 0 PP uses **Last Resort
+     Hum**: 50 power, typeless (type product 1, no STAB, normal-effect),
+     physical, never misses, cannot crit, user takes recoil = floor(damage/4),
+     not a sound move, infinite use. It is engine-built-in, not content.
+  4. **Confusion self-hit:** 40 power, typeless, physical, computed with the
+     user's own atk vs the user's own def, no crit, no STAB, no random 85–100
+     roll (deterministic base damage), cannot flinch or apply effects.
+  5. **Sleep counter:** rolled uniform 1–3 on application. When the sleeper
+     would act: decrement first; if the counter hits 0 the Mote wakes and acts
+     this turn, otherwise the action is lost ("is lulled").
+  6. **Freeze:** 20% thaw check when the frozen Mote would act (thaw → act
+     this turn). Being hit by an ember-type move thaws immediately.
+  7. **Paralysis:** effective speed = floor(spe / 4) (the ×0.25 of §5); the
+     25% full-stop check happens when the Mote would act, after sleep/freeze
+     checks and before confusion.
+  8. **Volatile check order at action time:** flinch → sleep → freeze →
+     paralysis stop → confusion (33% self-hit replaces the action).
+  9. **Toxic:** counter n starts at 1, +1 each end of turn; switching out
+     resets the Mote's toxic counter to 1 (stays badly poisoned).
+  10. **Crit stages:** base stage 0 (1/16); move flag `high_crit` adds +1.
+      Stage indexes the §4 table; stage caps at 4 (1/2).
+  11. **Stat recompute on level-up:** stats recompute from the §3 formulas at
+      the new level; current HP increases by (new max − old max).
+  12. **medium_slow floor:** total-exp values below 0 (levels 1–2) clamp to 0;
+      every curve's total exp at level 1 is 0.
+  13. **Exp participation:** a Mote participates by being active when the
+      opposing Mote faints; participants split evenly (integer division,
+      remainder dropped), each then ×1.5 trainer / ×1.5 traded as applicable.
+  14. **EV award:** the species' ev_yield goes to every participant, capped at
+      252/stat and 510 total (excess dropped stat-by-stat in §3 stat order).
+  15. **AI T1 "expected damage":** full §4 pipeline with rand fixed at 92, no
+      crit assumed; picks the highest-damage usable damaging move (ties → the
+      lowest move slot). If it has no damaging move with PP it uses slot 0's
+      legal fallback (Last Resort Hum rule applies naturally).
+  16. **AI T2 scoring (1-ply):** score = expected damage (as T1, as % of
+      defender's current HP, capped 100) + 25 if the move can KO + 15 for a
+      major-status move against a healthy (>50% HP) un-statused foe + 10 for a
+      self-stat-stage move while at full HP ("setup if safe"). Switch rule: if
+      the foe's type product vs the active Mote is ≥ 4 (using the foe's best
+      STAB type), and the bench has a Mote whose defensive product vs that
+      type is ≤ 1, switch to the first such Mote. T2 never uses bells/escape.
+  17. **Switch legality:** a switch target must be a non-fainted, non-active
+      party member; a side with no legal replacement after a faint loses (a
+      battle ends when one side has no conscious Motes).
+  18. **Accuracy stages** apply per §3 (acc/eva 3-based table); `resonate`'s
+      "ignores eva stages" flag zeroes the target's evasion stage in the §4
+      accuracy formula only.
