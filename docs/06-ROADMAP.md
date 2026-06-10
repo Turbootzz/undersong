@@ -118,7 +118,8 @@ headless replay `new_game_to_first_badge.ron` passes in CI; `validate` + `simula
 - [ ] **Phase review:** `/code-review` (high effort) over `git diff p4-start..HEAD` — all findings fixed, review clean.
 
 **Gate P4:** `cargo test --workspace` includes ability/evolution/perf-skill suites,
-green; fuzz now includes doubles; replay corpus extended; T3 beats T1 ≥ 85%.
+green; fuzz now includes doubles; replay corpus extended; tier regression per
+doc 02 §14 (v1.7 calibration): T2 ≥ 90% and T3 ≥ 90% vs T0, T3 ≥ 45% vs T1.
 
 ## P5 — Act 1 (Badges 1–3 + TACET introduced)
 

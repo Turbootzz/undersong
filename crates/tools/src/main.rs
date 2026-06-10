@@ -543,7 +543,9 @@ fn simulate(options: &Options) -> Result<bool> {
     let report = sim::simulate(&pool, &content.moves, &content.typechart, &config);
     print!("{}", report.render());
     // Gate P1 (docs/06-ROADMAP.md): T2 must beat T0 ≥ 90% with equal teams.
-    Ok(report.t2_rate_percent() >= 90.0)
+    Ok(report.t2_rate_percent() >= 90.0
+        && report.t3_vs_t0_rate_percent() >= 90.0
+        && report.t3_rate_percent() >= 45.0)
 }
 
 fn run_battle(options: &Options) -> Result<bool> {

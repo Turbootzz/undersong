@@ -102,6 +102,8 @@ pub struct SimReport {
     pub species_results: BTreeMap<String, (u32, u32)>, // (wins, battles)
     pub type_results: BTreeMap<Type, (u32, u32)>,
     pub t2_vs_t0_wins: u32,
+    pub t3_vs_t1_wins: u32,
+    pub t3_vs_t0_wins: u32,
     pub t2_vs_t0_battles: u32,
 }
 
@@ -139,9 +141,15 @@ impl SimReport {
             ));
         }
         out.push_str(&format!(
-            "\nT2 vs T0 (equal teams): {:.1}% ({}/{})  [gate: ≥ 90%]\n",
+            "\nT2 vs T0 (equal teams): {:.1}% ({}/{})  [gate: ≥ 90%]\nT3 vs T0 (equal teams): {:.1}% ({}/{})  [gate: ≥ 90%]\nT3 vs T1 (equal teams): {:.1}% ({}/{})  [gate: ≥ 45%, §14 v1.7 mirror plateau]\n",
             f64::from(self.t2_vs_t0_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1)),
             self.t2_vs_t0_wins,
+            self.t2_vs_t0_battles,
+            f64::from(self.t3_vs_t0_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1)),
+            self.t3_vs_t0_wins,
+            self.t2_vs_t0_battles,
+            f64::from(self.t3_vs_t1_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1)),
+            self.t3_vs_t1_wins,
             self.t2_vs_t0_battles
         ));
         out
@@ -149,6 +157,14 @@ impl SimReport {
 
     pub fn t2_rate_percent(&self) -> f64 {
         f64::from(self.t2_vs_t0_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1))
+    }
+
+    pub fn t3_rate_percent(&self) -> f64 {
+        f64::from(self.t3_vs_t1_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1))
+    }
+
+    pub fn t3_vs_t0_rate_percent(&self) -> f64 {
+        f64::from(self.t3_vs_t0_wins) * 100.0 / f64::from(self.t2_vs_t0_battles.max(1))
     }
 }
 
@@ -168,6 +184,8 @@ pub fn simulate(
         species_results: BTreeMap::new(),
         type_results: BTreeMap::new(),
         t2_vs_t0_wins: 0,
+        t3_vs_t1_wins: 0,
+        t3_vs_t0_wins: 0,
         t2_vs_t0_battles: config.battles,
     };
 
@@ -221,6 +239,28 @@ pub fn simulate(
         let (outcome, _) = play_out(state, [AiTier::T2, AiTier::T0], &mut rng);
         if matches!(outcome, Outcome::Won { winner: 0 }) {
             report.t2_vs_t0_wins += 1;
+        }
+    }
+
+    // Tier gate (roadmap P4): identical teams, T3 (side 0) vs T1.
+    for _ in 0..config.battles {
+        let seed = (u64::from(master.next_u32()) << 32) | u64::from(master.next_u32());
+        let mut rng = BattleRng::from_seed(seed);
+        let team = random_team(pool, config.team_size, config.level, moves, &mut rng);
+        let state = BattleState::new(BattleKind::Trainer, team.clone(), team, chart.clone());
+        let (outcome, _) = play_out(state, [AiTier::T3, AiTier::T1], &mut rng);
+        if matches!(outcome, Outcome::Won { winner: 0 }) {
+            report.t3_vs_t1_wins += 1;
+        }
+    }
+    for _ in 0..config.battles {
+        let seed = (u64::from(master.next_u32()) << 32) | u64::from(master.next_u32());
+        let mut rng = BattleRng::from_seed(seed);
+        let team = random_team(pool, config.team_size, config.level, moves, &mut rng);
+        let state = BattleState::new(BattleKind::Trainer, team.clone(), team, chart.clone());
+        let (outcome, _) = play_out(state, [AiTier::T3, AiTier::T0], &mut rng);
+        if matches!(outcome, Outcome::Won { winner: 0 }) {
+            report.t3_vs_t0_wins += 1;
         }
     }
 

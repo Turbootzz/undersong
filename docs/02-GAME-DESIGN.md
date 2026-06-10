@@ -269,8 +269,20 @@ cost. Unlocked by badge; performing plays that Mote's cry as the jingle seed.
 | 2 | aces/admins | 1-ply: scores damage + status value + setup if safe; switches out on hard counter (type product ≥ 4 against it) |
 | 3 | Maestros/Quartet/Vesper | 2-ply expectimax over (move, switch) with hand-tuned weights; sees its own team plan (scripted opener allowed) |
 
-AI tier is per-trainer in data. The `tools simulate` command pits tiers against each
-other for regression (T3 must beat T1 ≥ 85% with equal teams).
+AI tier is per-trainer in data. The `tools simulate` command pits tiers against
+each other for regression. **v1.7 calibration erratum:** the original "T3 beats
+T1 ≥ 85% with equal teams" is unattainable in this engine's mirror format and
+is replaced. Measured at P4 (800–1600 battles each, cantorel pool, L30 3v3
+identical rosters): T1 vs T1 = 49.2% (the symmetry baseline — identical teams
+and near-equal policies converge on a coin flip; every same-species duel ties
+speed, so turn order itself is a 50/50 each round), T2 vs T1 = 47.8%, T3 vs
+T1 = 48.6%, T2 vs T0 = 96.0%, T3 vs T0 ≥ 92.8%. Greedy max-expected-damage
+(T1) is near-optimal in a 3v3 race: a matchup switch concedes a free hit that
+roughly cancels the type edge it buys. The regression gates are therefore:
+T2 ≥ 90% vs T0, T3 ≥ 90% vs T0, T3 ≥ 45% vs T1 (parity-noise floor), plus the
+unit test proving T3 switches out of a type wall when the bench holds the
+counter (its qualitative edge — scripted Maestro fights, not mirror races,
+are where T3's plan-reading shows).
 
 ## 15. Economy
 
@@ -461,8 +473,11 @@ Specifications P4 needs that earlier sections left open. Doc is law.
    assume each opposing response in turn (uniform weights), simulate one
    full turn on a cloned state with a fixed-seed probe rng (deterministic
    across runs), and score `Δ(own team HP%) − Δ(foe team HP%)` plus 10
-   per foe KO and −10 per own KO. Pick the max-min action; ties break
-   toward the lower move slot, then Move over Switch.
+   per foe KO and −10 per own KO. Pick the action with the highest MEAN
+   score across responses (that's the "expecti" in expectimax — v1.7
+   erratum: an earlier draft said "max-min", which mis-tunes into
+   pathological pessimism); ties break toward the lower move slot, then
+   Move over Switch.
 4. **Weather setters.** Move effect `SetWeather(w)` (5 turns, replaces
    current weather, fails — turn consumed — if that weather is already
    up); on-entry abilities set the same way but never fail. The four

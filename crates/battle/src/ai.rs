@@ -1,7 +1,5 @@
-//! Trainer AI tiers (doc 02 §14, scoring law v1.1 #15–16).
-//!
-//! Tier 3 (2-ply expectimax) is a P5 deliverable; until then it returns
-//! tier 2's choice (roadmap P1).
+//! Trainer AI tiers (doc 02 §14, scoring law v1.1 #15–16; T3 per
+//! v1.5 #3: 2-ply expectimax over cloned-state turn simulations).
 
 use undersong_core::moves::MoveCategory;
 use undersong_core::rng::BattleRng;
@@ -28,9 +26,150 @@ pub fn choose(tier: AiTier, state: &BattleState, side: SideId, rng: &mut BattleR
     match tier {
         AiTier::T0 => tier0(state, side, rng),
         AiTier::T1 => tier1(state, side),
-        // T3 stub returns tier 2 until P5 (roadmap).
-        AiTier::T2 | AiTier::T3 => tier2(state, side),
+        AiTier::T2 => tier2(state, side),
+        AiTier::T3 => tier3(state, side),
     }
+}
+
+/// Tier 3 (doc 02 v1.5 #3, v1.7 erratum): for each of our legal
+/// actions, assume each opposing response in turn (uniform weights),
+/// simulate one full turn on a cloned state with a fixed-seed probe
+/// rng, and score
+/// `Δ(own team HP%) − Δ(foe team HP%) + 10·foe KOs − 10·own KOs`.
+/// Picks the action with the highest MEAN score across responses; ties
+/// break toward the lower move slot, then Move over Switch. Fully
+/// deterministic: the probe rng is fixed-seed and the live rng is never
+/// consumed.
+fn tier3(state: &BattleState, side: SideId) -> Action {
+    let foe: SideId = 1 - side;
+    let my_actions = legal_actions(state, side);
+    let foe_actions = legal_actions(state, foe);
+    // Anchor: tier 2's analytic choice. The expectimax may override it
+    // only by a clear margin — fixed-seed probe sims carry correlated
+    // noise, and unanchored probe scores measurably lose to T1's exact
+    // arithmetic (see doc 02 §14 v1.7 calibration note).
+    let anchor = tier2(state, side);
+
+    let team_hp_pct = |s: &BattleState, who: SideId| -> i64 {
+        let side_state = s.side(who);
+        let mut total = 0i64;
+        for mote in &side_state.party {
+            total += i64::from(mote.hp) * 100 / i64::from(mote.max_hp().max(1));
+        }
+        total
+    };
+    let kos = |before: &BattleState, after: &BattleState, who: SideId| -> i64 {
+        let count =
+            |s: &BattleState| s.side(who).party.iter().filter(|m| m.is_fainted()).count() as i64;
+        count(after) - count(before)
+    };
+
+    // Positional matchup term (§14's "hand-tuned weights"): how the
+    // post-turn field matchup leans, so a switch that fixes a bad
+    // matchup can outscore one turn of lost tempo. Per side: the best
+    // chart product any fielded usable move achieves against the foe's
+    // fielded mote, mapped 0×→−20, ½×→−8, 1×→0, 2×→+12.
+    let matchup_lean = |s: &BattleState| -> i64 {
+        let value = |attacker: SideId| -> i64 {
+            let me = s.side(attacker).active_mote();
+            let them = s.side(1 - attacker).active_mote();
+            if me.is_fainted() || them.is_fainted() {
+                return 0;
+            }
+            let mut best = -20i64;
+            for battle_move in &me.moves {
+                if battle_move.pp == 0 || battle_move.spec.power == 0 {
+                    continue;
+                }
+                let (num, den) = s.chart.product(battle_move.spec.r#type, &them.types);
+                let worth = if num == 0 {
+                    -20
+                } else if num * 2 <= den {
+                    -8
+                } else if num > den {
+                    12
+                } else {
+                    0
+                };
+                best = best.max(worth);
+            }
+            best
+        };
+        value(side) - value(foe)
+    };
+
+    let mut best: Option<(i64, usize)> = None;
+    let mut scores: Vec<i64> = Vec::with_capacity(my_actions.len());
+    for (index, mine) in my_actions.iter().enumerate() {
+        let mut total: i64 = 0;
+        for theirs in &foe_actions {
+            // Three probe seeds smooth single-sample accuracy/crit noise
+            // while staying fully deterministic.
+            for probe_seed in 0..3u64 {
+                let mut probe = BattleRng::from_seed(probe_seed);
+                let actions = if side == 0 {
+                    crate::actions::TurnActions::new(*mine, *theirs)
+                } else {
+                    crate::actions::TurnActions::new(*theirs, *mine)
+                };
+                let (next, _) = crate::turn::step(state, &actions, &mut probe);
+                total += (team_hp_pct(&next, side) - team_hp_pct(state, side))
+                    - (team_hp_pct(&next, foe) - team_hp_pct(state, foe))
+                    + 10 * kos(state, &next, foe)
+                    - 10 * kos(state, &next, side)
+                    + matchup_lean(&next);
+            }
+        }
+        // Uniform weights: comparing totals over the same response set
+        // is equivalent to comparing means, and stays integer.
+        scores.push(total);
+        let better = match best {
+            None => true,
+            Some((best_score, _)) => total > best_score,
+        };
+        if better {
+            best = Some((total, index));
+        }
+    }
+    let anchor_index = my_actions.iter().position(|a| *a == anchor);
+    let anchor_score = anchor_index.map(|index| scores[index]);
+    match (best, anchor_score) {
+        (Some((best_score, index)), Some(anchor_score)) => {
+            // Override the anchor only when the probe sims see a clear
+            // edge (margin: 25 points per response sample).
+            let margin = 25 * i64::try_from(foe_actions.len().max(1) * 3).expect("fits");
+            if my_actions[index] != anchor && best_score > anchor_score + margin {
+                my_actions[index]
+            } else {
+                anchor
+            }
+        }
+        (Some((_, index)), None) => my_actions[index],
+        _ => anchor,
+    }
+}
+
+/// Legal singles actions for max-min enumeration: usable move slots in
+/// order (lower slot first — the tie-break order), then switches to
+/// conscious bench Motes (Move beats Switch on ties because moves
+/// enumerate first and ties keep the earlier index).
+fn legal_actions(state: &BattleState, side: SideId) -> Vec<Action> {
+    let mut actions = Vec::new();
+    for slot in usable_slots(state, side) {
+        actions.push(Action::Move { slot });
+    }
+    if actions.is_empty() {
+        actions.push(Action::Move { slot: 0 }); // Last Resort path
+    }
+    let side_state = state.side(side);
+    let fielded = side_state.positions[0].party_index;
+    for (index, mote) in side_state.party.iter().enumerate() {
+        let index = u8::try_from(index).expect("party ≤ 6");
+        if index != fielded && !mote.is_fainted() {
+            actions.push(Action::Switch { to: index });
+        }
+    }
+    actions
 }
 
 /// Picks `(action, target_position)` for one doubles position
@@ -67,7 +206,9 @@ pub fn choose_doubles(
             (Action::Move { slot }, target)
         }
         AiTier::T1 => tier1_doubles(state, side, position, &targets),
-        // T3 stub returns tier 2 until P5 (roadmap).
+        // Doubles T3 plays the T2 policy: joint-action expectimax over
+        // four actors is out of scope at launch (doc 02 v1.5 #3 defines
+        // T3 for the singles ladder; the gate measures singles).
         AiTier::T2 | AiTier::T3 => tier2_doubles(state, side, position, &targets),
     }
 }
