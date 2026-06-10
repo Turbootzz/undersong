@@ -1,5 +1,10 @@
 // Rival fight 1 (beat 2): Cade runs the counter to your starter.
+// The trigger refires every step on the row; this guard makes the
+// fight repeat-until-won and a no-op afterwards (doc 02 v1.4 #5).
 [
+    If(flag: "story.rival1.defeated",
+       then: [End],
+       else: []),
     Say(who: "cade", key: "rival1.cade.intro"),
     If(flag: "starter.fanfyre",
        then: [StartBattle(trainer: "rival1_vs_fanfyre")],

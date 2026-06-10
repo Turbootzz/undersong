@@ -5,7 +5,7 @@ Motif(
     catch_rate: 90, base_exp_yield: 89,
     ev_yield: {spa: 1},
     growth_curve: Slow,
-    learnset: [(1, "hollow_hum"), (7, "dampen"), (11, "venom_trill"), (22, "phantom_rest"), (26, "frost_lull"), (31, "resonate"), (36, "requiem_swell")],
+    learnset: [(1, "hollow_hum"), (7, "dampen"), (11, "venom_trill"), (22, "phantom_rest"), (26, "frost_lull"), (31, "resonate"), (36, "requiem_swell"), (40, "overtone"), (44, "sostenuto")],
     abilities: ["damper"],
     hidden_ability: Some("keysmith"),
     tags: ["performer.lament", "habitat.ruins"],

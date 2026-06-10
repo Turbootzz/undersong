@@ -8,7 +8,7 @@ use undersong_core::individual::Individual;
 
 /// Current save format version. Every breaking change bumps this and
 /// adds a migration; old fixtures must load forever (doc 03 §4).
-pub const SAVE_VERSION: u32 = 1;
+pub const SAVE_VERSION: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SlotId {
@@ -94,7 +94,8 @@ pub struct Player {
     pub settings: Settings,
 }
 
-/// SaveFile v1 (doc 03 §4). RON, human-readable during development.
+/// SaveFile v2 (doc 03 §4). RON, human-readable during development.
+/// v1 → v2: added `heal_point` (rest-point respawn; review P3 finding).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SaveFile {
     pub header: SaveHeader,
@@ -110,6 +111,10 @@ pub struct SaveFile {
     pub vars: BTreeMap<String, i32>,
     pub counters: BTreeMap<String, u64>,
     pub world_seed: u64,
+    /// v2: whiteout respawn point (map id, position). None in migrated
+    /// v1 saves — the game falls back to the region entry.
+    #[serde(default)]
+    pub heal_point: Option<(String, (u32, u32))>,
 }
 
 /// Parses any supported save text into the current version.
@@ -127,8 +132,16 @@ pub fn migrate(text: &str) -> Result<SaveFile, SaveError> {
     let peek: VersionPeek = ron::from_str(text).map_err(|e| SaveError::Decode(e.to_string()))?;
     match peek.header.version {
         SAVE_VERSION => ron::from_str(text).map_err(|e| SaveError::Decode(e.to_string())),
-        // Future migrations chain here: 1 → 2 → … keeping every fixture
-        // loading (doc 03 §4).
+        // v1 → v2: heal_point gained a serde default, so the text parses
+        // directly; stamp the new version and leave heal_point None (the
+        // game falls back to the region entry).
+        1 => {
+            let mut file: SaveFile =
+                ron::from_str(text).map_err(|e| SaveError::Decode(e.to_string()))?;
+            file.header.version = SAVE_VERSION;
+            file.heal_point = None;
+            Ok(file)
+        }
         v if v > SAVE_VERSION => Err(SaveError::UnsupportedVersion(v)),
         v => Err(SaveError::Decode(format!("unknown save version {v}"))),
     }

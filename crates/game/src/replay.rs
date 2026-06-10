@@ -41,6 +41,12 @@ pub struct Expectations {
     pub min_dialogue_lines: u32,
     /// Whether at least one warp must have happened.
     pub warped: bool,
+    /// Party levels in order (doc 03 §6: replays assert party too).
+    #[serde(default)]
+    pub party_levels: Option<Vec<u8>>,
+    /// Final money, asserted end-of-inputs and after reload.
+    #[serde(default)]
+    pub money: Option<u32>,
 }
 
 pub struct ReplayOutcome {
@@ -97,6 +103,22 @@ pub fn run_replay(content_root: &Path, file: &ReplayFile) -> Result<ReplayOutcom
             if !world.vars.flags.contains(flag) {
                 return Err(format!("{stage}: flag `{flag}` not set"));
             }
+        }
+        if let Some(expected) = &file.expect.party_levels {
+            let actual: Vec<u8> = world.party.iter().map(|p| p.level).collect();
+            if &actual != expected {
+                return Err(format!(
+                    "{stage}: party levels {actual:?}, expected {expected:?}"
+                ));
+            }
+        }
+        if let Some(expected) = file.expect.money
+            && world.money != expected
+        {
+            return Err(format!(
+                "{stage}: money {}, expected {expected}",
+                world.money
+            ));
         }
         Ok(())
     };

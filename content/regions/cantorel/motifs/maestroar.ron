@@ -5,7 +5,7 @@ Motif(
     catch_rate: 45, base_exp_yield: 240,
     ev_yield: {spa: 3},
     growth_curve: MediumSlow,
-    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"), (21, "flare_brass"), (30, "crescendo"), (34, "alloy_clang"), (38, "resonate")],
+    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"), (21, "flare_brass"), (30, "crescendo"), (34, "alloy_clang"), (38, "resonate"), (42, "cinder_waltz")],
     abilities: ["crescendo_ember"],
     hidden_ability: Some("soloist"),
     tags: ["performer.light", "habitat.urban"],

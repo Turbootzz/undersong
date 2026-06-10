@@ -34,6 +34,9 @@ fn symmetry_for(ty: Type) -> Symmetry {
 }
 
 fn parse_hex(hex: &str) -> Rgba<u8> {
+    if hex.len() < 7 || !hex.is_ascii() {
+        return Rgba([125, 79, 158, 255]); // resonant violet fallback
+    }
     let channel = |range| u8::from_str_radix(&hex[range], 16).unwrap_or(255);
     Rgba([channel(1..3), channel(3..5), channel(5..7), 255])
 }
@@ -65,7 +68,16 @@ pub fn render_sigil(
         base,
         shade(base, 1.35),
     ];
-    let accent = parse_hex(accent_hex);
+    // Accent varies with the seed (doc 04 §5): the gilt base rotated
+    // through a small deterministic palette of warm offsets.
+    let accent_base = parse_hex(accent_hex);
+    let accent_shift = rng.below(3) as i16;
+    let accent = Rgba([
+        accent_base[0],
+        accent_base[1].saturating_add_signed((accent_shift as i8 - 1) * 24),
+        accent_base[2].saturating_add_signed((accent_shift as i8 - 1) * 18),
+        255,
+    ]);
 
     // Harmonic content from the melody: each note contributes one polar
     // harmonic — look and sound are the same data.
@@ -133,9 +145,20 @@ pub fn render_sigil(
         }
     }
 
-    // The eyes rule (doc 04 §5): exactly one readable regard element.
-    let eye_x = (center + 8.0) as u32;
-    let eye_y = (center - 10.0) as u32;
+    // The eyes rule (doc 04 §5): exactly one readable regard element —
+    // walk the desired offset back toward the center until it sits on a
+    // filled body pixel, so the eye never floats in space.
+    let mut eye_x = (center + 8.0) as u32;
+    let mut eye_y = (center - 10.0) as u32;
+    while (eye_x > center as u32 || eye_y < center as u32) && front.get_pixel(eye_x, eye_y)[3] == 0
+    {
+        if eye_x > center as u32 {
+            eye_x -= 1;
+        }
+        if eye_y < center as u32 {
+            eye_y += 1;
+        }
+    }
     for (dx, dy) in [(0i32, 0i32), (1, 0), (0, 1), (1, 1)] {
         let x = eye_x.saturating_add_signed(dx);
         let y = eye_y.saturating_add_signed(dy);

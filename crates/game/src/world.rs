@@ -118,6 +118,11 @@ pub enum WorldEvent {
     /// Party wiped: half money, heal, return to the rest point
     /// (doc 02 §15).
     Whiteout,
+    /// An illegal battle selection was refused without spending the
+    /// turn or the item (doc 02 v1.4 #3).
+    ActionRejected {
+        reason_key: String,
+    },
 }
 
 /// A live NPC (positions can drift from the map definition via wander).
@@ -176,6 +181,10 @@ pub struct WorldState {
     pub pending_learn_queue: Vec<(usize, undersong_core::ids::MoveId)>,
     /// Respawn point after a whiteout (map, position).
     pub heal_point: (MapId, (u32, u32)),
+    /// Merged string table (core + region), golden rule 6's flavored face.
+    pub strings: undersong_core::collections::UniqueMap<String, String>,
+    /// Region id for saves and asset paths ("dev" in the testbed).
+    pub region_id: String,
 }
 
 impl WorldState {
@@ -229,6 +238,8 @@ impl WorldState {
             pending_evolutions: Vec::new(),
             pending_learn_queue: Vec::new(),
             heal_point: (start_map, start),
+            strings: std::collections::BTreeMap::new().into(),
+            region_id: "dev".into(),
         }
     }
 
@@ -253,9 +264,15 @@ impl WorldState {
             }
             return events;
         }
-        if !self.pending_evolutions.is_empty() {
-            if let Input::Evolve { accept } = input {
-                self.resolve_evolution(accept, &mut events);
+        if !self.pending_evolutions.is_empty() || !self.pending_learn_queue.is_empty() {
+            match input {
+                Input::Evolve { accept } if !self.pending_evolutions.is_empty() => {
+                    self.resolve_evolution(accept, &mut events);
+                }
+                Input::Learn { replace } if !self.pending_learn_queue.is_empty() => {
+                    self.answer_learn(replace, &mut events);
+                }
+                _ => {}
             }
             return events;
         }
@@ -635,6 +652,15 @@ impl WorldState {
         }
     }
 
+    /// Resolves a string key to its flavored text; missing keys show
+    /// the key itself prefixed so playtests spot them instantly.
+    pub fn text(&self, key: &str) -> String {
+        self.strings
+            .get(key)
+            .cloned()
+            .unwrap_or_else(|| format!("⟨{key}⟩"))
+    }
+
     /// Starts the wild battle for `pending_encounter` if content is
     /// loaded and the player has a party.
     fn maybe_start_wild_battle(&mut self, events: &mut Vec<WorldEvent>) {
@@ -678,7 +704,45 @@ impl WorldState {
         let Some(mut session) = self.battle.take() else {
             return;
         };
-        // Bell resolution consumes one bell item from the bag.
+        // Doc 02 v1.4 #3: illegal selections reject without consuming
+        // the item or the turn (and without touching the rng stream).
+        match command {
+            BattleCmd::Bell => {
+                let is_wild = matches!(session.context, BattleContext::Wild { .. });
+                if !is_wild {
+                    events.push(WorldEvent::ActionRejected {
+                        reason_key: "ui.reject.bell_trainer".into(),
+                    });
+                    self.battle = Some(session);
+                    return;
+                }
+                if self.peek_best_bell().is_none() {
+                    events.push(WorldEvent::ActionRejected {
+                        reason_key: "ui.reject.no_bells".into(),
+                    });
+                    self.battle = Some(session);
+                    return;
+                }
+            }
+            BattleCmd::Item => {
+                let active = session.state.sides[0].active_mote();
+                if self.peek_best_potion().is_none() {
+                    events.push(WorldEvent::ActionRejected {
+                        reason_key: "ui.reject.no_tonics".into(),
+                    });
+                    self.battle = Some(session);
+                    return;
+                }
+                if active.hp >= active.max_hp() {
+                    events.push(WorldEvent::ActionRejected {
+                        reason_key: "ui.reject.full_hp".into(),
+                    });
+                    self.battle = Some(session);
+                    return;
+                }
+            }
+            _ => {}
+        }
         let bell = if matches!(command, BattleCmd::Bell) {
             self.consume_best_bell()
         } else {
@@ -712,6 +776,34 @@ impl WorldState {
                 self.finish_battle(session, outcome, events);
             }
         }
+    }
+
+    fn peek_best_bell(&self) -> Option<()> {
+        let registry = self.registry.as_ref()?;
+        self.bag
+            .iter()
+            .any(|(id, n)| {
+                *n > 0
+                    && matches!(
+                        registry.items.get(id).map(|d| &d.kind),
+                        Some(data::ItemKind::Bell { .. })
+                    )
+            })
+            .then_some(())
+    }
+
+    fn peek_best_potion(&self) -> Option<()> {
+        let registry = self.registry.as_ref()?;
+        self.bag
+            .iter()
+            .any(|(id, n)| {
+                *n > 0
+                    && matches!(
+                        registry.items.get(id).map(|d| &d.kind),
+                        Some(data::ItemKind::Potion { .. })
+                    )
+            })
+            .then_some(())
     }
 
     fn consume_best_bell(&mut self) -> Option<undersong_core::moves::Frac> {
@@ -791,6 +883,13 @@ impl WorldState {
                     if let Some(foe) = session.state.sides[1].party.first() {
                         wild.hp = Some(foe.hp.max(1));
                         wild.status = foe.status.map(battle::mote::MajorStatus::ailment);
+                        for learned in &mut wild.moves {
+                            if let Some(battle_move) =
+                                foe.moves.iter().find(|m| m.spec.id == learned.id)
+                            {
+                                learned.pp = battle_move.pp;
+                            }
+                        }
                     }
                     wild.ot = "player".into();
                     events.push(WorldEvent::MoteCaught {
@@ -826,6 +925,9 @@ impl WorldState {
                 self.heal_party();
                 self.current_map = self.heal_point.0.clone();
                 self.player = self.heal_point.1;
+                // Doc 02 v1.4 #5: loss wipes suspended scripts/shops.
+                self.dialogue = None;
+                self.shop = None;
                 events.push(WorldEvent::Whiteout);
                 events.push(WorldEvent::MoneyChanged { money: self.money });
             }
@@ -858,9 +960,22 @@ impl WorldState {
             }
         }
 
-        // Queue level evolutions (doc 02 §9).
+        // Queue level evolutions for members that LEVELED this battle
+        // (doc 02 v1.4 #2: prompts on level-up only, never for fresh
+        // catches already past the threshold).
+        let mut leveled: Vec<usize> = Vec::new();
+        for event in &session.last_events_all {
+            if let battle::BattleEvent::LeveledUp { side: 0, slot, .. } = event
+                && let Some(party_index) = session.party_map.get(usize::from(*slot))
+            {
+                leveled.push(*party_index);
+            }
+        }
         if let Some(registry) = &self.registry {
-            for (index, individual) in self.party.iter().enumerate() {
+            for index in leveled {
+                let Some(individual) = self.party.get(index) else {
+                    continue;
+                };
                 if let Some((at_level, target)) = registry.evolutions.get(&individual.species)
                     && individual.level >= *at_level
                     && !self.pending_evolutions.iter().any(|(i, _)| *i == index)
@@ -910,9 +1025,10 @@ impl WorldState {
             return;
         }
         if let Some(individual) = self.party.get_mut(party_index) {
+            // Doc 02 v1.4 #1: evolution preserves current HP and status —
+            // resolve clamps against the new max; no free heal.
             let from = individual.species.clone();
             individual.species = target.clone();
-            individual.hp = None; // recompute full at next resolve
             events.push(WorldEvent::Evolved { from, into: target });
         }
     }
@@ -960,8 +1076,14 @@ impl WorldState {
                 version: save::SAVE_VERSION,
                 created_epoch_s,
                 playtime_s,
-                region: "dev".into(),
-                badge_bits: 0,
+                region: self.region_id.clone(),
+                badge_bits: (1..=8u8).fold(0, |bits, n| {
+                    if self.vars.flags.contains(&format!("badge.{n}")) {
+                        bits | (1 << (n - 1))
+                    } else {
+                        bits
+                    }
+                }),
                 score_pct: 0,
             },
             player: save::model::Player {
@@ -985,6 +1107,7 @@ impl WorldState {
             vars: self.vars.vars.clone(),
             counters: BTreeMap::from([("steps".to_string(), self.steps)]),
             world_seed: self.world_seed,
+            heal_point: Some((self.heal_point.0.to_string(), self.heal_point.1)),
         }
     }
 
@@ -1005,6 +1128,9 @@ impl WorldState {
             .get("items")
             .map(|items| items.iter().cloned().collect())
             .unwrap_or_default();
+        if let Some((map, at)) = &file.heal_point {
+            self.heal_point = (map.as_str().into(), *at);
+        }
         self.world_seed = file.world_seed;
         self.rng = BattleRng::from_seed(file.world_seed);
         self.dialogue = None;
@@ -1102,6 +1228,7 @@ pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<Worl
     }
 
     let registry = Registry::from_content(&core_content, &pack, &items);
+    let core_strings = data::load_core_strings(content_root).map_err(|e| e.to_string())?;
     let mut world = WorldState::new(
         pack.maps.clone(),
         scripts,
@@ -1109,6 +1236,15 @@ pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<Worl
         pack.def.entry_spawn,
         seed,
     );
+    let mut merged: std::collections::BTreeMap<String, String> = core_strings
+        .iter()
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .collect();
+    for (key, value) in pack.strings.iter() {
+        merged.insert(key.clone(), value.clone());
+    }
+    world.strings = merged.into();
+    world.region_id = pack.def.id.clone();
     world.registry = Some(registry);
     Ok(world)
 }

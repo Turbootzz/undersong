@@ -17,13 +17,18 @@ use crate::melody::{Melody, Timbre, midi_hz};
 /// Renders one melody to `<out>/<id>.wav`.
 pub fn render_cry(id: &str, melody: &Melody, out_dir: &Path) -> Result<()> {
     let sample_rate = 44_100.0;
-    let total_ms: u32 = melody.notes.iter().map(|n| n.millis).sum();
-    let duration = (f64::from(total_ms) / 1000.0).clamp(0.3, 1.4);
+    // Doc 04 §6: cries are 0.6–1.2 s. Scale the phrase uniformly into
+    // the band instead of trusting per-note arithmetic.
+    let mut total_ms: u32 = melody.notes.iter().map(|n| n.millis).sum();
+    if total_ms == 0 {
+        total_ms = 1;
+    }
+    let scale = (f64::from(total_ms) / 1000.0).clamp(0.6, 1.2) / (f64::from(total_ms) / 1000.0);
 
     let mut wave = Wave::new(1, sample_rate);
     for note in &melody.notes {
         let hz = midi_hz(note.midi);
-        let seconds = f64::from(note.millis) / 1000.0;
+        let seconds = f64::from(note.millis) / 1000.0 * scale;
         let mut unit: Box<dyn AudioUnit> = match melody.timbre {
             Timbre::Brass => Box::new((saw_hz(hz) * 0.30) >> lowpass_hz(hz * 3.0, 0.8)),
             Timbre::Glass => {
@@ -50,8 +55,6 @@ pub fn render_cry(id: &str, melody: &Melody, out_dir: &Path) -> Result<()> {
             wave.push(sample);
         }
     }
-    let _ = duration;
-
     std::fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
     let path = out_dir.join(format!("{id}.wav"));
     wave.save_wav16(&path)

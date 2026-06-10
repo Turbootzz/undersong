@@ -5,7 +5,7 @@ Motif(
     catch_rate: 45, base_exp_yield: 142,
     ev_yield: {spd: 2},
     growth_curve: MediumSlow,
-    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (36, "riptide_finale")],
+    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (36, "riptide_finale"), (40, "da_capo")],
     abilities: ["crescendo_tide"],
     hidden_ability: Some("damper"),
     tags: ["performer.ferry", "habitat.water"],

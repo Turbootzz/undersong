@@ -18,7 +18,7 @@ impl Plugin for BattleUiPlugin {
             .add_systems(OnEnter(AppState::Battle), battle_enter)
             .add_systems(
                 Update,
-                (pump_messages, battle_input, refresh_panels)
+                (pump_messages, battle_input, refresh_sprites, refresh_panels)
                     .chain()
                     .run_if(in_state(AppState::Battle)),
             )
@@ -53,11 +53,18 @@ struct FoeSprite;
 #[derive(Component)]
 struct PlayerSpriteImg;
 
+/// Which species a battle sprite currently shows (switch detection).
+#[derive(Component)]
+struct ShownSpecies(undersong_core::ids::SpeciesId);
+
 /// Paced battle text (doc 05 §6: everything skippable with confirm).
 #[derive(Resource, Default)]
 pub struct MessageQueue {
     pub lines: std::collections::VecDeque<String>,
     pub timer: f32,
+    /// Set when this frame's Z popped a message — the input system must
+    /// not also consume that same press.
+    pub popped_this_frame: bool,
 }
 
 #[derive(Resource, Default)]
@@ -74,7 +81,8 @@ pub fn queue_battle_events(
     world: &game::world::WorldState,
     events: &[WorldEvent],
 ) {
-    let name = |species: &undersong_core::ids::SpeciesId| species.as_str().to_string();
+    let name = |species: &undersong_core::ids::SpeciesId| world.text(&format!("motif.{species}"));
+    let move_name = |move_id: &undersong_core::ids::MoveId| world.text(&format!("move.{move_id}"));
     for event in events {
         match event {
             WorldEvent::Battle(stream) => {
@@ -82,8 +90,9 @@ pub fn queue_battle_events(
                     use battle::BattleEvent as E;
                     let line = match battle_event {
                         E::MoveUsed { side, move_id } => Some(format!(
-                            "{} uses {move_id}",
-                            if *side == 0 { "you" } else { "foe" }
+                            "{} uses {}",
+                            if *side == 0 { "you" } else { "foe" },
+                            move_name(move_id)
                         )),
                         E::LastResortUsed { side } => Some(format!(
                             "{} resorts to a desperate hum",
@@ -111,8 +120,19 @@ pub fn queue_battle_events(
                             Some(line)
                         }
                         E::StatusApplied { target, status } => Some(format!(
-                            "{} is {status:?}!",
-                            if *target == 0 { "your mote" } else { "the foe" }
+                            "{} is {}!",
+                            if *target == 0 { "your mote" } else { "the foe" },
+                            world.text(&format!(
+                                "ui.status.{}",
+                                match status {
+                                    undersong_core::moves::Ailment::Burn => "burn",
+                                    undersong_core::moves::Ailment::Poison => "poison",
+                                    undersong_core::moves::Ailment::Toxic => "toxic",
+                                    undersong_core::moves::Ailment::Paralysis => "paralysis",
+                                    undersong_core::moves::Ailment::Sleep => "sleep",
+                                    undersong_core::moves::Ailment::Freeze => "freeze",
+                                }
+                            ))
                         )),
                         E::Fainted { target } => Some(format!(
                             "{} faints!",
@@ -147,14 +167,15 @@ pub fn queue_battle_events(
             }
             WorldEvent::LearnPrompt { species, move_id } => {
                 queue.lines.push_back(format!(
-                    "{} wants to learn {move_id} (Z: replace first move · X: skip)",
-                    name(species)
+                    "{} wants to learn {} (Z: replace first move · X: skip)",
+                    name(species),
+                    move_name(move_id)
                 ));
             }
             WorldEvent::MoveLearned { species, move_id } => {
                 queue
                     .lines
-                    .push_back(format!("{} learned {move_id}", name(species)));
+                    .push_back(format!("{} learned {}", name(species), move_name(move_id)));
             }
             WorldEvent::EvolutionPrompt { from, into } => {
                 queue.lines.push_back(format!(
@@ -176,10 +197,12 @@ pub fn queue_battle_events(
             WorldEvent::MoneyChanged { money } => {
                 queue.lines.push_back(format!("₵{money}"));
             }
+            WorldEvent::ActionRejected { reason_key } => {
+                queue.lines.push_back(world.text(reason_key));
+            }
             _ => {}
         }
     }
-    let _ = world;
 }
 
 fn battle_enter(
@@ -214,7 +237,11 @@ fn battle_enter(
             // Foe sigil, upper right.
             root.spawn((
                 FoeSprite,
-                ImageNode::new(assets.load(format!("sigils/cantorel/{}.front.png", foe.species))),
+                ShownSpecies(foe.species.clone()),
+                ImageNode::new(assets.load(format!(
+                    "sigils/{}/{}.front.png",
+                    world.0.region_id, foe.species
+                ))),
                 Node {
                     position_type: PositionType::Absolute,
                     right: Val::Px(60.0),
@@ -227,7 +254,11 @@ fn battle_enter(
             // Player sigil (back), lower left.
             root.spawn((
                 PlayerSpriteImg,
-                ImageNode::new(assets.load(format!("sigils/cantorel/{}.back.png", us.species))),
+                ShownSpecies(us.species.clone()),
+                ImageNode::new(assets.load(format!(
+                    "sigils/{}/{}.back.png",
+                    world.0.region_id, us.species
+                ))),
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(48.0),
@@ -365,7 +396,14 @@ fn battle_enter(
             ))
             .with_child((
                 MessageText,
-                Text::new("a wild mote hums!"),
+                Text::new(match session.context {
+                    game::session::BattleContext::Wild { .. } => {
+                        world.0.text("ui.battle.wild_intro")
+                    }
+                    game::session::BattleContext::Trainer { .. } => {
+                        world.0.text("ui.battle.trainer_intro")
+                    }
+                }),
                 TextFont::from_font_size(8.0),
                 TextColor(theme.color(&theme.palette.ink)),
             ));
@@ -379,6 +417,7 @@ fn pump_messages(
     mut queue: ResMut<MessageQueue>,
     mut text: Query<&mut Text, With<MessageText>>,
 ) {
+    queue.popped_this_frame = false;
     if queue.lines.is_empty() {
         return;
     }
@@ -390,6 +429,9 @@ fn pump_messages(
             && let Ok(mut message) = text.single_mut()
         {
             message.0 = line;
+        }
+        if skip {
+            queue.popped_this_frame = true;
         }
     }
 }
@@ -405,8 +447,9 @@ fn battle_input(
     mut rows: Query<(&CommandRow, &mut BackgroundColor)>,
     mut command_texts: Query<(&ChildOf, &mut Text)>,
 ) {
-    // While messages are pending, only pumping happens (handled above).
-    if !queue.lines.is_empty() {
+    // While messages are pending, only pumping happens (handled above);
+    // and a Z that just popped a message must not double-fire here.
+    if !queue.lines.is_empty() || queue.popped_this_frame {
         return;
     }
     // Prompts take priority: learn / evolution answered with Z/X.
@@ -430,11 +473,14 @@ fn battle_input(
         }
         return;
     }
-    // Battle over and nothing queued → autosave (doc 03 §4
+    // Battle over and nothing queued → wait for an explicit confirm so
+    // the last line stays readable, then autosave (doc 03 §4
     // post-battle) and back to the overworld.
     if world.0.battle.is_none() {
-        crate::app::autosave(&world.0);
-        next.set(AppState::Overworld);
+        if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+            crate::app::autosave(&world.0);
+            next.set(AppState::Overworld);
+        }
         return;
     }
 
@@ -523,6 +569,41 @@ fn battle_input(
 /// Live plates: names, levels, HP bars (color by fraction per doc 05 §2).
 type HpBarQuery<'w, 's, T, U> =
     Query<'w, 's, (&'static mut Node, &'static mut BackgroundColor), (With<T>, Without<U>)>;
+
+#[expect(clippy::type_complexity, reason = "bevy query filters")]
+fn refresh_sprites(
+    world: Res<WorldRes>,
+    assets: Res<AssetServer>,
+    mut foe: Query<
+        (&mut ShownSpecies, &mut ImageNode),
+        (With<FoeSprite>, Without<PlayerSpriteImg>),
+    >,
+    mut player: Query<
+        (&mut ShownSpecies, &mut ImageNode),
+        (With<PlayerSpriteImg>, Without<FoeSprite>),
+    >,
+) {
+    let Some(session) = &world.0.battle else {
+        return;
+    };
+    if let Ok((mut shown, mut image)) = foe.single_mut() {
+        let current = &session.state.sides[1].active_mote().species;
+        if &shown.0 != current {
+            shown.0 = current.clone();
+            image.image = assets.load(format!(
+                "sigils/{}/{}.front.png",
+                world.0.region_id, current
+            ));
+        }
+    }
+    if let Ok((mut shown, mut image)) = player.single_mut() {
+        let current = &session.state.sides[0].active_mote().species;
+        if &shown.0 != current {
+            shown.0 = current.clone();
+            image.image = assets.load(format!("sigils/{}/{}.back.png", world.0.region_id, current));
+        }
+    }
+}
 
 fn refresh_panels(
     theme: Res<Theme>,

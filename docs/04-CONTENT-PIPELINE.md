@@ -26,51 +26,67 @@ UI strings. A region pack may add, never modify, core content.
 ### Species (`motifs/fanfyre.ron`)
 
 ```ron
-Species(
+Motif(
     id: "fanfyre", name_key: "motif.fanfyre", types: [Ember],
     base_stats: (hp: 46, atk: 51, def: 40, spa: 64, spd: 46, spe: 63),
-    abilities: ["crescendo_ember"], hidden_ability: Some("amplify"),
-    growth_curve: MediumSlow, catch_rate: 45, base_exp_yield: 62,
+    catch_rate: 45, base_exp_yield: 62,
     ev_yield: {spa: 1},
-    learnset: [(1,"tackle"),(1,"ember_note"),(7,"dampen"),(13,"gale_riff"),
-               (19,"flare_brass"),(28,"crescendo"),(36,"resonate")],
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (1, "ember_note"), (7, "dampen"), (13, "gale_riff"),
+               (19, "flare_brass"), (28, "crescendo"), (36, "resonate")],
+    abilities: ["crescendo_ember"],
+    hidden_ability: Some("amplify"),
+    tags: ["performer.light", "habitat.urban"],
     tm_set: [],
     evolution: Some((method: Level(16), target: "embaritone")),
-    cry_seed: 0xFA9F_1E22, sigil_seed: 0xFA9F_1E22,
-    // integer law: height/weight in decimeters/hectograms
-    dex: (height_dm: 6, weight_hg: 95, entry_key: "dex.fanfyre"),
-    tags: ["performer.light", "habitat.urban"],
+    cry_seed: 1486184087595, sigil_seed: 211710318515989,
+    // integer law: height/weight in decimeters/hectograms.
+    dex: (height_dm: 9, weight_hg: 190, entry_key: "dex.fanfyre"),
 )
-// (Sample updated at P3 to the shipped three-stage line:
-// fanfyre 310 BST → embaritone @16 → maestroar @34.)
+// (Faithful to content/regions/cantorel/motifs/fanfyre.ron at the P3 review.
+// Root struct is `Motif` — serde(flatten) is unusable with RON named structs,
+// so the content schema mirrors core's SpeciesSpec field-by-field (03 §10).
+// Cry seeds are shared per evolution line: the leitmotif rule.)
 ```
 
 ### Trainer (`trainers/maestro_mirelle.ron`)
 
 ```ron
 Trainer(
-    id: "maestro_mirelle", class: Maestro, name_key: "npc.mirelle",
-    ai_tier: 3, payout_class: Maestro, double_battle: false,
+    id: "maestro_mirelle", class: "Maestro", name_key: "npc.mirelle",
+    ai_tier: 3, payout_base: 80, double_battle: false,
     party: [
         (species: "solfawn",  level: 14, moves: Some(["leaf_pick","dampen","quick_step"])),
         (species: "vinebrato",level: 17, ivs: Some((hp:31,atk:20,def:25,spa:31,spd:25,spe:31)),
          moves: Some(["root_chord","leaf_pick","dampen","quick_step"]),
          held_item: Some("oran_chime")),
     ],
-    defeat_flag: "hall.2.cleared", reward: (money_mult: 1.0, items: [("tm05", 1)]),
+    defeat_flag: "hall.2.cleared", reward_items: [("tm05", 1)],
     intro_key: "battle.mirelle.intro", defeat_key: "battle.mirelle.defeat",
 )
+// (Trued to the shipped schema at the P3 review: quoted class, payout_base —
+// payout = payout_base × ace level per doc 02 v1.4 #4 — and reward_items.)
 ```
 
-### Encounters (`maps/route_02/encounters.ron`)
+### Encounters (inside `maps/<map_id>/map.ron` — doc 02 v1.3 #2)
 
 ```ron
-Encounters(
-    patch_rate: 0.12,
-    land_day:  [("pipling",2,4,20),("solfawn",3,4,20),("burrbass",2,5,10), /* …12 slots, weights 20,20,10,10,10,10,5,5,4,4,1,1 */],
-    land_night: [ /* … */ ], surf: None, fishing: None,
-)
+    encounters: Some((
+        patch_rate_pct: 12,   // integer percent, 1..=100
+        slots: [              // exactly 12, weights = the fixed multiset
+            ("tremole", 2, 4, 20), ("pipling", 2, 4, 20),
+            ("burrbass", 3, 5, 10), ("buzzoon", 3, 5, 10),
+            ("solfawn", 3, 4, 10), ("zapresto", 3, 5, 10),
+            ("glissicle", 4, 5, 5), ("timpanite", 4, 5, 5),
+            ("dirgeist", 4, 6, 4), ("carilloy", 4, 6, 4),
+            ("rattacca", 6, 7, 1), ("soarprano", 6, 7, 1),
+        ],
+    )),
 ```
+
+One table per map at launch; day/night and surf/fishing split into
+per-time tables when P4's clock lands (the §1 layout's `encounters.ron`
+file is reserved for that split).
 
 ### Map triggers (in `map.ron`)
 

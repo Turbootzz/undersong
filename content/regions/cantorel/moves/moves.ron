@@ -5,7 +5,7 @@ MoveSet(
         (
             id: "anvil_anthem", name_key: "move.anvil_anthem", type: Alloy,
             category: Status, power: 0, accuracy: 0, pp: 10,
-            priority: 0, target: Foe,
+            priority: 0, target: User,
             flags: (sound: true),
             effects: [StatStage(target: User, stat: def, delta: 2, chance: 100)],
         ),
@@ -74,7 +74,7 @@ MoveSet(
         (
             id: "da_capo", name_key: "move.da_capo", type: Resonant,
             category: Status, power: 0, accuracy: 0, pp: 10,
-            priority: 0, target: Foe,
+            priority: 0, target: User,
             effects: [Heal(frac: (1, 2))],
         ),
         (
@@ -87,7 +87,7 @@ MoveSet(
         (
             id: "fermata_guard", name_key: "move.fermata_guard", type: Stone,
             category: Status, power: 0, accuracy: 0, pp: 20,
-            priority: 0, target: Foe,
+            priority: 0, target: User,
             effects: [StatStage(target: User, stat: def, delta: 1, chance: 100), StatStage(target: User, stat: spd, delta: 1, chance: 100)],
         ),
         (
@@ -144,7 +144,7 @@ MoveSet(
         (
             id: "quick_march", name_key: "move.quick_march", type: Feral,
             category: Status, power: 0, accuracy: 0, pp: 20,
-            priority: 0, target: Foe,
+            priority: 0, target: User,
             effects: [StatStage(target: User, stat: atk, delta: 1, chance: 100), StatStage(target: User, stat: spe, delta: 1, chance: 100)],
         ),
         (

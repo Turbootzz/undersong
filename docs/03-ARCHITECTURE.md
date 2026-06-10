@@ -28,7 +28,7 @@ undersong/
 │   ├── save/                   # save format, versioning, migrations
 │   ├── script/                 # dialogue/cutscene command interpreter (pure)
 │   ├── game/                   # the bevy app (binary)
-│   └── tools/                  # CLI: validate | simulate | importmap | cries | sigils | atlas
+│   └── tools/                  # CLI: validate | simulate | importmap | assets (sigils + cries; atlas deferred)
 ├── content/
 │   ├── core/                   # typechart.ron, natures.ron, items.ron, strings/en.ron
 │   └── regions/cantorel/       # region pack (see 04)
@@ -220,8 +220,20 @@ autoplay needs a first-interaction gate on web — title screen press handles it
 
 - 2026-06: Stack locked (this doc v1). Hand-rolled tilemap over plugins. RON over
   JSON (comments + enums). Integer-only battle math. Event-stream battle rendering.
-- 2026-06-10 (P3): cries render to **WAV** (fundsp's built-in writer; bevy's `wav`
-  feature plays it). The doc 04 "OGG" target needs a vorbis *encoder*, which the
+- 2026-06-10 (P3 review): `tools assets` ships loose per-species PNGs/WAVs;
+  **atlas packing is deferred** until a perf pass needs it (doc 03 §8's
+  one-draw-per-layer rule is waived for sigils meanwhile). The committed
+  assets under `assets/` are canon — cross-platform f32 trig may differ in
+  the last bit, so regeneration on another platform is best-effort, not a
+  determinism contract.
+- 2026-06-10 (P3 review): content schemas mirror core specs **field-by-field**
+  (`Motif` duplicates `SpeciesSpec`; `Motif::spec()` is the sync point, and a
+  new SpeciesSpec field fails compilation there) because serde(flatten) is
+  incompatible with RON named-struct syntax. `RegionDef.starters` is a
+  length-validated `Vec` (exactly 3) — RON has no ergonomic fixed-array form.
+- 2026-06-10 (P3): cries render to **WAV** (fundsp's built-in writer; the
+  game crate enables bevy's `wav` feature so playback works when the audio
+  pass lands). The doc 04 "OGG" target needs a vorbis *encoder*, which the
   closed dep list doesn't carry; revisit if audio size ever matters pre-ship.
 - 2026-06-10 (P0): the `crates/core` package is named **`undersong-core`** — cargo
   reserves `core` (collides with Rust's built-in crate). All other packages keep

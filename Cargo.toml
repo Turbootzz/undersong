@@ -29,7 +29,7 @@ all = { level = "deny", priority = -1 }
 [workspace.dependencies]
 undersong-core = { path = "crates/core" }
 data = { path = "crates/data" }
-bevy = "0.18"
+bevy = { version = "0.18", features = ["wav"] }
 serde = { version = "1", features = ["derive"] }
 ron = "0.12"
 rand_chacha = "0.10"

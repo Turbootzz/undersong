@@ -416,3 +416,28 @@ other for regression (T3 must beat T1 ≥ 85% with equal teams).
   4. **NPC wander pauses during dialogue and pending encounters** — a
      property of the world core, not the renderer.
   5. **Wandering NPCs never end a stroll on a trigger tile.**
+
+### v1.4 — 2026-06-10 (P3 phase review rulings)
+
+P3 review rulings; each was unspecified or contradicted by code. Doc is law.
+
+1. **Evolution preserves condition.** Evolving never heals: current HP
+   and status carry over unchanged; the higher max HP from the new
+   species' bases applies immediately (current HP is clamped only if it
+   somehow exceeds the new max). No free heal on evolution.
+2. **Evolution prompts trigger on level-up only.** The eligibility check
+   runs when a Mote levels (or when a stone/trade-equivalent is used),
+   not on every battle end and not for newly caught Motes at or above
+   the threshold level. Refusing keeps the Mote unevolved until the
+   next level-up re-prompts.
+3. **Bells in trainer battles are blocked at selection.** The bell is
+   not consumed, no turn passes; the UI explains ("the Maestro's score
+   forbids it"). Likewise, ringing with no bells in the bag, or using a
+   healing item with an empty bag or at full HP, rejects the action
+   without consuming the turn.
+4. **Trainer payout ace = highest level in the party** (doc §15's
+   "ace's level", made precise).
+5. **Whiteout clears modal state.** Loss wipes any suspended script,
+   dialogue, or open shop along with the warp to the rest point; defeat
+   re-walks the script from its trigger, so one-time fights must guard
+   with their defeat flag rather than a fire-once trigger.

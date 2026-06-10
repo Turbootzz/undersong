@@ -5,7 +5,7 @@ Motif(
     catch_rate: 45, base_exp_yield: 240,
     ev_yield: {spd: 3},
     growth_curve: MediumSlow,
-    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (34, "crescendo"), (38, "riptide_finale")],
+    learnset: [(1, "ripple"), (1, "tackle"), (8, "dampen"), (15, "frost_lull"), (21, "undertow"), (28, "phantom_rest"), (34, "crescendo"), (38, "riptide_finale"), (42, "breaker_beat")],
     abilities: ["crescendo_tide"],
     hidden_ability: Some("encore_heart"),
     tags: ["performer.ferry", "habitat.water"],

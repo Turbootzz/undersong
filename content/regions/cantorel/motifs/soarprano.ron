@@ -5,7 +5,7 @@ Motif(
     catch_rate: 180, base_exp_yield: 138,
     ev_yield: {spa: 1, spe: 1},
     growth_curve: MediumFast,
-    learnset: [(1, "tackle"), (1, "grace_gust"), (9, "dampen"), (13, "ember_note"), (19, "gale_riff"), (25, "crescendo"), (31, "volt_pluck"), (38, "tempest_coda")],
+    learnset: [(1, "tackle"), (1, "grace_gust"), (9, "dampen"), (13, "ember_note"), (19, "gale_riff"), (25, "crescendo"), (31, "volt_pluck"), (38, "tempest_coda"), (40, "wing_beat")],
     abilities: ["floating"],
     hidden_ability: Some("perfect_pitch"),
     tags: ["habitat.sky"],

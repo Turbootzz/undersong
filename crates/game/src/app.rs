@@ -41,12 +41,17 @@ impl Plugin for UndersongPlugin {
                     sync_npc_sprites,
                     camera_follow,
                     dialogue_ui,
+                    shop_ui,
                     advance_wipe,
                 )
                     .chain()
                     .run_if(in_state(AppState::Overworld)),
             )
-            .add_systems(OnExit(AppState::Overworld), cleanup_wipe)
+            .add_systems(
+                OnExit(AppState::Overworld),
+                (cleanup_wipe, despawn_tagged::<DialogueUi>),
+            )
+            .add_systems(OnExit(AppState::Battle), resync_after_battle)
             .add_systems(OnEnter(AppState::Menu), menu_open)
             .add_systems(Update, menu_input.run_if(in_state(AppState::Menu)))
             .add_systems(OnExit(AppState::Menu), despawn_tagged::<MenuUi>)
@@ -293,6 +298,10 @@ fn player_input(
     mut next: ResMut<NextState<AppState>>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
 ) {
+    // An open mart owns the keys (shop_ui routes them).
+    if world.0.shop.is_some() {
+        return;
+    }
     // Interact / advance dialogue / answer choice.
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
         let events = world.0.apply(WorldInput::Interact);
@@ -489,7 +498,8 @@ fn dialogue_ui(
                 .current
                 .clone()
                 .unwrap_or((String::new(), String::new()));
-            let line = format!("{who}: {key}");
+            let speaker = world.0.text(&format!("npc.{who}"));
+            let line = format!("{speaker}: {}", world.0.text(&key));
             // The choice list, when open, is appended to the text so the
             // pure cursor is visible; the dedicated popup widget arrives
             // with real fonts in P3 (doc 05 §4).
@@ -499,10 +509,11 @@ fn dialogue_ui(
                         .iter()
                         .enumerate()
                         .map(|(i, option)| {
+                            let label = world.0.text(option);
                             if i == *cursor {
-                                format!("> {option}")
+                                format!("> {label}")
                             } else {
-                                format!("  {option}")
+                                format!("  {label}")
                             }
                         })
                         .collect();
@@ -572,6 +583,95 @@ fn dialogue_ui(
                 commands.entity(entity).despawn();
             }
         }
+    }
+}
+
+// ----- shop (mart) panel -----------------------------------------------
+
+#[derive(Component)]
+struct ShopUi;
+
+#[derive(Component)]
+struct ShopText;
+
+/// Renders the open mart and routes keys to the pure shop inputs.
+/// Movement is already frozen by the core while a shop is open.
+fn shop_ui(
+    mut commands: Commands,
+    keys: Res<ButtonInput<KeyCode>>,
+    theme: Option<Res<Theme>>,
+    mut world: ResMut<WorldRes>,
+    existing: Query<Entity, With<ShopUi>>,
+    mut text: Query<&mut Text, With<ShopText>>,
+) {
+    let Some(theme) = theme else { return };
+    if world.0.shop.is_none() {
+        for entity in &existing {
+            commands.entity(entity).despawn();
+        }
+        return;
+    }
+
+    // Keys → pure inputs.
+    if keys.just_pressed(KeyCode::ArrowDown) {
+        world.0.apply(WorldInput::ShopCursor(1));
+    }
+    if keys.just_pressed(KeyCode::ArrowUp) {
+        world.0.apply(WorldInput::ShopCursor(-1));
+    }
+    if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+        world.0.apply(WorldInput::ShopBuy);
+    }
+    if keys.just_pressed(KeyCode::KeyX) || keys.just_pressed(KeyCode::Escape) {
+        world.0.apply(WorldInput::ShopClose);
+        return;
+    }
+
+    let Some((stock, cursor)) = &world.0.shop else {
+        return;
+    };
+    let mut lines = vec![format!(
+        "COMMISSARY — ₵{}   (Z buy · X leave)",
+        world.0.money
+    )];
+    for (index, item_id) in stock.iter().enumerate() {
+        let price = world
+            .0
+            .registry
+            .as_ref()
+            .and_then(|r| r.items.get(item_id))
+            .map(|d| d.price)
+            .unwrap_or(0);
+        let name = world.0.text(&format!("item.{item_id}"));
+        let marker = if index == *cursor { ">" } else { " " };
+        lines.push(format!("{marker} {name:<16} ₵{price}"));
+    }
+    let body = lines.join("\n");
+
+    if existing.is_empty() {
+        commands
+            .spawn((
+                ShopUi,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(40.0),
+                    right: Val::Px(40.0),
+                    top: Val::Px(16.0),
+                    padding: UiRect::all(Val::Px(8.0)),
+                    ..default()
+                },
+                BackgroundColor(theme.color(&theme.palette.parchment)),
+            ))
+            .with_child((
+                ShopText,
+                Text::new(body),
+                TextFont::from_font_size(8.0),
+                TextColor(theme.color(&theme.palette.ink)),
+            ));
+    } else if let Ok(mut existing_text) = text.single_mut()
+        && existing_text.0 != body
+    {
+        existing_text.0 = body;
     }
 }
 
@@ -685,10 +785,14 @@ fn menu_input(
         };
     }
     if keys.just_pressed(KeyCode::Escape) || keys.just_pressed(KeyCode::KeyX) {
-        next.set(AppState::Overworld);
+        if settings_ui.0 {
+            settings_ui.0 = false;
+        } else {
+            next.set(AppState::Overworld);
+        }
         return;
     }
-    if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+    if !settings_ui.0 && (keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter)) {
         match cursor.0 {
             1 => {
                 next.set(AppState::Dialogue); // the party screen state
@@ -717,7 +821,8 @@ fn menu_input(
         }
     }
     // Settings adjustments while the panel is open: Left/Right tweak the
-    // row matching the cursor (text speed / music volume / scale).
+    // row matching the cursor (cursor rows map 0/1/2+ regardless of the
+    // menu's own row count).
     if settings_ui.0 {
         let delta: i32 = if keys.just_pressed(KeyCode::ArrowRight) {
             1
@@ -748,6 +853,25 @@ fn menu_input(
                 }
             }
         }
+    }
+}
+
+/// After a battle the world may have warped (whiteout to the rest
+/// point): force a map rebuild and snap the player sprite to the
+/// logical tile so the overworld resumes in sync.
+fn resync_after_battle(
+    world: Res<WorldRes>,
+    mut rendered: ResMut<RenderedMap>,
+    mut anim: ResMut<PlayerAnim>,
+    mut player: Query<&mut Transform, With<PlayerSprite>>,
+) {
+    anim.0 = None;
+    if rendered.0.as_ref() != Some(&world.0.current_map) {
+        rendered.0 = None;
+    }
+    if let Ok(mut transform) = player.single_mut() {
+        let (x, y) = world.0.player;
+        transform.translation = Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
     }
 }
 
@@ -860,8 +984,18 @@ fn title_input(
         && let Ok(Some(file)) = save::load(&backend, save::SlotId::Slot1)
     {
         world.0.restore(&file);
+    } else {
+        // A NEW song gets a fresh seed (app layer entropy — replays and
+        // tests always pass explicit seeds, so determinism is intact).
+        let seed = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos() as u64)
+            .unwrap_or(0x00D0_5EED);
+        let reseeded = load_game_world(std::path::Path::new("content"), seed);
+        if let Ok(reseeded) = reseeded {
+            world.0 = reseeded;
+        }
     }
-    // (fresh or no save: the boot world is already a new game)
     next.set(AppState::Overworld);
 }
 
@@ -898,11 +1032,15 @@ fn party_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
                     .hp
                     .map(|hp| hp.to_string())
                     .unwrap_or_else(|| "full".into());
-                let moves: Vec<&str> = member.moves.iter().map(|m| m.id.as_str()).collect();
+                let moves: Vec<String> = member
+                    .moves
+                    .iter()
+                    .map(|m| world.0.text(&format!("move.{}", m.id)))
+                    .collect();
                 panel.spawn((
                     Text::new(format!(
                         "{}  L{}  hp {}  [{}]",
-                        member.species,
+                        world.0.text(&format!("motif.{}", member.species)),
                         member.level,
                         hp,
                         moves.join(" / ")
@@ -910,6 +1048,51 @@ fn party_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
                     TextFont::from_font_size(8.0),
                     TextColor(theme.color(&theme.palette.ink_soft)),
                 ));
+                // Summary staff chart (doc 05 §4): six stat lines drawn
+                // as note runs — one ♪ per ~8 base points + IV shading.
+                if let Some(registry) = &world.0.registry
+                    && let Some(spec) = registry.species.get(&member.species)
+                {
+                    let staff = [
+                        ("hp ", spec.base_stats.hp, member.ivs.hp),
+                        ("atk", spec.base_stats.atk, member.ivs.atk),
+                        ("def", spec.base_stats.def, member.ivs.def),
+                        ("spa", spec.base_stats.spa, member.ivs.spa),
+                        ("spd", spec.base_stats.spd, member.ivs.spd),
+                        ("spe", spec.base_stats.spe, member.ivs.spe),
+                    ];
+                    for (label, base, iv) in staff {
+                        let notes = "♪".repeat(usize::from(base / 8).max(1));
+                        let timbre = if iv >= 26 {
+                            " ◆" // bright timbre: high IV (flavored, not numeric)
+                        } else {
+                            ""
+                        };
+                        panel.spawn((
+                            Text::new(format!("  {label} {notes}{timbre}")),
+                            TextFont::from_font_size(8.0),
+                            TextColor(theme.color(&theme.palette.ink_soft)),
+                        ));
+                    }
+                }
+            }
+            if !world.0.boxes.is_empty() {
+                panel.spawn((
+                    Text::new(format!("BOX — {} resting", world.0.boxes.len())),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.ink)),
+                ));
+                for resting in &world.0.boxes {
+                    panel.spawn((
+                        Text::new(format!(
+                            "{}  L{}",
+                            world.0.text(&format!("motif.{}", resting.species)),
+                            resting.level
+                        )),
+                        TextFont::from_font_size(8.0),
+                        TextColor(theme.color(&theme.palette.ink_soft)),
+                    ));
+                }
             }
             panel.spawn((
                 Text::new("BAG"),
@@ -918,7 +1101,10 @@ fn party_open(mut commands: Commands, theme: Res<Theme>, world: Res<WorldRes>) {
             ));
             for (item, count) in &world.0.bag {
                 panel.spawn((
-                    Text::new(format!("{item} ×{count}")),
+                    Text::new(format!(
+                        "{} ×{count}",
+                        world.0.text(&format!("item.{item}"))
+                    )),
                     TextFont::from_font_size(8.0),
                     TextColor(theme.color(&theme.palette.ink_soft)),
                 ));

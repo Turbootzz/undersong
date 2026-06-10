@@ -745,6 +745,49 @@ pub fn validate_region(
     findings
 }
 
+/// Doc 04 §3 rules 1 & 8: every referenced string key resolves; the
+/// caller passes the merged table (core strings + region strings) and
+/// any extra keys referenced by scripts (collected by `tools`).
+pub fn validate_strings(
+    pack: &crate::region::RegionPack,
+    core_strings: &undersong_core::collections::UniqueMap<String, String>,
+    script_keys: &[String],
+) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    let exists = |key: &str| pack.strings.get(key).is_some() || core_strings.get(key).is_some();
+    let mut require = |key: &str, source: String| {
+        if !exists(key) {
+            findings.push(Finding::error(
+                "strings.missing",
+                format!("`{key}` referenced by {source} is not in strings.ron"),
+            ));
+        }
+    };
+    require(&pack.def.name_key, "region.ron".into());
+    for motif in pack.motifs.values() {
+        require(&motif.name_key, format!("motif `{}`", motif.id));
+        require(&motif.dex.entry_key, format!("motif `{}`", motif.id));
+        for (_, move_id) in &motif.learnset {
+            require(
+                &format!("move.{move_id}"),
+                format!("motif `{}` learnset", motif.id),
+            );
+        }
+    }
+    for trainer in pack.trainers.values() {
+        require(&trainer.name_key, format!("trainer `{}`", trainer.id));
+        require(&trainer.intro_key, format!("trainer `{}`", trainer.id));
+        require(&trainer.defeat_key, format!("trainer `{}`", trainer.id));
+    }
+    for map in pack.maps.values() {
+        require(&map.name_key, format!("map `{}`", map.id));
+    }
+    for key in script_keys {
+        require(key, "scripts".into());
+    }
+    findings
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;

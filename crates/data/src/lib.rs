@@ -13,8 +13,8 @@ pub mod region;
 pub mod validate;
 
 pub use content::{
-    CoreContent, LoadError, Natures, Palette, SpeciesPool, TypeChart, load_core, load_palette,
-    load_species_pool,
+    CoreContent, LoadError, Natures, Palette, SpeciesPool, TypeChart, load_core, load_core_strings,
+    load_palette, load_species_pool,
 };
 pub use map::{EncounterDef, MapDef, NpcBehavior, NpcDef, Trigger, TriggerKind, load_maps};
 pub use region::{
@@ -24,5 +24,5 @@ pub use region::{
 pub use undersong_core::collections::UniqueMap;
 pub use validate::{
     Finding, Severity, validate_core, validate_items, validate_maps, validate_palette,
-    validate_region, validate_species_pool,
+    validate_region, validate_species_pool, validate_strings,
 };

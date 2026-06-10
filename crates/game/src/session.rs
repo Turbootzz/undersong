@@ -81,9 +81,10 @@ impl Registry {
             .moves(moves)
             .build();
         mote.exp = individual.exp.max(mote.exp);
-        // Carry persistent HP/PP/status.
-        for (slot, learned) in individual.moves.iter().enumerate() {
-            if let Some(battle_move) = mote.moves.get_mut(slot) {
+        // Carry persistent HP/PP/status; PP matches by move id so a
+        // missing move cannot shift its neighbours' PP.
+        for learned in &individual.moves {
+            if let Some(battle_move) = mote.moves.iter_mut().find(|m| m.spec.id == learned.id) {
                 battle_move.pp = learned.pp.min(battle_move.spec.pp);
             }
         }
@@ -102,14 +103,20 @@ impl Registry {
     }
 
     /// Folds battle results back into the persistent Individual.
+    /// PP is matched by move id, not slot — a move that failed registry
+    /// lookup at resolve time must not shift its neighbours' PP.
     pub fn fold_back(individual: &mut Individual, mote: &BattleMote) {
         individual.level = mote.level;
         individual.exp = mote.exp;
         individual.evs = mote.evs;
         individual.hp = Some(mote.hp);
         individual.status = mote.status.map(battle::mote::MajorStatus::ailment);
-        for (slot, battle_move) in mote.moves.iter().enumerate() {
-            if let Some(learned) = individual.moves.get_mut(slot) {
+        for battle_move in &mote.moves {
+            if let Some(learned) = individual
+                .moves
+                .iter_mut()
+                .find(|m| m.id == battle_move.spec.id)
+            {
                 learned.pp = battle_move.pp;
             }
         }
@@ -201,7 +208,8 @@ pub struct BattleSession {
     pub foe_tier: AiTier,
     /// Pending learn prompts: (party index, move id).
     pub pending_learn: Vec<(usize, undersong_core::ids::MoveId)>,
-    pub last_events: Vec<battle::BattleEvent>,
+    /// Every event across the whole battle (level-up tracking).
+    pub last_events_all: Vec<battle::BattleEvent>,
 }
 
 /// Player battle intentions (replay vocabulary).
@@ -244,7 +252,7 @@ impl BattleSession {
             wild: Some(wild),
             foe_tier: AiTier::T0,
             pending_learn: Vec::new(),
-            last_events: Vec::new(),
+            last_events_all: Vec::new(),
         })
     }
 
@@ -295,7 +303,7 @@ impl BattleSession {
             wild: None,
             foe_tier: tier,
             pending_learn: Vec::new(),
-            last_events: Vec::new(),
+            last_events_all: Vec::new(),
         })
     }
 
@@ -332,7 +340,7 @@ impl BattleSession {
             rng,
         );
         self.state = next;
-        self.last_events.clone_from(&events);
+        self.last_events_all.extend(events.iter().cloned());
         events
     }
 

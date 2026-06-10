@@ -1,0 +1,28 @@
+// Core strings (en): canon move names, item names, UI vocabulary.
+// Golden rule 6: code ids are mechanical; these are the flavored faces.
+{
+    "move.tackle": "Tackle", "move.quick_step": "Quick Step",
+    "move.ember_note": "Ember Note", "move.flare_brass": "Flare Brass",
+    "move.ripple": "Ripple", "move.undertow": "Undertow",
+    "move.leaf_pick": "Leaf Pick", "move.root_chord": "Root Chord",
+    "move.volt_pluck": "Volt Pluck", "move.gale_riff": "Gale Riff",
+    "move.stone_toll": "Stone Toll", "move.venom_trill": "Venom Trill",
+    "move.phantom_rest": "Phantom Rest", "move.alloy_clang": "Alloy Clang",
+    "move.frost_lull": "Frost Lull", "move.resonate": "Resonate",
+    "move.crescendo": "Crescendo", "move.dampen": "Dampen",
+    "item.fermata": "Fermata", "item.grand_fermata": "Grand Fermata",
+    "item.maestro_fermata": "Maestro Fermata",
+    "item.potion_s": "Small Tonic", "item.potion_m": "Tonic",
+    "item.potion_l": "Grand Tonic", "item.potion_x": "Full Tonic",
+    "item.status_heal": "Clear Note", "item.duet_stone": "Duet Stone",
+    "item.oran_chime": "Oran Chime",
+    "ui.status.burn": "Scorched", "ui.status.poison": "Sour",
+    "ui.status.toxic": "Souring", "ui.status.paralysis": "Tangled",
+    "ui.status.sleep": "Lulled", "ui.status.freeze": "Frozen",
+    "ui.reject.bell_trainer": "The Maestro's score forbids it!",
+    "ui.reject.no_bells": "No bells left to ring.",
+    "ui.reject.no_tonics": "The bag holds no tonics.",
+    "ui.reject.full_hp": "Its voice is already full.",
+    "ui.battle.wild_intro": "A wild Mote hums!",
+    "ui.battle.trainer_intro": "The challenger strikes up!",
+}

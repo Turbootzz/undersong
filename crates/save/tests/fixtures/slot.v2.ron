@@ -1,0 +1,89 @@
+(
+    header: (
+        version: 2,
+        created_epoch_s: 1780000000,
+        playtime_s: 4321,
+        region: "cantorel",
+        badge_bits: 1,
+        score_pct: 4,
+    ),
+    player: (
+        name: "Junie",
+        money: 3000,
+        position: (
+            map: "debug_rehearsal",
+            x: 5,
+            y: 7,
+            facing: Down,
+        ),
+        settings: (
+            text_speed: 60,
+            battle_animations: true,
+            set_mode: false,
+            volume_music: 80,
+            volume_sfx: 80,
+            screen_scale: 2,
+            reduced_motion: false,
+            high_contrast: false,
+        ),
+    ),
+    party: [
+        (
+            species: "testbed_ember",
+            level: 12,
+            exp: 1728,
+            ivs: (
+                hp: 31,
+                atk: 12,
+                def: 18,
+                spa: 31,
+                spd: 22,
+                spe: 31,
+            ),
+            evs: (
+                hp: 0,
+                atk: 0,
+                def: 0,
+                spa: 8,
+                spd: 0,
+                spe: 4,
+            ),
+            nature: 10,
+            ability_slot: 0,
+            moves: [
+                (
+                    id: "ember_note",
+                    pp: 25,
+                    pp_ups: 0,
+                ),
+            ],
+            status: None,
+            held_item: None,
+            friendship: 90,
+            keyshifted: false,
+            ot: "Junie",
+            nickname: None,
+            hp: None,
+            uses_hidden_ability: false,
+        ),
+    ],
+    boxes: [
+        [],
+    ],
+    bag: {
+        "items": [
+            ("fermata", 5),
+        ],
+    },
+    flags: [
+        "met.fisher_old",
+    ],
+    vars: {
+        "story.act": 1,
+    },
+    counters: {
+        "steps": 812,
+    },
+    world_seed: 10555637,
+    heal_point: Some(("debug_rehearsal", (5, 2))),
+)

@@ -5,7 +5,7 @@ Motif(
     catch_rate: 120, base_exp_yield: 93,
     ev_yield: {spd: 1},
     growth_curve: MediumSlow,
-    learnset: [(1, "chime_peal"), (6, "dampen"), (10, "gale_riff"), (16, "anvil_chorus"), (22, "fermata_guard"), (28, "volt_pluck"), (34, "hour_toll")],
+    learnset: [(1, "chime_peal"), (6, "dampen"), (10, "gale_riff"), (16, "anvil_chorus"), (22, "fermata_guard"), (28, "volt_pluck"), (34, "hour_toll"), (40, "cymbal_tap"), (44, "anvil_anthem")],
     abilities: ["amplify"],
     hidden_ability: Some("tuning_fork"),
     tags: ["performer.bells", "habitat.urban"],

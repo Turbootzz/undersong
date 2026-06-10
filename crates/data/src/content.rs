@@ -131,6 +131,13 @@ pub struct Palette {
 }
 
 /// Loads `content/core/palette.ron`.
+/// Loads `content/core/strings.ron` (canon move/item/UI strings).
+pub fn load_core_strings(
+    content_root: &Path,
+) -> Result<undersong_core::collections::UniqueMap<String, String>, LoadError> {
+    load_ron_file(&content_root.join("core/strings.ron"))
+}
+
 pub fn load_palette(content_root: &Path) -> Result<Palette, LoadError> {
     load_ron(content_root.join("core/palette.ron"))
 }

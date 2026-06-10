@@ -387,8 +387,10 @@ fn new_game_reaches_badge_one() {
                 .into_iter()
                 .map(String::from)
                 .collect(),
-                min_dialogue_lines: 10,
+                min_dialogue_lines: driver.dialogue_lines,
                 warped: true,
+                party_levels: Some(driver.world.party.iter().map(|p| p.level).collect()),
+                money: Some(driver.world.money),
             },
         };
         let text = ron::ser::to_string_pretty(&file, ron::ser::PrettyConfig::default())

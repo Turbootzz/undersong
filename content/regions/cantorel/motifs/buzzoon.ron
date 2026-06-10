@@ -5,7 +5,7 @@ Motif(
     catch_rate: 200, base_exp_yield: 74,
     ev_yield: {spa: 1},
     growth_curve: MediumFast,
-    learnset: [(1, "sour_note"), (6, "dampen"), (11, "gale_riff"), (14, "venom_trill"), (20, "crescendo"), (25, "phantom_rest"), (31, "venom_cadenza")],
+    learnset: [(1, "sour_note"), (6, "dampen"), (11, "gale_riff"), (14, "venom_trill"), (20, "crescendo"), (25, "phantom_rest"), (31, "venom_cadenza"), (40, "toxic_toccata"), (44, "quill_pizzicato")],
     abilities: ["live_wire"],
     hidden_ability: None,
     tags: ["habitat.brush"],

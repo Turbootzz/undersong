@@ -5,7 +5,7 @@ Motif(
     catch_rate: 140, base_exp_yield: 76,
     ev_yield: {spa: 1},
     growth_curve: MediumFast,
-    learnset: [(1, "ripple"), (5, "sleet_staccato"), (9, "frost_lull"), (14, "gale_riff"), (18, "hail_chorale"), (24, "crescendo"), (35, "shatter_aria")],
+    learnset: [(1, "sleet_staccato"), (1, "ripple"), (5, "sleet_staccato"), (9, "frost_lull"), (14, "gale_riff"), (18, "hail_chorale"), (24, "crescendo"), (35, "shatter_aria")],
     abilities: ["vigor"],
     hidden_ability: None,
     tags: ["performer.glass", "habitat.alpine"],

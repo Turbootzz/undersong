@@ -6,6 +6,7 @@
 //! No CLI dependency: the closed dependency list (doc 03 §7) has no
 //! argument parser, and a handful of flags doesn't justify one.
 
+mod asset_tests;
 mod cries;
 mod importmap;
 mod melody;
@@ -262,6 +263,7 @@ fn validate(options: &Options) -> Result<bool> {
             let pack = data::load_region(&options.content, &region)
                 .with_context(|| format!("loading region `{region}`"))?;
             findings.extend(data::validate_region(&pack, &content, &items));
+            let mut script_keys: Vec<String> = Vec::new();
 
             // Region scripts parse, too.
             for map_id in pack.maps.keys() {
@@ -282,10 +284,25 @@ fn validate(options: &Options) -> Result<bool> {
                             rule: "script.parse",
                             message: format!("{}: {error}", path.display()),
                         }),
-                        Ok(cmds) => check_script_cmds(&cmds, &path, &mut findings),
+                        Ok(cmds) => {
+                            check_script_cmds(&cmds, &path, &mut findings);
+                            collect_script_refs(
+                                &cmds,
+                                &pack,
+                                &items,
+                                &path,
+                                &mut script_keys,
+                                &mut findings,
+                            );
+                        }
                     }
                 }
             }
+
+            // Doc 04 §3 rules 1 & 8: all referenced strings resolve.
+            let core_strings = data::load_core_strings(&options.content)
+                .with_context(|| "loading core strings")?;
+            findings.extend(data::validate_strings(&pack, &core_strings, &script_keys));
         }
     }
 
@@ -302,6 +319,66 @@ fn validate(options: &Options) -> Result<bool> {
 }
 
 /// Recursive Choice/If sanity for script content (doc 03 §5).
+/// Walks a script collecting string keys and validating side-effect
+/// references (species/trainers/items/maps) against the pack.
+fn collect_script_refs(
+    cmds: &[script::Cmd],
+    pack: &data::RegionPack,
+    items: &data::ItemSet,
+    path: &std::path::Path,
+    keys: &mut Vec<String>,
+    findings: &mut Vec<data::Finding>,
+) {
+    for cmd in cmds {
+        match cmd {
+            script::Cmd::Say { who, key } => {
+                keys.push(format!("npc.{who}"));
+                keys.push(key.clone());
+            }
+            script::Cmd::Choice { key, branches } => {
+                keys.push(key.clone());
+                for (label, branch) in branches {
+                    keys.push(label.clone());
+                    collect_script_refs(branch, pack, items, path, keys, findings);
+                }
+            }
+            script::Cmd::If { then, r#else, .. } => {
+                collect_script_refs(then, pack, items, path, keys, findings);
+                collect_script_refs(r#else, pack, items, path, keys, findings);
+            }
+            script::Cmd::GiveMote { species, .. } if !pack.motifs.contains_key(species) => {
+                findings.push(data::Finding {
+                    severity: data::Severity::Error,
+                    rule: "script.ref",
+                    message: format!("{}: unknown species `{species}`", path.display()),
+                });
+            }
+            script::Cmd::StartBattle { trainer } if !pack.trainers.contains_key(trainer) => {
+                findings.push(data::Finding {
+                    severity: data::Severity::Error,
+                    rule: "script.ref",
+                    message: format!("{}: unknown trainer `{trainer}`", path.display()),
+                });
+            }
+            script::Cmd::GiveItem { id, .. } if !items.items.iter().any(|i| &i.id == id) => {
+                findings.push(data::Finding {
+                    severity: data::Severity::Error,
+                    rule: "script.ref",
+                    message: format!("{}: unknown item `{id}`", path.display()),
+                });
+            }
+            script::Cmd::Warp { map, .. } if !pack.maps.contains_key(map) => {
+                findings.push(data::Finding {
+                    severity: data::Severity::Error,
+                    rule: "script.ref",
+                    message: format!("{}: unknown warp map `{map}`", path.display()),
+                });
+            }
+            _ => {}
+        }
+    }
+}
+
 fn check_script_cmds(
     cmds: &[script::Cmd],
     path: &std::path::Path,
@@ -342,6 +419,25 @@ fn generate_assets(
     let palette = data::load_palette(content_root).context("loading palette")?;
     let sigil_dir = out.join("sigils").join(region);
     let cry_dir = out.join("cries").join(region);
+    // Evolution stage per species (root = 0): drives the leitmotif
+    // ornament count (doc 04 §6).
+    let mut stage: std::collections::BTreeMap<_, u8> = std::collections::BTreeMap::new();
+    for motif in pack.motifs.values() {
+        if let Some(evolution) = &motif.evolution {
+            let parent_stage = stage.get(&motif.id).copied().unwrap_or(0);
+            let entry = stage.entry(evolution.target.clone()).or_insert(0);
+            *entry = (*entry).max(parent_stage + 1);
+        }
+    }
+    // Two passes settle 3-stage lines regardless of BTree order.
+    for motif in pack.motifs.values() {
+        if let Some(evolution) = &motif.evolution {
+            let parent_stage = stage.get(&motif.id).copied().unwrap_or(0);
+            let entry = stage.entry(evolution.target.clone()).or_insert(0);
+            *entry = (*entry).max(parent_stage + 1);
+        }
+    }
+
     let mut count = 0usize;
     for motif in pack.motifs.values() {
         let primary = motif.types[0];
@@ -350,6 +446,7 @@ fn generate_assets(
             primary,
             motif.base_stats.spe,
             motif.dex.weight_hg,
+            stage.get(&motif.id).copied().unwrap_or(0),
         );
         let type_hex = palette
             .type_colors
