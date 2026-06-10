@@ -55,7 +55,14 @@ impl BattleRng {
     /// Uniform draw in `lo..=hi` (inclusive). Panics if `lo > hi`.
     pub fn range_inclusive(&mut self, lo: u32, hi: u32) -> u32 {
         assert!(lo <= hi, "BattleRng::range_inclusive: lo > hi");
-        lo + self.below(hi - lo + 1)
+        // The span is computed in u64: for the full domain (0, u32::MAX)
+        // `hi - lo + 1` would overflow u32.
+        let span = u64::from(hi) - u64::from(lo) + 1;
+        match u32::try_from(span) {
+            Ok(span) => lo + self.below(span),
+            // Full domain: every raw draw is already uniform.
+            Err(_) => self.next_u32(),
+        }
     }
 
     /// True with probability `num/den`. Panics if `den == 0`.
@@ -118,6 +125,15 @@ mod tests {
             let roll = rng.range_inclusive(85, 100);
             assert!((85..=100).contains(&roll));
         }
+    }
+
+    #[test]
+    fn range_inclusive_full_domain_does_not_overflow() {
+        let mut rng = BattleRng::from_seed(11);
+        let mut reference = BattleRng::from_seed(11);
+        // The full-domain draw is exactly the raw stream — and must not
+        // panic computing the span.
+        assert_eq!(rng.range_inclusive(0, u32::MAX), reference.next_u32());
     }
 
     #[test]
