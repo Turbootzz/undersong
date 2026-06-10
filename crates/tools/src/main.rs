@@ -332,7 +332,11 @@ fn check_script_cmds(
 
 /// `tools assets`: renders every motif's sigil sprites + cry from its
 /// seeds (doc 04 §5–§6). Same melody feeds both — the signature trick.
-fn generate_assets(content_root: &PathBuf, region: &str, out: &PathBuf) -> Result<bool> {
+fn generate_assets(
+    content_root: &std::path::Path,
+    region: &str,
+    out: &std::path::Path,
+) -> Result<bool> {
     let pack = data::load_region(content_root, region)
         .with_context(|| format!("loading region `{region}`"))?;
     let palette = data::load_palette(content_root).context("loading palette")?;
