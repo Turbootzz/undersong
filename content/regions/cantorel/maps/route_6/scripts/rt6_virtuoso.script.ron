@@ -1,7 +1,5 @@
+// The audition circuit never closes (rematch: the era's rich trainer).
 [
-    If(flag: "trainer.rt6_virtuoso.defeated",
-       then: [Say(who: "rt6_virtuoso", key: "rt6.virtuoso.after"), End],
-       else: []),
     Say(who: "rt6_virtuoso", key: "rt6.virtuoso.intro"),
     StartBattle(trainer: "rt6_virtuoso"),
     End,

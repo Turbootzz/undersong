@@ -1,6 +1,7 @@
 Trainer(
     id: "rt6_virtuoso", class: "Virtuoso", name_key: "npc.rt6_virtuoso",
     ai_tier: 2, payout_base: 46,
+    rematch: true,
     party: [(species: "cadenzear", level: 42), (species: "madrigale", level: 42)],
     defeat_flag: "trainer.rt6_virtuoso.defeated",
     intro_key: "rt6.virtuoso.intro", defeat_key: "rt6.virtuoso.defeat",

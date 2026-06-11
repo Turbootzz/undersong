@@ -9,6 +9,7 @@ pub struct Driver {
     pub world: WorldState,
     pub log: Vec<Input>,
     pub dialogue_lines: u32,
+    pub trace: Vec<String>,
     battle_turns: u32,
 }
 
@@ -18,6 +19,7 @@ impl Driver {
             world,
             log: Vec::new(),
             dialogue_lines: 0,
+            trace: Vec::new(),
             battle_turns: 0,
         }
     }
@@ -28,6 +30,12 @@ impl Driver {
         for event in &events {
             if matches!(event, WorldEvent::DialogueLine { .. }) {
                 self.dialogue_lines += 1;
+            }
+            if std::env::var_os("DRIVER_TRACE").is_some() {
+                self.trace.push(format!("{event:?}"));
+                if self.trace.len() > 500 {
+                    self.trace.remove(0);
+                }
             }
         }
         events
@@ -192,6 +200,17 @@ impl Driver {
                 continue;
             }
             if self.world.dialogue.is_some() {
+                // Open choice lists are the caller's decision — confirming
+                // blind would pick option 0 (it once silently chose an
+                // ENDING that way).
+                if self
+                    .world
+                    .dialogue
+                    .as_ref()
+                    .is_some_and(|d| d.choice.is_some())
+                {
+                    return;
+                }
                 self.input(Input::Interact);
                 continue;
             }
@@ -412,6 +431,11 @@ impl Driver {
                 );
             }
         }
+        if !self.world.vars.flags.contains(flag) && std::env::var_os("DRIVER_TRACE").is_some() {
+            for line in &self.trace {
+                eprintln!("    | {line}");
+            }
+        }
         assert!(
             self.world.vars.flags.contains(flag),
             "until_flag({flag}) exhausted {tries} tries: map {} at {:?} party {:?}",
@@ -425,6 +449,442 @@ impl Driver {
         );
     }
 
+    /// Pumps dialogue to the next open choice and confirms option
+    /// `index` (Down × index from the top).
+    pub fn answer_choice(&mut self, index: u32) {
+        for _ in 0..60 {
+            if self
+                .world
+                .dialogue
+                .as_ref()
+                .is_some_and(|d| d.choice.is_some())
+            {
+                break;
+            }
+            if self.world.dialogue.is_none() {
+                return; // nothing asked
+            }
+            self.input(Input::Interact);
+        }
+        for _ in 0..index {
+            self.input(Input::Step(Down));
+        }
+        self.input(Input::Interact);
+        self.drain();
+    }
+
+    /// Catch-sweep: bounce a patch field, belling every species not
+    /// yet in the caught Score, until `idle_cap` iterations pass with
+    /// no new catch (or the bells run out).
+    pub fn sweep_catch(&mut self, x0: u32, y0: u32, x1: u32, y1: u32, idle_cap: u32) {
+        let mut idle = 0u32;
+        let mut caught = self.caught_count();
+        let start_caught = caught;
+        let start_map = self.world.current_map.clone();
+        let mut battles_seen = 0u32;
+        let mut bells_rung = 0u32;
+        macro_rules! exit_log {
+            ($reason:expr) => {
+                if std::env::var_os("DRIVER_DEBUG").is_some() {
+                    eprintln!(
+                        "  sweep {} ({},{}): +{} caught (total {}), bells {}, battles {}, rung {}, exit: {}",
+                        start_map, x0, y0,
+                        self.caught_count() - start_caught,
+                        self.caught_count(),
+                        self.world.bag.get(&"fermata".into()).copied().unwrap_or(0),
+                        battles_seen,
+                        bells_rung,
+                        $reason,
+                    );
+                }
+            };
+        }
+        for _ in 0..6000 {
+            if idle > idle_cap {
+                exit_log!("idle");
+                return;
+            }
+            if self.world.battle.is_some() {
+                battles_seen += 1;
+                let bells: u32 = [
+                    "fermata",
+                    "grand_fermata",
+                    "maestro_fermata",
+                    "overture_bell",
+                    "vesper_bell",
+                    "cradle_bell",
+                ]
+                .iter()
+                .map(|id| self.world.bag.get(&(*id).into()).copied().unwrap_or(0))
+                .sum();
+                // Sip a potion when the fielded mote runs low — a faint
+                // mid-sweep costs the wallet and the tour position.
+                let hurt = self.world.battle.as_ref().is_some_and(|session| {
+                    let us = session.state.sides[0].active_mote();
+                    u32::from(us.hp) * 5 < u32::from(us.max_hp()) * 2
+                });
+                let has_potion = ["potion_x", "potion_l", "potion_m", "potion_s"]
+                    .iter()
+                    .any(|t| self.world.bag.get(&(*t).into()).copied().unwrap_or(0) > 0);
+                if hurt && has_potion {
+                    self.input(Input::Battle(BattleCmd::Item));
+                    idle += 1;
+                    continue;
+                }
+                if bells == 0 {
+                    // Nothing left to ring — finish this fight and stop
+                    // burning field time.
+                    self.battle_policy();
+                    idle += idle_cap / 8;
+                    continue;
+                }
+                let (foe_new, foe_weak) = self
+                    .world
+                    .battle
+                    .as_ref()
+                    .map(|session| {
+                        let foe = session.state.sides[1].active_mote();
+                        (
+                            !self
+                                .world
+                                .vars
+                                .flags
+                                .contains(&format!("dex.caught.{}", foe.species)),
+                            u32::from(foe.hp) * 3 <= u32::from(foe.max_hp()),
+                        )
+                    })
+                    .unwrap_or((false, false));
+                if foe_new && bells > 0 {
+                    let session = self.world.battle.as_ref().expect("battle open");
+                    let our = &session.state.sides[0];
+                    let active_index = usize::from(our.positions[0].party_index);
+                    let foe_asleep = session.state.sides[1].active_mote().status.is_some();
+                    let lull_slot = our.party[active_index]
+                        .moves
+                        .iter()
+                        .position(|m| m.spec.id.as_str() == "frost_lull" && m.pp > 0);
+                    let turn_zero = self
+                        .world
+                        .battle
+                        .as_ref()
+                        .is_some_and(|b| b.state.turn == 0);
+                    let overtures = self
+                        .world
+                        .bag
+                        .get(&"overture_bell".into())
+                        .copied()
+                        .unwrap_or(0);
+                    if foe_asleep || foe_weak {
+                        bells_rung += 1;
+                        self.input(Input::Battle(BattleCmd::Bell));
+                    } else if turn_zero && overtures > 0 {
+                        // The opening ring at ×4 — the only full-HP bell
+                        // worth its price.
+                        self.input(Input::Battle(BattleCmd::Bell));
+                    } else if let Some(slot) = lull_slot {
+                        self.input(Input::Battle(BattleCmd::Move {
+                            slot: u8::try_from(slot).unwrap_or(0),
+                        }));
+                    } else {
+                        // Keep ringing — fermatas land eventually, and
+                        // the war chest covers the spread.
+                        self.input(Input::Battle(BattleCmd::Bell));
+                    }
+                } else {
+                    self.input(Input::Battle(BattleCmd::Run));
+                }
+                idle += 1;
+                continue;
+            }
+            if self.world.dialogue.is_some()
+                || !self.world.pending_learn_queue.is_empty()
+                || !self.world.pending_evolutions.is_empty()
+            {
+                self.drain();
+                continue;
+            }
+            if self.world.current_map != start_map {
+                exit_log!("left map");
+                return;
+            }
+            let now = self.caught_count();
+            if now > caught {
+                caught = now;
+                idle = 0;
+            }
+            if !((x0..=x1).contains(&self.world.player.0)
+                && (y0..=y1).contains(&self.world.player.1))
+            {
+                let cx = (x0 + x1) / 2;
+                self.go_x(cx);
+                self.go_y(y0);
+            }
+            // Oscillate between two in-field rows — parity bouncing
+            // leaks out of odd-anchored fields, and every encounter
+            // that fires inside a recenter leg gets policy-killed
+            // instead of belled.
+            let dir = if self.world.player.1 <= y0 { Up } else { Down };
+            self.face(dir);
+            self.input(Input::Step(dir));
+            idle += 1;
+        }
+        exit_log!("budget");
+    }
+
+    /// Walks the region chain one hop toward `target`, from wherever a
+    /// whiteout left us. Returns true when standing in `target`.
+    pub fn tour_hop(&mut self, target: &str) -> bool {
+        let here = self.world.current_map.to_string();
+        if here == target {
+            return true;
+        }
+        const CHAIN: [&str; 12] = [
+            "pausa_village",
+            "route_2",
+            "arbor_vale",
+            "route_3",
+            "route_4",
+            "port_calando",
+            "route_5",
+            "voltaccia",
+            "route_5b",
+            "hollowfen",
+            "graven_pass",
+            "frostine",
+        ];
+        let index_of = |m: &str| CHAIN.iter().position(|c| *c == m);
+        // Off-chain maps first: drop to their town.
+        match here.as_str() {
+            "prelude_town" => {
+                self.go_x(10);
+                self.go_y(0);
+                return false;
+            }
+            "route_1" => {
+                self.go_x(6);
+                self.go_y(0);
+                return false;
+            }
+            "quiet_coast" => {
+                self.go_y(6);
+                self.go_x(22);
+                self.go_y(7);
+                self.go_x(23);
+                return false;
+            }
+            "route_6" | "cadenza_city" | "quartet_spire" | "the_vault" => {
+                let northbound = matches!(target, "cadenza_city" | "quartet_spire" | "the_vault");
+                if here == "cadenza_city" && !northbound {
+                    self.go_y(11);
+                    self.go_x(12);
+                    self.go_y(17);
+                } else if here == "route_6" {
+                    self.go_x(6);
+                    if northbound {
+                        self.go_y(19); // → cadenza
+                    } else {
+                        self.go_y(0); // → frostine
+                    }
+                }
+                return false;
+            }
+            _ => {}
+        }
+        let (Some(from), Some(to)) = (index_of(&here), index_of(target)) else {
+            // target off-chain: walk toward frostine then route_6 north
+            if target == "cadenza_city" || target == "route_6" {
+                if here == "frostine" {
+                    self.go_x(12); // east lane — the rest stop blocks x11
+                    self.go_y(7);
+                    self.go_x(9);
+                    self.go_x(12);
+                    self.go_y(13);
+                    return false;
+                }
+                return self.chain_step(true);
+            }
+            return false;
+        };
+        let _ = (from, to);
+        self.chain_step(index_of(&here) < index_of(target))
+    }
+
+    /// One hop along the chain. `north` = toward Frostine.
+    fn chain_step(&mut self, north: bool) -> bool {
+        match (self.world.current_map.as_str(), north) {
+            ("pausa_village", true) => {
+                self.go_y(6);
+                self.go_x(0);
+            }
+            ("route_2", true) => {
+                // Weave: gardener owns (9,6), courier owns (20,7).
+                self.go_y(7);
+                self.go_x(19);
+                if self.world.current_map.as_str() == "route_2" {
+                    self.go_y(6);
+                    self.go_x(29);
+                }
+            }
+            ("route_2", false) => {
+                if self.world.player.0 > 10 {
+                    self.go_y(6);
+                    self.go_x(10);
+                }
+                if self.world.current_map.as_str() == "route_2" {
+                    self.go_y(7);
+                    self.go_x(0);
+                }
+            }
+            ("arbor_vale", true) => {
+                self.go_x(13);
+                self.go_y(9);
+                self.go_x(10);
+                self.go_x(13);
+                self.go_y(14);
+                self.go_x(12);
+                self.go_y(15);
+            }
+            ("arbor_vale", false) => {
+                self.go_x(13);
+                self.go_y(9);
+                self.go_x(10);
+                self.go_y(8);
+                self.go_x(2);
+                self.go_y(7);
+                self.go_x(0);
+            }
+            ("route_3", true) => {
+                self.go_y(10);
+                self.go_x(6);
+                self.go_y(25);
+            }
+            ("route_3", false) => {
+                self.go_y(10);
+                self.go_x(6);
+                self.go_y(0);
+            }
+            ("route_4", true) => {
+                self.go_x(6);
+                self.go_y(21);
+            }
+            ("route_4", false) => {
+                self.go_x(6);
+                self.go_y(0);
+            }
+            ("port_calando", true) => {
+                self.go_x(12); // the east lane clears both buildings
+                self.go_y(16);
+            }
+            ("port_calando", false) => {
+                self.go_x(12);
+                self.go_y(2);
+                self.go_x(11);
+                self.go_y(0);
+            }
+            ("route_5", true) => {
+                self.go_y(10);
+                self.go_x(6);
+                self.go_y(23);
+            }
+            ("route_5", false) => {
+                self.go_y(10);
+                self.go_x(6);
+                self.go_y(0);
+            }
+            ("voltaccia", true) => {
+                self.go_x(12);
+                self.go_y(9);
+                self.go_x(9);
+                self.go_x(12);
+                self.go_y(15);
+            }
+            ("voltaccia", false) => {
+                self.go_x(12);
+                self.go_y(9);
+                self.go_x(9);
+                self.go_x(11);
+                self.go_y(0);
+            }
+            ("route_5b", true) => {
+                self.go_y(7);
+                self.go_x(16);
+                if self.world.current_map.as_str() == "route_5b" {
+                    self.go_y(8);
+                    self.go_x(24);
+                    self.go_y(7);
+                    self.go_x(25);
+                }
+            }
+            ("route_5b", false) => {
+                self.go_y(8);
+                self.go_x(2);
+                self.go_y(7);
+                self.go_x(0);
+            }
+            ("hollowfen", true) => {
+                self.go_x(12);
+                self.go_y(7);
+                self.go_x(9);
+                self.go_x(12);
+                self.go_y(12);
+                self.go_x(10);
+                self.go_y(13);
+            }
+            ("hollowfen", false) => {
+                self.go_x(12);
+                self.go_y(7);
+                self.go_x(9);
+                self.go_y(7);
+                self.go_x(0);
+            }
+            ("graven_pass", true) => {
+                if self.world.player.1 < 20 {
+                    self.go_y(19);
+                    self.go_x(8);
+                    self.go_y(24);
+                }
+                self.go_x(6);
+                self.go_y(27);
+            }
+            ("graven_pass", false) => {
+                if self.world.player.1 > 23 {
+                    self.go_y(24);
+                    self.go_x(8);
+                    self.go_y(19);
+                }
+                self.go_x(6);
+                self.go_y(0);
+            }
+            ("frostine", false) => {
+                self.go_x(12);
+                self.go_y(7);
+                self.go_x(9);
+                self.go_x(11);
+                self.go_y(0);
+            }
+            _ => return self.world.current_map.as_str() == "frostine" && north,
+        }
+        false
+    }
+
+    /// Walks the chain until `target` (or gives up after 16 hops).
+    pub fn tour_goto(&mut self, target: &str) {
+        for _ in 0..16 {
+            if self.tour_hop(target) {
+                return;
+            }
+        }
+    }
+
+    pub fn caught_count(&self) -> usize {
+        self.world
+            .vars
+            .flags
+            .iter()
+            .filter(|f| f.starts_with("dex.caught."))
+            .count()
+    }
+
     pub fn has_flag(&self, flag: &str) -> bool {
         self.world.vars.flags.contains(flag)
     }
@@ -433,7 +893,7 @@ impl Driver {
     /// reaches `level`; recovers to (x, y) after whiteouts via the
     /// caller-provided retrek closure.
     pub fn grind_until(&mut self, level: u8, mut retrek: impl FnMut(&mut Driver)) {
-        for iteration in 0..12000 {
+        for iteration in 0..40000 {
             if iteration % 2000 == 1999 && std::env::var_os("DRIVER_DEBUG").is_some() {
                 eprintln!(
                     "  grind[{iteration}] target {level}: lead L{} map {} at {:?} clock {}",
@@ -486,7 +946,8 @@ pub fn run_act1() -> Driver {
     driver.go_y(9); // lab door → pausa_lab (4,1)
     assert_eq!(driver.world.current_map.as_str(), "pausa_lab");
     driver.go_y(3); // intro fires at (4,2)
-    driver.interact(); // starter choice → fanfyre
+    driver.interact();
+    driver.answer_choice(0); // the starter choice → fanfyre
     assert!(driver.has_flag("starter.fanfyre"));
     driver.go_y(0); // exit → pausa (6,8)
     driver.go_x(9);
