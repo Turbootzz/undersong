@@ -157,6 +157,7 @@ MapDef(
     triggers: [
         (at: (6, 20), kind: Warp(map: "hall_6", to: (6, 1), facing: Up)),
         (at: (5, 12), kind: Script(path: "rest_stop.script.ron")),
+        (at: (6, 25), kind: Script(path: "cantavella_static.script.ron")),
         (at: (1, 16), kind: Script(path: "graven_anchor.script.ron")),
         (at: (2, 16), kind: Script(path: "graven_anchor.script.ron")),
         (at: (3, 16), kind: Script(path: "graven_anchor.script.ron")),

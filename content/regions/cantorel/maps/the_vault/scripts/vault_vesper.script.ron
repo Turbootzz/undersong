@@ -1,5 +1,12 @@
-// Beat 12 deferred to the descent: the meeting, not a battle.
+// Beat 12 deferred to the descent: the meeting, not a battle —
+// until the epilogue, when she'll finally show you her own hand.
 [
+    If(flag: "ending.chosen", then: [
+        Say(who: "vesper", key: "vesper.rematch"),
+        ClearFlag(flag: "trainer.vesper_epilogue.defeated"),
+        StartBattle(trainer: "vesper_epilogue"),
+        End,
+    ], else: []),
     If(flag: "story.vesper.met", then: [End], else: []),
     Say(who: "vesper", key: "vesper.1"),
     Say(who: "vesper", key: "vesper.2"),

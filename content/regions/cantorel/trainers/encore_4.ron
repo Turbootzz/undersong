@@ -1,0 +1,8 @@
+Trainer(
+    id: "encore_4", class: "Encore", name_key: "npc.encore_4",
+    ai_tier: 3, payout_base: 52, rematch: true,
+    double_battle: true,
+    party: [(species: "dynamaestro", level: 63), (species: "pistonna", level: 63), (species: "voltacelle", level: 63)],
+    defeat_flag: "trainer.encore_4.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

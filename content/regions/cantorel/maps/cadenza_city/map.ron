@@ -111,6 +111,10 @@ MapDef(
         (at: (12, 17), kind: Warp(map: "route_6", to: (6, 18), facing: Up)),
         (at: (13, 17), kind: Warp(map: "route_6", to: (7, 18), facing: Up)),
         (at: (24, 9), kind: Warp(map: "quartet_spire", to: (5, 1), facing: Right)),
+        (at: (7, 10), kind: Warp(map: "encore_hall", to: (4, 1), facing: Up)),
+        (at: (6, 9), kind: Script(path: "encore_gate.script.ron")),
+        (at: (7, 9), kind: Script(path: "encore_gate.script.ron")),
+        (at: (8, 9), kind: Script(path: "encore_gate.script.ron")),
     ],
     npcs: [
         (id: "echo_keeper_8", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_8.script.ron"), behavior: Static, sight_range: 0),

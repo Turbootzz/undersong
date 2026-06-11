@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_6", class: "Encore", name_key: "npc.encore_6",
+    ai_tier: 3, payout_base: 60, rematch: true,
+    party: [(species: "maestrina", level: 65), (species: "velvetide", level: 65), (species: "ferrobass", level: 65), (species: "zephyrune", level: 65)],
+    defeat_flag: "trainer.encore_6.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_5", class: "Encore", name_key: "npc.encore_5",
+    ai_tier: 3, payout_base: 56, rematch: true,
+    party: [(species: "orchestrios", level: 64), (species: "nullavoce", level: 64), (species: "cadenzear", level: 64)],
+    defeat_flag: "trainer.encore_5.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

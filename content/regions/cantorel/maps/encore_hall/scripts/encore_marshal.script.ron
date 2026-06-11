@@ -1,0 +1,92 @@
+// The Encore: seven curtain calls, one streak. Lose once and the
+// programme starts over. The seventh hands over the Coda.
+[
+    HealParty,
+    If(flag: "encore.complete",
+       then: [Say(who: "encore_marshal", key: "encore.done"), End],
+       else: []),
+    If(flag: "encore.streak.6", then: [
+        Say(who: "encore_marshal", key: "encore.final"),
+        ClearFlag(flag: "trainer.encore_7.defeated"),
+        StartBattle(trainer: "encore_7"),
+        If(flag: "trainer.encore_7.defeated",
+           then: [
+                SetFlag(flag: "encore.complete"),
+                GiveItem(id: "coda", n: 1),
+                Say(who: "encore_marshal", key: "encore.coda"),
+           ],
+           else: [
+                ClearFlag(flag: "encore.streak.1"), ClearFlag(flag: "encore.streak.2"),
+                ClearFlag(flag: "encore.streak.3"), ClearFlag(flag: "encore.streak.4"),
+                ClearFlag(flag: "encore.streak.5"), ClearFlag(flag: "encore.streak.6"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    If(flag: "encore.streak.5", then: [
+        ClearFlag(flag: "trainer.encore_6.defeated"),
+        StartBattle(trainer: "encore_6"),
+        If(flag: "trainer.encore_6.defeated",
+           then: [SetFlag(flag: "encore.streak.6"), Say(who: "encore_marshal", key: "encore.next")],
+           else: [
+                ClearFlag(flag: "encore.streak.1"), ClearFlag(flag: "encore.streak.2"),
+                ClearFlag(flag: "encore.streak.3"), ClearFlag(flag: "encore.streak.4"),
+                ClearFlag(flag: "encore.streak.5"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    If(flag: "encore.streak.4", then: [
+        ClearFlag(flag: "trainer.encore_5.defeated"),
+        StartBattle(trainer: "encore_5"),
+        If(flag: "trainer.encore_5.defeated",
+           then: [SetFlag(flag: "encore.streak.5"), Say(who: "encore_marshal", key: "encore.next")],
+           else: [
+                ClearFlag(flag: "encore.streak.1"), ClearFlag(flag: "encore.streak.2"),
+                ClearFlag(flag: "encore.streak.3"), ClearFlag(flag: "encore.streak.4"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    If(flag: "encore.streak.3", then: [
+        ClearFlag(flag: "trainer.encore_4.defeated"),
+        StartBattle(trainer: "encore_4"),
+        If(flag: "trainer.encore_4.defeated",
+           then: [SetFlag(flag: "encore.streak.4"), Say(who: "encore_marshal", key: "encore.next")],
+           else: [
+                ClearFlag(flag: "encore.streak.1"), ClearFlag(flag: "encore.streak.2"),
+                ClearFlag(flag: "encore.streak.3"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    If(flag: "encore.streak.2", then: [
+        ClearFlag(flag: "trainer.encore_3.defeated"),
+        StartBattle(trainer: "encore_3"),
+        If(flag: "trainer.encore_3.defeated",
+           then: [SetFlag(flag: "encore.streak.3"), Say(who: "encore_marshal", key: "encore.next")],
+           else: [
+                ClearFlag(flag: "encore.streak.1"), ClearFlag(flag: "encore.streak.2"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    If(flag: "encore.streak.1", then: [
+        ClearFlag(flag: "trainer.encore_2.defeated"),
+        StartBattle(trainer: "encore_2"),
+        If(flag: "trainer.encore_2.defeated",
+           then: [SetFlag(flag: "encore.streak.2"), Say(who: "encore_marshal", key: "encore.next")],
+           else: [
+                ClearFlag(flag: "encore.streak.1"),
+                Say(who: "encore_marshal", key: "encore.reset"),
+           ]),
+        End,
+    ], else: []),
+    Say(who: "encore_marshal", key: "encore.intro"),
+    ClearFlag(flag: "trainer.encore_1.defeated"),
+    StartBattle(trainer: "encore_1"),
+    If(flag: "trainer.encore_1.defeated",
+       then: [SetFlag(flag: "encore.streak.1"), Say(who: "encore_marshal", key: "encore.next")],
+       else: [Say(who: "encore_marshal", key: "encore.reset")]),
+    End,
+]

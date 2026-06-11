@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_2", class: "Encore", name_key: "npc.encore_2",
+    ai_tier: 3, payout_base: 44, rematch: true,
+    party: [(species: "vespernox", level: 61), (species: "smogturne", level: 61), (species: "willowisp", level: 61)],
+    defeat_flag: "trainer.encore_2.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

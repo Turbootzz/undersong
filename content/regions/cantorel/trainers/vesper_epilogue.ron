@@ -1,0 +1,14 @@
+// Vesper's own team, shown only after everything is decided.
+Trainer(
+    id: "vesper_epilogue", class: "TacetLeader", name_key: "npc.vesper",
+    ai_tier: 3, payout_base: 100, rematch: true,
+    party: [
+        (species: "vespernox", level: 66),
+        (species: "nullavoce", level: 66),
+        (species: "requiemoth", level: 66),
+        (species: "mutewing", level: 65),
+        (species: "velvetide", level: 67, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "trainer.vesper_epilogue.defeated",
+    intro_key: "vesper.rematch", defeat_key: "vesper.rematch.defeat",
+)

@@ -60,6 +60,12 @@ pub enum Cmd {
     StartBattle {
         trainer: TrainerId,
     },
+    /// A scripted wild encounter (legendary statics): catchable, with a
+    /// fixed species and level.
+    StartWildBattle {
+        species: SpeciesId,
+        level: u8,
+    },
     Warp {
         map: MapId,
         x: u32,
@@ -123,6 +129,10 @@ pub enum SideEffectReq {
     },
     StartBattle {
         trainer: TrainerId,
+    },
+    StartWildBattle {
+        species: SpeciesId,
+        level: u8,
     },
     Warp {
         map: MapId,
@@ -240,6 +250,9 @@ impl ScriptRunner {
                 }
                 Cmd::GiveMote { species, level } => {
                     return StepResult::Effect(SideEffectReq::GiveMote { species, level });
+                }
+                Cmd::StartWildBattle { species, level } => {
+                    return StepResult::Effect(SideEffectReq::StartWildBattle { species, level });
                 }
                 Cmd::StartBattle { trainer } => {
                     return StepResult::Effect(SideEffectReq::StartBattle { trainer });

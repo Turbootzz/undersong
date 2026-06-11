@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_7", class: "Encore", name_key: "npc.encore_7",
+    ai_tier: 3, payout_base: 80, rematch: true,
+    party: [(species: "cellorca", level: 66), (species: "sonatler", level: 66), (species: "maestroar", level: 66), (species: "requiemoth", level: 67)],
+    defeat_flag: "trainer.encore_7.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

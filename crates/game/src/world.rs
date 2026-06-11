@@ -843,6 +843,13 @@ impl WorldState {
                     self.start_trainer_battle(&trainer);
                     return;
                 }
+                StepResult::Effect(SideEffectReq::StartWildBattle { species, level }) => {
+                    // Legendary statics: a catchable scripted encounter.
+                    self.dialogue = Some(dialogue);
+                    self.pending_encounter = Some((species, level));
+                    self.maybe_start_wild_battle(events);
+                    return;
+                }
                 StepResult::Effect(SideEffectReq::OpenShop { table }) => {
                     if let Some(registry) = &self.registry {
                         // P3 mart: every priced item; per-table stock in P4.

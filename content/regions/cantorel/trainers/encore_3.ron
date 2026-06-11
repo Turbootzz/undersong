@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_3", class: "Encore", name_key: "npc.encore_3",
+    ai_tier: 3, payout_base: 48, rematch: true,
+    party: [(species: "gravoross", level: 62), (species: "avalanche", level: 62), (species: "emberlith", level: 62)],
+    defeat_flag: "trainer.encore_3.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

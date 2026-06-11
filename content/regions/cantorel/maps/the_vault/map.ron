@@ -185,6 +185,7 @@ MapDef(
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ],
     triggers: [
+        (at: (3, 29), kind: Script(path: "taciturn_static.script.ron")),
         (at: (4, 31), kind: Script(path: "aria_finale.script.ron")),
         (at: (5, 31), kind: Script(path: "aria_finale.script.ron")),
         (at: (5, 0), kind: Warp(map: "quartet_spire", to: (5, 27), facing: Down)),

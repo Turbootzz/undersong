@@ -1,0 +1,9 @@
+// Epilogue hunt: the held rest, sleeping under everything.
+[
+    If(flag: "static.taciturn", then: [End], else: []),
+    If(flag: "ending.chosen", then: [], else: [End]),
+    Say(who: "narrator", key: "static.taciturn"),
+    SetFlag(flag: "static.taciturn"),
+    StartWildBattle(species: "taciturn", level: 64),
+    End,
+]

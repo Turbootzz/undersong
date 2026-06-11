@@ -1,0 +1,7 @@
+Trainer(
+    id: "encore_1", class: "Encore", name_key: "npc.encore_1",
+    ai_tier: 3, payout_base: 40, rematch: true,
+    party: [(species: "galliard", level: 60), (species: "crescendola", level: 60), (species: "thornata", level: 60)],
+    defeat_flag: "trainer.encore_1.defeated",
+    intro_key: "encore.intro", defeat_key: "encore.next",
+)

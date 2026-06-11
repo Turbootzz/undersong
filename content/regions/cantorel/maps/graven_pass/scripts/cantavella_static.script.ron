@@ -1,0 +1,9 @@
+// Epilogue hunt: the rising third, asking its question at the summit.
+[
+    If(flag: "static.cantavella", then: [End], else: []),
+    If(flag: "ending.chosen", then: [], else: [End]),
+    Say(who: "narrator", key: "static.cantavella"),
+    SetFlag(flag: "static.cantavella"),
+    StartWildBattle(species: "cantavella", level: 62),
+    End,
+]

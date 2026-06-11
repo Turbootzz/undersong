@@ -1,0 +1,9 @@
+// Epilogue hunt: the falling fifth, where the silent water listens.
+[
+    If(flag: "static.intervallia", then: [End], else: []),
+    If(flag: "ending.chosen", then: [], else: [End]),
+    Say(who: "narrator", key: "static.intervallia"),
+    SetFlag(flag: "static.intervallia"),
+    StartWildBattle(species: "intervallia", level: 62),
+    End,
+]

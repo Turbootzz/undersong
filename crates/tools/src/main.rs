@@ -456,6 +456,13 @@ fn collect_script_refs(
                     message: format!("{}: unknown species `{species}`", path.display()),
                 });
             }
+            script::Cmd::StartWildBattle { species, .. } if !pack.motifs.contains_key(species) => {
+                findings.push(data::Finding {
+                    severity: data::Severity::Error,
+                    rule: "script.ref",
+                    message: format!("{}: unknown species `{species}`", path.display()),
+                });
+            }
             script::Cmd::StartBattle { trainer } if !pack.trainers.contains_key(trainer) => {
                 findings.push(data::Finding {
                     severity: data::Severity::Error,

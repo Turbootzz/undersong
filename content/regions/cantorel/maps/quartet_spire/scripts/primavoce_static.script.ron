@@ -1,0 +1,9 @@
+// The first voice answers only the Chorus.
+[
+    If(flag: "static.primavoce", then: [End], else: []),
+    If(flag: "ending.chorus", then: [], else: [End]),
+    Say(who: "narrator", key: "static.primavoce"),
+    SetFlag(flag: "static.primavoce"),
+    StartWildBattle(species: "primavoce", level: 70),
+    End,
+]

@@ -1,0 +1,5 @@
+[
+    If(flag: "ending.chosen", then: [End], else: []),
+    Say(who: "narrator", key: "encore.locked"),
+    End,
+]

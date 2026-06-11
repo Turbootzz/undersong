@@ -75,6 +75,7 @@ MapDef(
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ],
     triggers: [
+        (at: (2, 2), kind: Script(path: "intervallia_static.script.ron")),
         (at: (23, 7), kind: Warp(map: "route_3", to: (1, 12), facing: Right)),
         (at: (23, 8), kind: Warp(map: "route_3", to: (1, 13), facing: Right)),
     ],
