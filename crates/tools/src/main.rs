@@ -14,6 +14,7 @@ mod music;
 mod render;
 mod sigils;
 mod sim;
+mod sprites;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -27,7 +28,8 @@ const USAGE: &str = "usage:
   tools battle    --seed <n> [--pool <file>] [--level <n>] [--content <dir>]
   tools importmap --in <project.ldtk> --out <maps dir>
   tools assets    --region <id> [--content <dir>] [--out <dir>]
-  tools music     [--out <dir>]";
+  tools music     [--out <dir>]
+  tools sprites   [--content <dir>] [--out <dir>]";
 
 fn main() -> ExitCode {
     match run() {
@@ -155,6 +157,42 @@ fn run() -> Result<bool> {
             let content = PathBuf::from(value("--content", "content"));
             let out = PathBuf::from(value("--out", "assets"));
             generate_assets(&content, &region, &out)
+        }
+        Some("sprites") => {
+            let rest: Vec<String> = args.collect();
+            let value = |flag: &str, default: &str| -> String {
+                rest.iter()
+                    .position(|a| a == flag)
+                    .and_then(|i| rest.get(i + 1))
+                    .cloned()
+                    .unwrap_or_else(|| default.to_string())
+            };
+            let content = PathBuf::from(value("--content", "content"));
+            let out = PathBuf::from(value("--out", "assets"));
+            let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
+            let chars = sprites::render_characters(&out.join("sprites/chars"))?;
+            let mut creatures = 0;
+            let regions_root = content.join("regions");
+            let mut dirs: Vec<_> = std::fs::read_dir(&regions_root)?
+                .filter_map(Result::ok)
+                .map(|e| e.path())
+                .filter(|p| p.is_dir())
+                .collect();
+            dirs.sort();
+            for dir in dirs {
+                let region = dir
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                creatures +=
+                    sprites::render_creatures(&content, &region, &out.join("sprites/monsters"))?;
+            }
+            println!(
+                "sprites: {tiles} tiles, {chars} character frames, {creatures} creatures → {}",
+                out.display()
+            );
+            Ok(true)
         }
         Some("music") => {
             let rest: Vec<String> = args.collect();

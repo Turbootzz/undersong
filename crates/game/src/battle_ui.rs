@@ -324,7 +324,7 @@ fn battle_enter(
                 FoeSprite,
                 ShownSpecies(foe.species.clone()),
                 ImageNode::new(assets.load(format!(
-                    "sigils/{}/{}.front.png",
+                    "sprites/monsters/{}/{}.front.png",
                     world.0.region_id, foe.species
                 ))),
                 Node {
@@ -341,7 +341,7 @@ fn battle_enter(
                 PlayerSpriteImg,
                 ShownSpecies(us.species.clone()),
                 ImageNode::new(assets.load(format!(
-                    "sigils/{}/{}.back.png",
+                    "sprites/monsters/{}/{}.back.png",
                     world.0.region_id, us.species
                 ))),
                 Node {
@@ -817,7 +817,7 @@ fn refresh_sprites(
         if &shown.0 != current {
             shown.0 = current.clone();
             image.image = assets.load(format!(
-                "sigils/{}/{}.front.png",
+                "sprites/monsters/{}/{}.front.png",
                 world.0.region_id, current
             ));
         }
@@ -826,7 +826,10 @@ fn refresh_sprites(
         let current = &session.state.sides[0].active_mote().species;
         if &shown.0 != current {
             shown.0 = current.clone();
-            image.image = assets.load(format!("sigils/{}/{}.back.png", world.0.region_id, current));
+            image.image = assets.load(format!(
+                "sprites/monsters/{}/{}.back.png",
+                world.0.region_id, current
+            ));
         }
     }
 }

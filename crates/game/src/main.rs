@@ -19,12 +19,12 @@ use bevy::window::WindowResolution;
 
 use game::replay;
 
-/// Virtual resolution (doc 05 §1): all UI authored at 480×270,
-/// integer-scaled.
+/// Virtual resolution (doc 05 v2): all world art authored at 640×360
+/// with a 32px grid, integer-scaled.
 #[cfg(not(feature = "headless"))]
-const VIRTUAL_WIDTH: u32 = 480;
+const VIRTUAL_WIDTH: u32 = 640;
 #[cfg(not(feature = "headless"))]
-const VIRTUAL_HEIGHT: u32 = 270;
+const VIRTUAL_HEIGHT: u32 = 360;
 /// P2 still opens at a fixed ×2; the Settings scale picker applies it
 /// for real in P3 polish. The UI scale and camera zoom derive from this
 /// one constant.

@@ -11,9 +11,9 @@ use undersong_core::world::Facing;
 
 use crate::{AppState, WINDOW_SCALE};
 
-const TILE: f32 = 16.0;
-const VIEW_W: f32 = 480.0;
-const VIEW_H: f32 = 270.0;
+const TILE: f32 = 32.0;
+const VIEW_W: f32 = 640.0;
+const VIEW_H: f32 = 360.0;
 /// Walk interpolation (doc 02 §12: 150 ms per tile).
 const WALK_SECONDS: f32 = 0.15;
 
@@ -21,7 +21,9 @@ pub struct UndersongPlugin;
 
 impl Plugin for UndersongPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(UiScale(WINDOW_SCALE as f32))
+        // UI is authored on the old 270-line canvas; the 360-line world
+        // (doc 05 v2) keeps those proportions via a 4/3 factor.
+        app.insert_resource(UiScale(WINDOW_SCALE as f32 * 4.0 / 3.0))
             .insert_resource(RenderedMap(None))
             .insert_resource(PlayerAnim(None))
             .insert_resource(WanderTimer(Timer::from_seconds(1.2, TimerMode::Repeating)))
@@ -36,6 +38,7 @@ impl Plugin for UndersongPlugin {
                     player_input,
                     rebuild_map_if_needed,
                     animate_player,
+                    animate_player_frame,
                     facing_marker,
                     npc_wander,
                     sync_npc_sprites,
@@ -51,7 +54,10 @@ impl Plugin for UndersongPlugin {
             .insert_resource(CurrentMusic::default())
             .insert_resource(CreditsState::default())
             .insert_resource(AudioUnlocked::default())
-            .add_systems(Update, (audio_unlock, music_director, credits_watch))
+            .add_systems(
+                Update,
+                (audio_unlock, music_director, credits_watch, screenshot_key),
+            )
             .add_systems(
                 Update,
                 (toast_ui, night_tint).run_if(in_state(AppState::Overworld)),
@@ -185,6 +191,16 @@ fn tile_pos(x: u32, y: u32, z: f32) -> Transform {
     )
 }
 
+use game::art::art;
+
+fn art_sprite(assets: &AssetServer, rel: &str, size: f32) -> Sprite {
+    Sprite {
+        image: assets.load(art(rel)),
+        custom_size: Some(Vec2::splat(size)),
+        ..default()
+    }
+}
+
 fn quad(color: Color, size: f32) -> Sprite {
     Sprite {
         color,
@@ -193,10 +209,12 @@ fn quad(color: Color, size: f32) -> Sprite {
     }
 }
 
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn rebuild_map_if_needed(
     mut commands: Commands,
     world: Res<WorldRes>,
     theme: Option<Res<Theme>>,
+    assets: Res<AssetServer>,
     mut rendered: ResMut<RenderedMap>,
     tiles: Query<Entity, With<MapTile>>,
     npcs: Query<Entity, With<NpcSprite>>,
@@ -211,12 +229,21 @@ fn rebuild_map_if_needed(
     }
 
     let map = world.0.map();
-    let ground_color = |id: u16| match id {
-        1 => shade(theme.ty(Type::Bloom), 1.25),        // grass
-        2 => theme.color(&theme.palette.parchment_dim), // path
-        3 => theme.ty(Type::Tide),                      // water
-        4 => theme.color(&theme.palette.parchment),     // floor
-        _ => theme.color(&theme.palette.ink_soft),
+    // Generated tile art (P10) — interiors share ground id 4 with town
+    // building blocks; the indoor flag picks plank floor vs masonry.
+    let ground_tile = |id: u16| match id {
+        1 => "sprites/tiles/grass.png",
+        2 => "sprites/tiles/path.png",
+        3 => "sprites/tiles/water.png",
+        4 => {
+            if map.indoor {
+                "sprites/tiles/floor.png"
+            } else {
+                "sprites/tiles/wall.png"
+            }
+        }
+        5 => "sprites/tiles/deep.png",
+        _ => "sprites/tiles/path.png",
     };
     for y in 0..map.height {
         for x in 0..map.width {
@@ -225,44 +252,67 @@ fn rebuild_map_if_needed(
             if ground != 0 {
                 commands.spawn((
                     MapTile,
-                    quad(ground_color(ground), TILE),
+                    art_sprite(&assets, ground_tile(ground), TILE),
                     tile_pos(x, y, 0.0),
                 ));
             }
             if map.is_patch(x, y) {
-                let mut color = shade(theme.ty(Type::Bloom), 0.9);
-                color = color.with_alpha(0.55);
-                commands.spawn((MapTile, quad(color, TILE - 4.0), tile_pos(x, y, 0.5)));
+                commands.spawn((
+                    MapTile,
+                    art_sprite(&assets, "sprites/tiles/patch.png", TILE),
+                    tile_pos(x, y, 0.5),
+                ));
             }
             if let Some(&decor) = map.decor.get(index)
                 && decor != 0
             {
-                let color = match decor {
-                    5 => shade(theme.ty(Type::Bloom), 0.7), // bush
-                    6 => theme.color(&theme.palette.gilt),  // sign
-                    _ => theme.color(&theme.palette.ink_soft),
+                let rel = match decor {
+                    5 => "sprites/tiles/bush.png",
+                    6 => "sprites/tiles/sign.png",
+                    _ => "sprites/tiles/bush.png",
                 };
-                commands.spawn((MapTile, quad(color, TILE - 6.0), tile_pos(x, y, 1.0)));
+                commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 1.0)));
             }
             if let Some(&overhang) = map.overhang.get(index)
                 && overhang != 0
             {
-                let color = shade(theme.ty(Type::Bloom), 0.5).with_alpha(0.85);
-                commands.spawn((MapTile, quad(color, TILE), tile_pos(x, y, 3.0)));
+                commands.spawn((
+                    MapTile,
+                    art_sprite(&assets, "sprites/tiles/canopy.png", TILE),
+                    tile_pos(x, y, 3.0),
+                ));
             }
         }
     }
 
-    // NPCs for this map.
+    // NPCs for this map: archetype sprite by key, facing baked in
+    // (unknown keys fall back to the villager set).
     if let Some(states) = world.0.npcs.get(&world.0.current_map) {
         for npc in states {
-            let color = match npc.sprite.as_str() {
-                "npc.greeter" => theme.color(&theme.palette.cantorel_accent),
-                _ => theme.color(&theme.palette.hp_mid),
+            let known = matches!(
+                npc.sprite.as_str(),
+                "npc.villager"
+                    | "npc.villager2"
+                    | "npc.trainer"
+                    | "npc.dario"
+                    | "npc.mirelle"
+                    | "npc.reed"
+                    | "npc.greeter"
+            );
+            let key = if known {
+                npc.sprite.as_str()
+            } else {
+                "npc.villager"
+            };
+            let dir = match npc.facing {
+                Facing::Down => "down",
+                Facing::Up => "up",
+                Facing::Left => "left",
+                Facing::Right => "right",
             };
             commands.spawn((
                 NpcSprite(npc.id.clone()),
-                quad(color, TILE - 4.0),
+                art_sprite(&assets, &format!("sprites/chars/{key}.{dir}.0.png"), TILE),
                 tile_pos(npc.at.0, npc.at.1, 2.0),
             ));
         }
@@ -273,7 +323,7 @@ fn rebuild_map_if_needed(
     if player.is_empty() {
         commands.spawn((
             PlayerSprite,
-            quad(theme.color(&theme.palette.gilt), TILE - 4.0),
+            art_sprite(&assets, "sprites/chars/player.down.0.png", TILE),
             tile_pos(world.0.player.0, world.0.player.1, 2.0),
         ));
         let mut marker_color = theme.color(&theme.palette.gilt);
@@ -383,8 +433,14 @@ fn player_input(
     if stepped && !warped {
         let to = world.0.player;
         anim.0 = Some((
-            Vec2::new(from.0 as f32 * TILE + 8.0, from.1 as f32 * TILE + 8.0),
-            Vec2::new(to.0 as f32 * TILE + 8.0, to.1 as f32 * TILE + 8.0),
+            Vec2::new(
+                from.0 as f32 * TILE + TILE / 2.0,
+                from.1 as f32 * TILE + TILE / 2.0,
+            ),
+            Vec2::new(
+                to.0 as f32 * TILE + TILE / 2.0,
+                to.1 as f32 * TILE + TILE / 2.0,
+            ),
             0.0,
         ));
     }
@@ -446,8 +502,11 @@ fn handle_events(
                 wipe.0 = Some(0.0);
                 if let Ok(mut transform) = player.single_mut() {
                     let (x, y) = world.0.player;
-                    transform.translation =
-                        Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
+                    transform.translation = Vec3::new(
+                        x as f32 * TILE + TILE / 2.0,
+                        y as f32 * TILE + TILE / 2.0,
+                        2.0,
+                    );
                 }
                 // Autosave on map change (doc 03 §4).
                 autosave(&world.0);
@@ -459,8 +518,11 @@ fn handle_events(
                 anim.0 = None;
                 if let Ok(mut transform) = player.single_mut() {
                     let (x, y) = world.0.player;
-                    transform.translation =
-                        Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
+                    transform.translation = Vec3::new(
+                        x as f32 * TILE + TILE / 2.0,
+                        y as f32 * TILE + TILE / 2.0,
+                        2.0,
+                    );
                 }
             }
             _ => {}
@@ -512,19 +574,70 @@ fn npc_wander(time: Res<Time>, mut timer: ResMut<WanderTimer>, mut world: ResMut
     }
 }
 
-fn sync_npc_sprites(world: Res<WorldRes>, mut npcs: Query<(&NpcSprite, &mut Transform)>) {
+fn sync_npc_sprites(
+    world: Res<WorldRes>,
+    assets: Res<AssetServer>,
+    mut npcs: Query<(&NpcSprite, &mut Transform, &mut Sprite)>,
+) {
     let Some(states) = world.0.npcs.get(&world.0.current_map) else {
         return;
     };
-    for (marker, mut transform) in &mut npcs {
+    for (marker, mut transform, mut sprite) in &mut npcs {
         if let Some(state) = states.iter().find(|n| n.id == marker.0) {
             transform.translation = Vec3::new(
-                state.at.0 as f32 * TILE + 8.0,
-                state.at.1 as f32 * TILE + 8.0,
+                state.at.0 as f32 * TILE + TILE / 2.0,
+                state.at.1 as f32 * TILE + TILE / 2.0,
                 2.0,
             );
+            // Facing follows the world (wander, FaceNpc effects).
+            let known = matches!(
+                state.sprite.as_str(),
+                "npc.villager"
+                    | "npc.villager2"
+                    | "npc.trainer"
+                    | "npc.dario"
+                    | "npc.mirelle"
+                    | "npc.reed"
+                    | "npc.greeter"
+            );
+            let key = if known {
+                state.sprite.as_str()
+            } else {
+                "npc.villager"
+            };
+            let dir = match state.facing {
+                Facing::Down => "down",
+                Facing::Up => "up",
+                Facing::Left => "left",
+                Facing::Right => "right",
+            };
+            sprite.image = assets.load(art(&format!("sprites/chars/{key}.{dir}.0.png")));
         }
     }
+}
+
+/// The player's frame: facing × walk phase (frame 1 during the first
+/// half of each slide — a two-beat gait).
+fn animate_player_frame(
+    world: Res<WorldRes>,
+    assets: Res<AssetServer>,
+    anim: Res<PlayerAnim>,
+    mut player: Query<&mut Sprite, With<PlayerSprite>>,
+) {
+    let Ok(mut sprite) = player.single_mut() else {
+        return;
+    };
+    let dir = match world.0.facing {
+        Facing::Down => "down",
+        Facing::Up => "up",
+        Facing::Left => "left",
+        Facing::Right => "right",
+    };
+    let frame = match anim.0 {
+        Some((_, _, t)) if t < 0.5 => 1,
+        _ => 0,
+    };
+    sprite.image = assets.load(art(&format!("sprites/chars/player.{dir}.{frame}.png")));
 }
 
 // ----- camera ----------------------------------------------------------
@@ -961,7 +1074,11 @@ fn resync_after_battle(
     }
     if let Ok(mut transform) = player.single_mut() {
         let (x, y) = world.0.player;
-        transform.translation = Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
+        transform.translation = Vec3::new(
+            x as f32 * TILE + TILE / 2.0,
+            y as f32 * TILE + TILE / 2.0,
+            2.0,
+        );
     }
 }
 
@@ -1006,6 +1123,31 @@ pub fn play_cue(
         AudioPlayer::new(assets.load(format!("sfx/{name}.wav"))),
         PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::Linear(volume)),
     ));
+}
+
+/// F12 saves a screenshot (and `UNDERSONG_SHOT=path` auto-captures one
+/// a few seconds after boot — README/STATUS evidence without a hand).
+fn screenshot_key(
+    mut commands: Commands,
+    keys: Res<ButtonInput<KeyCode>>,
+    time: Res<Time>,
+    mut auto_done: Local<bool>,
+) {
+    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+    if keys.just_pressed(KeyCode::F12) {
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk("screenshot.png"));
+    }
+    if !*auto_done
+        && time.elapsed_secs() > 6.0
+        && let Some(path) = std::env::var_os("UNDERSONG_SHOT")
+    {
+        *auto_done = true;
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(std::path::PathBuf::from(path)));
+    }
 }
 
 fn music_director(
