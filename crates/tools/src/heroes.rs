@@ -343,12 +343,13 @@ fn mirror(grid: &[&str]) -> Vec<String> {
 
 pub fn render_heroes(out: &Path) -> Result<usize> {
     std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
-    let a = legend_a();
+    let a = legend_b();
     let save = |img: &RgbaImage, name: &str| -> Result<()> {
         img.save(out.join(format!("{name}.png")))
             .with_context(|| format!("writing {name}"))
     };
-    // Variant A is the live player set.
+    // Variant B (teal wayfarer) is the live player set — the user's pick
+    // from the P13 variant sheet.
     save(&paint(A_DOWN_0, &a), "player.down.0")?;
     save(&paint(A_DOWN_1, &a), "player.down.1")?;
     save(&paint(A_UP_0, &a), "player.up.0")?;
