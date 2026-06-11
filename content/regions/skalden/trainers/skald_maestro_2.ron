@@ -1,0 +1,11 @@
+Trainer(
+    id: "skald_maestro_2", class: "VerseKeeper", name_key: "npc.skald_maestro_2",
+    ai_tier: 3, payout_base: 70,
+    party: [
+        (species: "loomgarde", level: 27),
+        (species: "reynardeau", level: 27),
+        (species: "henge", level: 29, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "skalden.hall.2.cleared",
+    intro_key: "skald.hall2.intro", defeat_key: "skald.hall2.defeat",
+)

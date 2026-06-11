@@ -1,0 +1,16 @@
+// Cobbelt — Skalden pack (P8, batch 2)
+Motif(
+    id: "cobbelt", name_key: "motif.cobbelt", types: [Stone, Alloy],
+    base_stats: (hp: 58, atk: 62, def: 68, spa: 40, spd: 48, spe: 40),
+    catch_rate: 170, base_exp_yield: 58,
+    ev_yield: {def: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "pebble_beat"), (1, "cymbal_tap"), (9, "stone_toll"), (16, "alloy_clang"), (24, "downbeat"), (32, "anvil_anthem")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 211459154867248, sigil_seed: 211459154867248,
+    dex: (height_dm: 6, weight_hg: 206, entry_key: "dex.cobbelt"),
+)

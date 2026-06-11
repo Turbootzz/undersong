@@ -1,0 +1,16 @@
+// Eiderdun — Skalden pack (P8, batch 2)
+Motif(
+    id: "eiderdun", name_key: "motif.eiderdun", types: [Frost, Gale],
+    base_stats: (hp: 60, atk: 46, def: 52, spa: 58, spd: 66, spe: 56),
+    catch_rate: 150, base_exp_yield: 80,
+    ev_yield: {spd: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sleet_staccato"), (1, "zephyr_pluck"), (9, "gale_riff"), (16, "frost_lull"), (23, "wing_beat"), (31, "hail_chorale")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 9841410617844, sigil_seed: 9841410617844,
+    dex: (height_dm: 6, weight_hg: 213, entry_key: "dex.eiderdun"),
+)

@@ -1,0 +1,16 @@
+// Skaldgeir — Skalden pack (P8, batch 2)
+Motif(
+    id: "skaldgeir", name_key: "motif.skaldgeir", types: [Alloy, Resonant],
+    base_stats: (hp: 74, atk: 68, def: 82, spa: 84, spd: 80, spe: 48),
+    catch_rate: 45, base_exp_yield: 190,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "cymbal_tap"), (1, "overtone"), (13, "alloy_clang"), (21, "sostenuto"), (29, "anvil_anthem"), (37, "resonate"), (46, "shatter_aria")],
+    abilities: ["amplify"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.ruin", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 180630578058817, sigil_seed: 180630578058817,
+    dex: (height_dm: 8, weight_hg: 275, entry_key: "dex.skaldgeir"),
+)

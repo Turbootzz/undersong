@@ -1,0 +1,16 @@
+// Dirgelk — Skalden pack (P8, batch 2)
+Motif(
+    id: "dirgelk", name_key: "motif.dirgelk", types: [Frost, Phantom],
+    base_stats: (hp: 72, atk: 66, def: 62, spa: 58, spd: 64, spe: 48),
+    catch_rate: 100, base_exp_yield: 135,
+    ev_yield: {hp: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sleet_staccato"), (1, "hollow_hum"), (11, "frost_lull"), (18, "phantom_rest"), (26, "hail_chorale"), (34, "requiem_swell")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 64476046461845, sigil_seed: 64476046461845,
+    dex: (height_dm: 8, weight_hg: 210, entry_key: "dex.dirgelk"),
+)

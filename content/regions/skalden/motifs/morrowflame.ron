@@ -1,0 +1,16 @@
+// Morrowflame — Skalden pack (P8, batch 2)
+Motif(
+    id: "morrowflame", name_key: "motif.morrowflame", types: [Ember, Resonant],
+    base_stats: (hp: 72, atk: 64, def: 66, spa: 88, spd: 74, spe: 68),
+    catch_rate: 45, base_exp_yield: 188,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "ember_note"), (1, "overtone"), (13, "flare_brass"), (21, "sostenuto"), (29, "cinder_waltz"), (37, "crescendo"), (46, "resonate")],
+    abilities: ["heat_haze"],
+    hidden_ability: Some("amplify"),
+    tags: ["habitat.ruin", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 128140429164480, sigil_seed: 128140429164480,
+    dex: (height_dm: 7, weight_hg: 236, entry_key: "dex.morrowflame"),
+)

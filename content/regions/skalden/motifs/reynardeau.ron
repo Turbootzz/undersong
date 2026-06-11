@@ -1,0 +1,16 @@
+// Reynardeau — Skalden pack (P8, batch 1)
+Motif(
+    id: "reynardeau", name_key: "motif.reynardeau", types: [Feral, Resonant],
+    base_stats: (hp: 68, atk: 76, def: 58, spa: 70, spd: 60, spe: 86),
+    catch_rate: 85, base_exp_yield: 160,
+    ev_yield: {spe: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "tackle"), (1, "overtone"), (13, "downbeat"), (20, "quick_march"), (27, "sostenuto"), (35, "crescendo"), (43, "resonate")],
+    abilities: ["soloist"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.field", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 103147779925213, sigil_seed: 103147779925213,
+    dex: (height_dm: 8, weight_hg: 242, entry_key: "dex.reynardeau"),
+)

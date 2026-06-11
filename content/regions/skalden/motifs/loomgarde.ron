@@ -1,0 +1,16 @@
+// Loomgarde — Skalden pack (P8, batch 1)
+Motif(
+    id: "loomgarde", name_key: "motif.loomgarde", types: [Alloy, Bloom],
+    base_stats: (hp: 72, atk: 64, def: 80, spa: 60, spd: 70, spe: 40),
+    catch_rate: 90, base_exp_yield: 150,
+    ev_yield: {def: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "cymbal_tap"), (1, "bud_strum"), (14, "alloy_clang"), (21, "leaf_pick"), (28, "root_chord"), (36, "anvil_anthem"), (44, "fermata_guard")],
+    abilities: ["metronome_soul"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 262469355119281, sigil_seed: 262469355119281,
+    dex: (height_dm: 8, weight_hg: 214, entry_key: "dex.loomgarde"),
+)

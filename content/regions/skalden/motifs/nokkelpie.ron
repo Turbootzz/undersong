@@ -1,0 +1,16 @@
+// Nokkelpie — Skalden pack (P8, batch 2)
+Motif(
+    id: "nokkelpie", name_key: "motif.nokkelpie", types: [Tide, Phantom],
+    base_stats: (hp: 64, atk: 54, def: 58, spa: 80, spd: 72, spe: 66),
+    catch_rate: 70, base_exp_yield: 162,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "ripple"), (1, "hollow_hum"), (11, "undertow"), (18, "grace_note"), (26, "phantom_rest"), (34, "riptide_finale"), (42, "requiem_swell")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 138202617238720, sigil_seed: 138202617238720,
+    dex: (height_dm: 7, weight_hg: 257, entry_key: "dex.nokkelpie"),
+)

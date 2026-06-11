@@ -1,0 +1,16 @@
+// Skerrald — Skalden pack (P8, batch 1)
+Motif(
+    id: "skerrald", name_key: "motif.skerrald", types: [Tide, Alloy],
+    base_stats: (hp: 70, atk: 62, def: 76, spa: 64, spd: 78, spe: 42),
+    catch_rate: 95, base_exp_yield: 150,
+    ev_yield: {spd: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "cymbal_tap"), (12, "undertow"), (19, "alloy_clang"), (26, "breaker_beat"), (34, "anvil_anthem"), (42, "fermata_guard")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast", "performer.ferry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 14167488721867, sigil_seed: 14167488721867,
+    dex: (height_dm: 10, weight_hg: 223, entry_key: "dex.skerrald"),
+)

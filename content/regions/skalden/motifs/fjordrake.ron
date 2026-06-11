@@ -1,0 +1,16 @@
+// Fjordrake — Skalden pack (P8, batch 2)
+Motif(
+    id: "fjordrake", name_key: "motif.fjordrake", types: [Tide, Gale],
+    base_stats: (hp: 78, atk: 72, def: 68, spa: 76, spd: 66, spe: 72),
+    catch_rate: 50, base_exp_yield: 185,
+    ev_yield: {spa: 1},
+    growth_curve: Slow,
+    learnset: [(1, "ripple"), (1, "zephyr_pluck"), (13, "undertow"), (20, "gale_riff"), (28, "wing_beat"), (36, "riptide_finale"), (45, "tempest_coda")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("floating"),
+    tags: ["habitat.coast", "performer.sky"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 253418261011092, sigil_seed: 253418261011092,
+    dex: (height_dm: 7, weight_hg: 248, entry_key: "dex.fjordrake"),
+)

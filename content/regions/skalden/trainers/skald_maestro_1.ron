@@ -1,0 +1,11 @@
+Trainer(
+    id: "skald_maestro_1", class: "VerseKeeper", name_key: "npc.skald_maestro_1",
+    ai_tier: 3, payout_base: 60,
+    party: [
+        (species: "skerrald", level: 23),
+        (species: "brackaw", level: 23),
+        (species: "fjordrake", level: 25, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "skalden.hall.1.cleared",
+    intro_key: "skald.hall1.intro", defeat_key: "skald.hall1.defeat",
+)

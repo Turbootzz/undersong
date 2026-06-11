@@ -1,0 +1,16 @@
+// Brackaw — Skalden pack (P8, batch 1)
+Motif(
+    id: "brackaw", name_key: "motif.brackaw", types: [Gale, Venom],
+    base_stats: (hp: 62, atk: 70, def: 56, spa: 60, spd: 54, spe: 80),
+    catch_rate: 100, base_exp_yield: 140,
+    ev_yield: {spe: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "zephyr_pluck"), (1, "sour_note"), (11, "gale_riff"), (17, "venom_trill"), (24, "wing_beat"), (31, "toxic_toccata"), (39, "tempest_coda")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 67537004811089, sigil_seed: 67537004811089,
+    dex: (height_dm: 8, weight_hg: 240, entry_key: "dex.brackaw"),
+)

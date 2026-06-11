@@ -1,0 +1,16 @@
+// Gullnote — Skalden pack (P8, batch 1)
+Motif(
+    id: "gullnote", name_key: "motif.gullnote", types: [Gale],
+    base_stats: (hp: 40, atk: 42, def: 36, spa: 52, spd: 40, spe: 66),
+    catch_rate: 200, base_exp_yield: 48,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "zephyr_pluck"), (1, "tackle"), (6, "quick_step"), (11, "gale_riff"), (17, "wing_beat"), (25, "tempest_coda")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: Some((method: Level(22), target: "brackaw")),
+    cry_seed: 191198651334284, sigil_seed: 191198651334284,
+    dex: (height_dm: 6, weight_hg: 202, entry_key: "dex.gullnote"),
+)

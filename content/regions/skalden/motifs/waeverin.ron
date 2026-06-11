@@ -1,0 +1,16 @@
+// Waeverin — Skalden pack (P8, batch 2)
+Motif(
+    id: "waeverin", name_key: "motif.waeverin", types: [Bloom, Resonant],
+    base_stats: (hp: 58, atk: 48, def: 54, spa: 74, spd: 68, spe: 62),
+    catch_rate: 110, base_exp_yield: 120,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "bud_strum"), (1, "overtone"), (10, "leaf_pick"), (17, "sostenuto"), (25, "root_chord"), (33, "crescendo"), (41, "resonate")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.field", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 22218881709475, sigil_seed: 22218881709475,
+    dex: (height_dm: 10, weight_hg: 257, entry_key: "dex.waeverin"),
+)

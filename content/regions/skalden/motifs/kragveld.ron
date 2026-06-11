@@ -1,0 +1,16 @@
+// Kragveld — Skalden pack (P8, batch 1)
+Motif(
+    id: "kragveld", name_key: "motif.kragveld", types: [Stone, Gale],
+    base_stats: (hp: 76, atk: 82, def: 74, spa: 52, spd: 58, spe: 60),
+    catch_rate: 90, base_exp_yield: 150,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "pebble_beat"), (1, "zephyr_pluck"), (14, "stone_toll"), (21, "gale_riff"), (28, "wing_beat"), (36, "boulder_coda"), (44, "tempest_coda")],
+    abilities: ["iron_ear"],
+    hidden_ability: Some("floating"),
+    tags: ["habitat.peak", "performer.sky"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 131539279072316, sigil_seed: 131539279072316,
+    dex: (height_dm: 7, weight_hg: 277, entry_key: "dex.kragveld"),
+)

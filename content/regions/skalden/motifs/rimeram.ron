@@ -1,0 +1,16 @@
+// Rimeram — Skalden pack (P8, batch 1)
+Motif(
+    id: "rimeram", name_key: "motif.rimeram", types: [Frost, Feral],
+    base_stats: (hp: 66, atk: 74, def: 60, spa: 46, spd: 50, spe: 64),
+    catch_rate: 110, base_exp_yield: 135,
+    ev_yield: {atk: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sleet_staccato"), (1, "tackle"), (10, "quick_step"), (16, "downbeat"), (24, "hail_chorale"), (31, "quick_march"), (39, "fortissimo_slam")],
+    abilities: ["vigor"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 2033106114040, sigil_seed: 2033106114040,
+    dex: (height_dm: 7, weight_hg: 240, entry_key: "dex.rimeram"),
+)

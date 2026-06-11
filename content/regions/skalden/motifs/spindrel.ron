@@ -1,0 +1,16 @@
+// Spindrel — Skalden pack (P8, batch 1)
+Motif(
+    id: "spindrel", name_key: "motif.spindrel", types: [Alloy],
+    base_stats: (hp: 46, atk: 50, def: 56, spa: 44, spd: 46, spe: 52),
+    catch_rate: 180, base_exp_yield: 54,
+    ev_yield: {def: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "cymbal_tap"), (1, "tackle"), (8, "quick_step"), (14, "alloy_clang"), (22, "downbeat"), (30, "anvil_anthem")],
+    abilities: ["iron_ear"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: Some((method: Level(26), target: "loomgarde")),
+    cry_seed: 25728124365544, sigil_seed: 25728124365544,
+    dex: (height_dm: 6, weight_hg: 171, entry_key: "dex.spindrel"),
+)

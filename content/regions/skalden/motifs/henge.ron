@@ -1,0 +1,16 @@
+// Hengelod — Skalden pack (P8, batch 1)
+Motif(
+    id: "henge", name_key: "motif.henge", types: [Stone, Resonant],
+    base_stats: (hp: 84, atk: 70, def: 86, spa: 72, spd: 80, spe: 28),
+    catch_rate: 60, base_exp_yield: 180,
+    ev_yield: {def: 3},
+    growth_curve: Slow,
+    learnset: [(1, "pebble_beat"), (1, "overtone"), (15, "stone_toll"), (23, "sostenuto"), (31, "fermata_guard"), (40, "boulder_coda"), (48, "resonate")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.ruin", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 158974412771518, sigil_seed: 158974412771518,
+    dex: (height_dm: 9, weight_hg: 288, entry_key: "dex.henge"),
+)

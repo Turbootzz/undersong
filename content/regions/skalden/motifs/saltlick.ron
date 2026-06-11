@@ -1,0 +1,16 @@
+// Saltlick — Skalden pack (P8, batch 2)
+Motif(
+    id: "saltlick", name_key: "motif.saltlick", types: [Tide, Stone],
+    base_stats: (hp: 66, atk: 58, def: 72, spa: 44, spd: 60, spe: 36),
+    catch_rate: 140, base_exp_yield: 90,
+    ev_yield: {def: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "pebble_beat"), (10, "undertow"), (17, "stone_toll"), (25, "breaker_beat"), (33, "boulder_coda")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 188067606668565, sigil_seed: 188067606668565,
+    dex: (height_dm: 7, weight_hg: 233, entry_key: "dex.saltlick"),
+)

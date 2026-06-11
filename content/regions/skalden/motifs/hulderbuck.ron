@@ -1,0 +1,16 @@
+// Hulderbuck — Skalden pack (P8, batch 2)
+Motif(
+    id: "hulderbuck", name_key: "motif.hulderbuck", types: [Bloom, Phantom],
+    base_stats: (hp: 68, atk: 72, def: 60, spa: 66, spd: 62, spe: 70),
+    catch_rate: 70, base_exp_yield: 165,
+    ev_yield: {atk: 1},
+    growth_curve: Slow,
+    learnset: [(1, "bud_strum"), (1, "hollow_hum"), (11, "leaf_pick"), (18, "grace_note"), (25, "root_chord"), (33, "phantom_rest"), (41, "briar_bow")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("thorn_coat"),
+    tags: ["habitat.forest"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 142648917209669, sigil_seed: 142648917209669,
+    dex: (height_dm: 8, weight_hg: 248, entry_key: "dex.hulderbuck"),
+)

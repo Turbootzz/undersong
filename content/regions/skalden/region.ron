@@ -1,0 +1,10 @@
+// Skalden — the folk region (P8: the "all regions are just content"
+// proof). Four halls, one buried verse, zero engine changes.
+RegionDef(
+    id: "skalden",
+    name_key: "region.skalden",
+    dex: ["aurorale", "barrowmoss", "bogboar", "brackaw", "brinemare", "cobbelt", "dirgelk", "eiderdun", "emberjarl", "fiddlefox", "fjordrake", "frostfiddle", "glimmwyrm", "gullnote", "henge", "hulderbuck", "jokulhorn", "kragveld", "loomgarde", "mireling", "morrowflame", "nokkelpie", "peatling", "reynardeau", "rimeram", "runolf", "saltlick", "screel", "skaldgeir", "skarnbjorn", "skerrald", "skerryn", "spindrel", "tindrelod", "turfowl", "velkomma", "vinterstem", "voltvarg", "waeverin", "willowail"],
+    starters: ["skerryn", "peatling", "frostfiddle"],
+    entry_map: "port_skald",
+    entry_spawn: (4, 4),
+)

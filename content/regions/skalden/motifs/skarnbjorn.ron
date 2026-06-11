@@ -1,0 +1,16 @@
+// Skarnbjorn — Skalden pack (P8, batch 2)
+Motif(
+    id: "skarnbjorn", name_key: "motif.skarnbjorn", types: [Stone, Feral],
+    base_stats: (hp: 86, atk: 90, def: 78, spa: 46, spd: 58, spe: 46),
+    catch_rate: 65, base_exp_yield: 175,
+    ev_yield: {atk: 2},
+    growth_curve: Slow,
+    learnset: [(1, "pebble_beat"), (1, "tackle"), (12, "stone_toll"), (19, "downbeat"), (26, "quick_march"), (34, "boulder_coda"), (42, "fortissimo_slam")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("vigor"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 65040192949108, sigil_seed: 65040192949108,
+    dex: (height_dm: 7, weight_hg: 250, entry_key: "dex.skarnbjorn"),
+)

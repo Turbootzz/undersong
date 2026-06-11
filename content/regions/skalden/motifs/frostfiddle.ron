@@ -1,0 +1,16 @@
+// Frostfiddle — Skalden pack (P8, batch 1)
+Motif(
+    id: "frostfiddle", name_key: "motif.frostfiddle", types: [Frost],
+    base_stats: (hp: 48, atk: 42, def: 46, spa: 62, spd: 52, spe: 58),
+    catch_rate: 170, base_exp_yield: 58,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sleet_staccato"), (1, "tackle"), (8, "frost_lull"), (15, "hail_chorale"), (23, "dampen"), (31, "requiem_swell")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: Some((method: Level(30), target: "aurorale")),
+    cry_seed: 275829211265589, sigil_seed: 275829211265589,
+    dex: (height_dm: 7, weight_hg: 183, entry_key: "dex.frostfiddle"),
+)

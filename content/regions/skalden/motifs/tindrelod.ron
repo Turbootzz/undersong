@@ -1,0 +1,16 @@
+// Tindrelod — Skalden pack (P8, batch 2)
+Motif(
+    id: "tindrelod", name_key: "motif.tindrelod", types: [Volt, Resonant],
+    base_stats: (hp: 66, atk: 60, def: 62, spa: 86, spd: 72, spe: 74),
+    catch_rate: 55, base_exp_yield: 170,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "static_strum"), (1, "overtone"), (12, "volt_pluck"), (19, "sostenuto"), (27, "stun_chord"), (35, "crescendo"), (43, "resonate")],
+    abilities: ["amplify"],
+    hidden_ability: Some("live_wire"),
+    tags: ["habitat.peak", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 58098409667749, sigil_seed: 58098409667749,
+    dex: (height_dm: 8, weight_hg: 279, entry_key: "dex.tindrelod"),
+)

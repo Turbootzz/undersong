@@ -1,0 +1,16 @@
+// Voltvarg — Skalden pack (P8, batch 2)
+Motif(
+    id: "voltvarg", name_key: "motif.voltvarg", types: [Volt, Feral],
+    base_stats: (hp: 64, atk: 74, def: 56, spa: 58, spd: 50, spe: 78),
+    catch_rate: 95, base_exp_yield: 140,
+    ev_yield: {spe: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "static_strum"), (1, "tackle"), (10, "quick_step"), (16, "volt_pluck"), (23, "downbeat"), (30, "stun_chord"), (38, "quick_march")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("vigor"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 209298690963000, sigil_seed: 209298690963000,
+    dex: (height_dm: 7, weight_hg: 210, entry_key: "dex.voltvarg"),
+)

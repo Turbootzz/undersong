@@ -1,0 +1,16 @@
+// Fiddlefox — Skalden pack (P8, batch 1)
+Motif(
+    id: "fiddlefox", name_key: "motif.fiddlefox", types: [Feral],
+    base_stats: (hp: 50, atk: 58, def: 44, spa: 52, spd: 42, spe: 72),
+    catch_rate: 170, base_exp_yield: 60,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "grace_note"), (7, "quick_step"), (13, "downbeat"), (20, "quick_march"), (28, "crescendo")],
+    abilities: ["soloist"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: Some((method: Level(28), target: "reynardeau")),
+    cry_seed: 27827005664681, sigil_seed: 27827005664681,
+    dex: (height_dm: 7, weight_hg: 220, entry_key: "dex.fiddlefox"),
+)

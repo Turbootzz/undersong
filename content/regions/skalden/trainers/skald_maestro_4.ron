@@ -1,0 +1,12 @@
+Trainer(
+    id: "skald_maestro_4", class: "VerseKeeper", name_key: "npc.skald_maestro_4",
+    ai_tier: 3, payout_base: 100,
+    party: [
+        (species: "jokulhorn", level: 37),
+        (species: "tindrelod", level: 37),
+        (species: "skaldgeir", level: 38),
+        (species: "aurorale", level: 39, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "skalden.hall.4.cleared",
+    intro_key: "skald.hall4.intro", defeat_key: "skald.hall4.defeat",
+)

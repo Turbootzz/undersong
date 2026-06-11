@@ -1,0 +1,16 @@
+// Glimmwyrm — Skalden pack (P8, batch 2)
+Motif(
+    id: "glimmwyrm", name_key: "motif.glimmwyrm", types: [Resonant, Tide],
+    base_stats: (hp: 70, atk: 58, def: 64, spa: 82, spd: 76, spe: 58),
+    catch_rate: 75, base_exp_yield: 160,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "ripple"), (12, "sostenuto"), (19, "undertow"), (27, "crescendo"), (35, "riptide_finale"), (43, "resonate")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast", "performer.ferry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 82973036912075, sigil_seed: 82973036912075,
+    dex: (height_dm: 10, weight_hg: 259, entry_key: "dex.glimmwyrm"),
+)

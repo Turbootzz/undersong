@@ -1,0 +1,6 @@
+[
+    If(flag: "skalden.badge.4",
+       then: [Say(who: "verse_keeper", key: "skald.verse.found")],
+       else: [Say(who: "verse_keeper", key: "skald.verse.hint")]),
+    End,
+]

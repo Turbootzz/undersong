@@ -1,0 +1,16 @@
+// Screel — Skalden pack (P8, batch 1)
+Motif(
+    id: "screel", name_key: "motif.screel", types: [Stone],
+    base_stats: (hp: 54, atk: 58, def: 62, spa: 38, spd: 44, spe: 44),
+    catch_rate: 180, base_exp_yield: 55,
+    ev_yield: {def: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "pebble_beat"), (1, "tackle"), (8, "quick_step"), (14, "stone_toll"), (21, "downbeat"), (29, "boulder_coda")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: Some((method: Level(27), target: "kragveld")),
+    cry_seed: 172900725893404, sigil_seed: 172900725893404,
+    dex: (height_dm: 6, weight_hg: 174, entry_key: "dex.screel"),
+)

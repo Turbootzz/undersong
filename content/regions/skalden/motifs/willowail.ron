@@ -1,0 +1,16 @@
+// Willowail — Skalden pack (P8, batch 1)
+Motif(
+    id: "willowail", name_key: "motif.willowail", types: [Phantom],
+    base_stats: (hp: 56, atk: 42, def: 48, spa: 72, spd: 64, spe: 60),
+    catch_rate: 110, base_exp_yield: 125,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "hollow_hum"), (1, "dampen"), (10, "grace_note"), (17, "phantom_rest"), (25, "requiem_swell"), (33, "resonate")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.swamp"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 13961574941566, sigil_seed: 13961574941566,
+    dex: (height_dm: 8, weight_hg: 237, entry_key: "dex.willowail"),
+)

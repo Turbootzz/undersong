@@ -1,0 +1,16 @@
+// Velkomma — Skalden pack (P8, batch 2)
+Motif(
+    id: "velkomma", name_key: "motif.velkomma", types: [Bloom, Frost],
+    base_stats: (hp: 76, atk: 60, def: 70, spa: 72, spd: 78, spe: 44),
+    catch_rate: 65, base_exp_yield: 168,
+    ev_yield: {spd: 2},
+    growth_curve: Slow,
+    learnset: [(1, "bud_strum"), (1, "sleet_staccato"), (12, "leaf_pick"), (19, "frost_lull"), (27, "root_chord"), (35, "hail_chorale"), (43, "briar_bow")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 106561394241936, sigil_seed: 106561394241936,
+    dex: (height_dm: 7, weight_hg: 256, entry_key: "dex.velkomma"),
+)

@@ -1,0 +1,18 @@
+[
+    If(flag: "skalden.hall.4.cleared",
+       then: [Say(who: "skald_maestro_4", key: "skald.hall4.after"), End],
+       else: []),
+    If(flag: "skalden.badge.3", then: [], else: [Say(who: "skald_maestro_4", key: "skald.hall4.early"), End]),
+    Say(who: "skald_maestro_4", key: "skald.hall4.intro"),
+    StartBattle(trainer: "skald_maestro_4"),
+    If(flag: "skalden.hall.4.cleared",
+       then: [
+            Say(who: "skald_maestro_4", key: "skald.hall4.badge"),
+            SetFlag(flag: "skalden.badge.4"),
+            Say(who: "skald_maestro_4", key: "skald.verse.1"),
+            Say(who: "skald_maestro_4", key: "skald.verse.2"),
+            SetFlag(flag: "skalden.verse.restored"),
+       ],
+       else: []),
+    End,
+]

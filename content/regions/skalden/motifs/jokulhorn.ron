@@ -1,0 +1,16 @@
+// Jokulhorn — Skalden pack (P8, batch 2)
+Motif(
+    id: "jokulhorn", name_key: "motif.jokulhorn", types: [Frost, Stone],
+    base_stats: (hp: 84, atk: 80, def: 84, spa: 54, spd: 68, spe: 32),
+    catch_rate: 60, base_exp_yield: 178,
+    ev_yield: {def: 2},
+    growth_curve: Slow,
+    learnset: [(1, "sleet_staccato"), (1, "pebble_beat"), (12, "hail_chorale"), (20, "stone_toll"), (28, "fermata_guard"), (36, "boulder_coda"), (45, "requiem_swell")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 263955136292761, sigil_seed: 263955136292761,
+    dex: (height_dm: 8, weight_hg: 222, entry_key: "dex.jokulhorn"),
+)

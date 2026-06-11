@@ -1,0 +1,16 @@
+// Barrowmoss — Skalden pack (P8, batch 1)
+Motif(
+    id: "barrowmoss", name_key: "motif.barrowmoss", types: [Bloom, Phantom],
+    base_stats: (hp: 82, atk: 60, def: 78, spa: 64, spd: 72, spe: 30),
+    catch_rate: 85, base_exp_yield: 155,
+    ev_yield: {hp: 2},
+    growth_curve: Slow,
+    learnset: [(1, "bud_strum"), (1, "hollow_hum"), (13, "root_chord"), (20, "phantom_rest"), (28, "briar_bow"), (36, "requiem_swell"), (44, "fermata_guard")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.swamp", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 196260821147601, sigil_seed: 196260821147601,
+    dex: (height_dm: 8, weight_hg: 234, entry_key: "dex.barrowmoss"),
+)

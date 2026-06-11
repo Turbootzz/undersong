@@ -1,0 +1,11 @@
+Trainer(
+    id: "skald_maestro_3", class: "VerseKeeper", name_key: "npc.skald_maestro_3",
+    ai_tier: 3, payout_base: 80,
+    party: [
+        (species: "bogboar", level: 32),
+        (species: "barrowmoss", level: 32),
+        (species: "hulderbuck", level: 34, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "skalden.hall.3.cleared",
+    intro_key: "skald.hall3.intro", defeat_key: "skald.hall3.defeat",
+)

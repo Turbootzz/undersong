@@ -1,0 +1,16 @@
+// Bogboar — Skalden pack (P8, batch 1)
+Motif(
+    id: "bogboar", name_key: "motif.bogboar", types: [Venom, Feral],
+    base_stats: (hp: 74, atk: 80, def: 62, spa: 44, spd: 52, spe: 58),
+    catch_rate: 100, base_exp_yield: 145,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sour_note"), (1, "tackle"), (12, "venom_trill"), (18, "downbeat"), (25, "quick_march"), (32, "toxic_toccata"), (40, "fortissimo_slam")],
+    abilities: ["vigor"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.swamp"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 138182431888321, sigil_seed: 138182431888321,
+    dex: (height_dm: 8, weight_hg: 206, entry_key: "dex.bogboar"),
+)

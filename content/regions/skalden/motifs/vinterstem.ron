@@ -1,0 +1,16 @@
+// Vinterstem — Skalden pack (P8, batch 2)
+Motif(
+    id: "vinterstem", name_key: "motif.vinterstem", types: [Frost, Resonant],
+    base_stats: (hp: 90, atk: 68, def: 80, spa: 100, spd: 92, spe: 70),
+    catch_rate: 5, base_exp_yield: 245,
+    ev_yield: {spa: 3},
+    growth_curve: Slow,
+    learnset: [(1, "sleet_staccato"), (1, "overtone"), (15, "frost_lull"), (25, "sostenuto"), (35, "hail_chorale"), (45, "resonate"), (55, "requiem_swell")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 50025801216460, sigil_seed: 50025801216460,
+    dex: (height_dm: 8, weight_hg: 310, entry_key: "dex.vinterstem"),
+)

@@ -1,0 +1,8 @@
+// The Skalden ferry: borders open when the song stabilizes (doc 01 §6
+// — the Chorus ending unlocks Skalden travel).
+[
+    If(flag: "ending.chorus", then: [], else: [Say(who: "ferryman", key: "skald.ferry.locked"), End]),
+    Say(who: "ferryman", key: "skald.ferry.out"),
+    Warp(map: "port_skald", x: 3, y: 3),
+    End,
+]

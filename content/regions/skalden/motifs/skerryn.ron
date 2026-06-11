@@ -1,0 +1,16 @@
+// Skerryn — Skalden pack (P8, batch 1)
+Motif(
+    id: "skerryn", name_key: "motif.skerryn", types: [Tide],
+    base_stats: (hp: 48, atk: 44, def: 52, spa: 50, spd: 56, spe: 40),
+    catch_rate: 190, base_exp_yield: 55,
+    ev_yield: {spd: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "tackle"), (7, "quick_step"), (12, "undertow"), (19, "dampen"), (26, "breaker_beat")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: Some((method: Level(24), target: "skerrald")),
+    cry_seed: 242448587815845, sigil_seed: 242448587815845,
+    dex: (height_dm: 7, weight_hg: 210, entry_key: "dex.skerryn"),
+)

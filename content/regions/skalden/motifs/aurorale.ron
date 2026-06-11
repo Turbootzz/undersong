@@ -1,0 +1,16 @@
+// Aurorale — Skalden pack (P8, batch 1)
+Motif(
+    id: "aurorale", name_key: "motif.aurorale", types: [Frost, Resonant],
+    base_stats: (hp: 70, atk: 56, def: 66, spa: 88, spd: 80, spe: 66),
+    catch_rate: 70, base_exp_yield: 170,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "sleet_staccato"), (1, "overtone"), (15, "hail_chorale"), (23, "sostenuto"), (31, "frost_lull"), (39, "resonate"), (47, "requiem_swell")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 188036957388469, sigil_seed: 188036957388469,
+    dex: (height_dm: 8, weight_hg: 282, entry_key: "dex.aurorale"),
+)

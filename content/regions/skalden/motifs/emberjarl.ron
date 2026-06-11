@@ -1,0 +1,16 @@
+// Emberjarl — Skalden pack (P8, batch 2)
+Motif(
+    id: "emberjarl", name_key: "motif.emberjarl", types: [Ember],
+    base_stats: (hp: 62, atk: 70, def: 56, spa: 64, spd: 52, spe: 58),
+    catch_rate: 120, base_exp_yield: 110,
+    ev_yield: {atk: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ember_note"), (1, "tackle"), (10, "flare_brass"), (17, "downbeat"), (24, "cinder_waltz"), (32, "crescendo"), (40, "fortissimo_slam")],
+    abilities: ["heat_haze"],
+    hidden_ability: Some("vigor"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 115608783018225, sigil_seed: 115608783018225,
+    dex: (height_dm: 8, weight_hg: 246, entry_key: "dex.emberjarl"),
+)

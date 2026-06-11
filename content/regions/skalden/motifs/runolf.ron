@@ -1,0 +1,16 @@
+// Runolf — Skalden pack (P8, batch 2)
+Motif(
+    id: "runolf", name_key: "motif.runolf", types: [Resonant, Feral],
+    base_stats: (hp: 72, atk: 80, def: 64, spa: 72, spd: 62, spe: 82),
+    catch_rate: 60, base_exp_yield: 172,
+    ev_yield: {atk: 2},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "tackle"), (12, "downbeat"), (19, "sostenuto"), (26, "quick_march"), (34, "crescendo"), (42, "resonate")],
+    abilities: ["soloist"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 93609579568371, sigil_seed: 93609579568371,
+    dex: (height_dm: 10, weight_hg: 287, entry_key: "dex.runolf"),
+)

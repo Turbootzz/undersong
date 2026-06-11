@@ -1,0 +1,16 @@
+// Peatling — Skalden pack (P8, batch 1)
+Motif(
+    id: "peatling", name_key: "motif.peatling", types: [Bloom],
+    base_stats: (hp: 52, atk: 46, def: 54, spa: 44, spd: 50, spe: 38),
+    catch_rate: 190, base_exp_yield: 52,
+    ev_yield: {def: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "bud_strum"), (1, "tackle"), (7, "leaf_pick"), (13, "dampen"), (20, "root_chord"), (28, "briar_bow")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("thorn_coat"),
+    tags: ["habitat.swamp"],
+    tm_set: [],
+    evolution: Some((method: Level(26), target: "barrowmoss")),
+    cry_seed: 155826661139173, sigil_seed: 155826661139173,
+    dex: (height_dm: 7, weight_hg: 175, entry_key: "dex.peatling"),
+)
