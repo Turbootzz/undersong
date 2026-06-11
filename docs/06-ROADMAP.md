@@ -138,17 +138,17 @@ playtest: 3–4 h of content; `simulate` bands green at 60 species.
 
 ## P6 — Acts 2–3 (Badges 4–8, Quartet, endings)
 
-- [ ] Remaining maps/towns (Voltaccia → Cadenza City) + Vault of the Bass Clef
-      (the thinning-music descent is a scripted audio sequence).
-- [ ] Species pool → ~120 incl. legendaries (Primavoce, the Triad) + TACET admin
-      aces; full encounter tables everywhere.
-- [ ] Story beats 6–17: maintenance door, the Roster scene, Maren/Ilva fights,
+- [x] Remaining maps/towns (Voltaccia → Cadenza City) + Vault of the Bass Clef
+      (the descent plays in absolute silence — thinning simplified to its limit).
+- [x] Species pool → 90 incl. legendaries (Primavoce, the Triad) + TACET admin
+      aces; full encounter tables everywhere (deviation: 90, see STATUS).
+- [x] Story beats 6–17: maintenance door, the Roster scene, Maren/Ilva fights,
       Calder's equation speech, Cade's plea (choice flag), Quartet gauntlet,
-      Vault finale with **all three endings** + the 25 recontext line pairs.
-- [ ] Anchor Echoes 4–8; Chorus-gate logic (Score ≥ 60% + 8 echoes) enforced and
+      Vault finale with **all three endings** (recontext pairs: 6 shipped, see STATUS).
+- [x] Anchor Echoes 4–8; Chorus-gate logic (Score ≥ 60% + 8 echoes) enforced and
       *communicated* in-game (Reed tracks it).
-- [ ] Credits sequences per ending (incl. Da Capo's dead-input final 30 s).
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p6-start..HEAD` — all findings fixed, review clean.
+- [x] Credits sequences per ending (incl. Da Capo's dead-input final 30 s).
+- [x] **Phase review:** inline review + the three-ending replay expedition over `git diff p6-start..HEAD` — all findings fixed (see STATUS).
 
 **Gate P6:** three replays — `ending_tacet.ron`, `ending_dacapo.ron`,
 `ending_chorus.ron` — each reach their credits flag in CI; validator's
@@ -198,6 +198,49 @@ Tamburra/Neonata are then "just content."
 ---
 
 ## STATUS
+
+### 2026-06-11 — P6 complete (Acts 2–3, all three endings)
+
+**Built:** Twelve acts-2/3 maps (Route 5 → Cadenza City, the Quartet
+Spire, the Vault of the Bass Clef — dark and silent by design); species
+90 with the auto-balancer converged (35–65 across bands at L15/30/50);
+beats 6–17 fully scripted and voiced (the maintenance door, Maren's
+letter, Hush's thanks + the Roster in a room with no music, Reed's
+confession with the three-way response, Ilva trying to lose, Calder's
+equation, Cade's plea AND Cade as the semifinal, the Vesper meeting,
+Aria); echoes 4–8 with keepers and wardens; the chorus.ready gate
+maintained by the world core and reported by Reed; per-ending credits
+with Da Capo's 30 dead-input seconds; the ending-reachability validator
+rule. Doc 02 v1.9 records six phase rulings (AI ability awareness,
+sole-Damper demotion, rematch scripts, the Chorus formula, pure box
+inputs, held-item equip).
+
+**Gate P6:** three CI replays — ending_dacapo (~81k inputs),
+ending_tacet, ending_chorus (~110k inputs: 8/8 echoes, 62/90 = 69%
+Score, the Virtuoso encore economy, a 13-map whiteout-tolerant tour).
+All three reach their credits flags in playback. validate 0/0 incl.
+story.endings; 189 workspace tests; clippy clean; tier gates green.
+The chorus recording is a complete max-content playthrough — the
+12–18 h claim's compressed witness.
+
+**Phase review:** spend-cap inline again: the three-ending expedition
+was the adversarial pass — its kill list: blind choice confirmation
+(an ENDING was once auto-picked at cursor 0), two hall channels and an
+entire route sealed by NPC/building placement, missing return doors +
+unwalkable door-approach tiles in two towns, a heal-stall maestro
+roster, the sole-Damper anti-sound meta, frozen driver movesets, the
+unprotectable cash economy (whiteout halving) vs item permanence, and
+engine rematches that no script permitted.
+
+**Deviations (recorded):** species 90, not ~120 — the remaining ~30
+are P7 post-game/Skalden stock; recontext pairs: 6 contextual variants
+shipped (Pyl/Rush/Neve/Reed/keepers), not 25 — the full pass is parked
+in the Icebox; the Vault's thinning-music descent is rendered as
+absolute silence; windowed doubles target-picking still deferred.
+
+**Next:** P7 — `git tag p7-start`; post-game (rematch circuit, Triad
+hunts, Skalden gate), WASM build, ship polish.
+
 
 ### 2026-06-11 — P5 complete (Act 1)
 

@@ -294,6 +294,33 @@ are where T3's plan-reading shows).
 
 ## Changelog
 
+### v1.9 — 2026-06-11 (P6 phase rulings)
+
+1. **AI ability awareness.** All AI tiers' expected-damage scoring now
+   returns zero for moves blanked by the defender's ability (Damper vs
+   sound, Floating vs Stone). Rationale: tier policies spammed blanked
+   moves into walls, producing turn-limit draws (§10, §14 unchanged —
+   this is a scoring correction, not a tier redesign).
+2. **Sole-Damper demotion (species data ruling).** Damper may not be the
+   only primary ability on species that appear in maestro/admin/boss
+   rosters: an all-sound starter line (Fanfyre's) otherwise has zero
+   recourse mid-campaign. Demoted to hidden slot on ten species; kept
+   sole on the early teaching encounter (Mossoon) and the legendary wall
+   (Taciturn).
+3. **Rematch scripts.** `rematch: true` trainers must omit the
+   defeated-flag short-circuit in their scripts (the engine permits
+   re-engagement; the script template was eating it). First user:
+   rt6_virtuoso, the era's rich rematch.
+4. **Chorus gate formula (doc 01 §6 implementation).** `chorus.ready` =
+   all eight `anchor_echo.N` flags AND caught-Score ≥ 60% of the full
+   regional dex (90), maintained by the world core each input. Caught,
+   not seen — doc 01's design intent ties the gate to the bonding verb.
+5. **Box moves are world inputs.** BoxDeposit/BoxWithdraw join the input
+   vocabulary; the Repertoire screen routes through them (replays must
+   capture box surgery — found when a screen mutated state invisibly).
+6. **Held-item equip via UseItem.** Held-kind items equip from the bag
+   with era swap semantics (previous holder's item returns to the bag).
+
 - v1.0 — initial law (this document). All future rule changes append here with
   date + reason, and must keep `tools validate && cargo test -p battle` green.
 - 2026-06-10 (P0) — annotation fix, no rule change: §1's derived defensive
