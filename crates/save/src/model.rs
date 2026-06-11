@@ -47,6 +47,10 @@ pub struct Position {
 pub struct Settings {
     /// Characters per tick: 30 / 60 / 0 = instant (doc 05 §3).
     pub text_speed: u8,
+    /// Battle message pacing: 0 relaxed / 1 standard / 2 brisk (P9 —
+    /// the playtest found the default too quick). Hold Z fast-forwards.
+    #[serde(default)]
+    pub battle_pace: u8,
     pub battle_animations: bool,
     /// Set = no switch prompt on foe faint (doc 02 era convention).
     pub set_mode: bool,
@@ -61,6 +65,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             text_speed: 60,
+            battle_pace: 0,
             battle_animations: true,
             set_mode: false,
             volume_music: 80,

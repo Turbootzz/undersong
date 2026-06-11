@@ -94,7 +94,9 @@ fn screens_open(mut commands: Commands, theme: Res<Theme>, mut state: ResMut<Scr
 }
 
 fn screens_input(
+    mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
+    assets: Res<AssetServer>,
     mut state: ResMut<ScreenState>,
     mut world: ResMut<WorldRes>,
     mut settings: ResMut<SettingsRes>,
@@ -103,8 +105,23 @@ fn screens_input(
     if keys.just_pressed(KeyCode::Escape)
         || (keys.just_pressed(KeyCode::KeyX) && state.pending_tm.is_none())
     {
+        crate::app::play_cue(&mut commands, &assets, &settings.0, "cancel");
         next.set(AppState::Overworld);
         return;
+    }
+    // Cursor + tab cues (one per frame is plenty).
+    if keys.any_just_pressed([
+        KeyCode::ArrowUp,
+        KeyCode::ArrowDown,
+        KeyCode::ArrowLeft,
+        KeyCode::ArrowRight,
+        KeyCode::KeyQ,
+        KeyCode::KeyE,
+    ]) {
+        crate::app::play_cue(&mut commands, &assets, &settings.0, "cursor");
+    }
+    if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+        crate::app::play_cue(&mut commands, &assets, &settings.0, "confirm");
     }
     // Q/E cycle screens.
     if keys.just_pressed(KeyCode::KeyQ) || keys.just_pressed(KeyCode::KeyE) {
@@ -249,7 +266,7 @@ fn screens_input(
             }
         }
         Screen::Options => {
-            let rows = 6;
+            let rows = 7;
             if down && state.cursor + 1 < rows {
                 state.cursor += 1;
             }
@@ -270,6 +287,9 @@ fn screens_input(
                             30 => 60,
                             _ => 0,
                         };
+                    }
+                    5 => {
+                        settings.0.battle_pace = (settings.0.battle_pace + 1) % 3;
                     }
                     _ => {
                         let volume = i32::from(settings.0.volume_music) + delta * 10;
@@ -513,6 +533,14 @@ fn screens_render(
                     }
                 ),
                 format!("text speed: {}", settings.0.text_speed),
+                format!(
+                    "battle pace: {}",
+                    match settings.0.battle_pace {
+                        0 => "relaxed",
+                        1 => "standard",
+                        _ => "brisk",
+                    }
+                ),
                 format!("music volume: {}", settings.0.volume_music),
             ];
             for (index, row) in rows.iter().enumerate() {

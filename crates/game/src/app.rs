@@ -36,6 +36,7 @@ impl Plugin for UndersongPlugin {
                     player_input,
                     rebuild_map_if_needed,
                     animate_player,
+                    facing_marker,
                     npc_wander,
                     sync_npc_sprites,
                     camera_follow,
@@ -113,6 +114,10 @@ struct RenderedMap(Option<undersong_core::ids::MapId>);
 
 #[derive(Resource)]
 struct PlayerAnim(Option<(Vec2, Vec2, f32)>);
+
+/// The soft dot on the tile the player faces (interact target).
+#[derive(Component)]
+struct FacingMarker;
 
 #[derive(Resource)]
 struct WanderTimer(Timer);
@@ -263,12 +268,20 @@ fn rebuild_map_if_needed(
         }
     }
 
-    // The player persists across maps; spawn once.
+    // The player persists across maps; spawn once (with the facing
+    // marker — P9: "am I looking at the NPC?" must answer itself).
     if player.is_empty() {
         commands.spawn((
             PlayerSprite,
             quad(theme.color(&theme.palette.gilt), TILE - 4.0),
             tile_pos(world.0.player.0, world.0.player.1, 2.0),
+        ));
+        let mut marker_color = theme.color(&theme.palette.gilt);
+        marker_color.set_alpha(0.45);
+        commands.spawn((
+            FacingMarker,
+            quad(marker_color, TILE / 3.0),
+            tile_pos(world.0.player.0, world.0.player.1.saturating_sub(1), 1.5),
         ));
     }
 
@@ -293,7 +306,10 @@ fn pressed_direction(keys: &ButtonInput<KeyCode>) -> Option<Facing> {
 
 #[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn player_input(
+    mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
+    assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
     mut world: ResMut<WorldRes>,
     mut anim: ResMut<PlayerAnim>,
     mut rendered: ResMut<RenderedMap>,
@@ -308,7 +324,14 @@ fn player_input(
     }
     // Interact / advance dialogue / answer choice.
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+        let was_talking = world.0.dialogue.is_some();
         let events = world.0.apply(WorldInput::Interact);
+        let line = events
+            .iter()
+            .any(|e| matches!(e, WorldEvent::DialogueLine { .. }));
+        if line || was_talking {
+            play_cue(&mut commands, &assets, &settings.0, "cursor");
+        }
         handle_events(
             &events,
             &mut world,
@@ -459,6 +482,23 @@ fn animate_player(
         transform.translation = Vec3::new(p.x, p.y, 2.0);
     }
     anim.0 = if t >= 1.0 { None } else { Some((from, to, t)) };
+}
+
+fn facing_marker(
+    world: Res<WorldRes>,
+    player: Query<&Transform, (With<PlayerSprite>, Without<FacingMarker>)>,
+    mut marker: Query<&mut Transform, With<FacingMarker>>,
+) {
+    let (Ok(player), Ok(mut marker)) = (player.single(), marker.single_mut()) else {
+        return;
+    };
+    let (dx, dy) = match world.0.facing {
+        Facing::Up => (0.0, TILE),
+        Facing::Down => (0.0, -TILE),
+        Facing::Left => (-TILE, 0.0),
+        Facing::Right => (TILE, 0.0),
+    };
+    marker.translation = Vec3::new(player.translation.x + dx, player.translation.y + dy, 1.5);
 }
 
 // ----- NPCs ------------------------------------------------------------
@@ -625,10 +665,13 @@ struct ShopText;
 
 /// Renders the open mart and routes keys to the pure shop inputs.
 /// Movement is already frozen by the core while a shop is open.
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn shop_ui(
     mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     theme: Option<Res<Theme>>,
+    assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
     mut world: ResMut<WorldRes>,
     existing: Query<Entity, With<ShopUi>>,
     mut text: Query<&mut Text, With<ShopText>>,
@@ -641,18 +684,30 @@ fn shop_ui(
         return;
     }
 
-    // Keys → pure inputs.
+    // Keys → pure inputs (with their cues).
     if keys.just_pressed(KeyCode::ArrowDown) {
         world.0.apply(WorldInput::ShopCursor(1));
+        play_cue(&mut commands, &assets, &settings.0, "cursor");
     }
     if keys.just_pressed(KeyCode::ArrowUp) {
         world.0.apply(WorldInput::ShopCursor(-1));
+        play_cue(&mut commands, &assets, &settings.0, "cursor");
     }
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
-        world.0.apply(WorldInput::ShopBuy);
+        let events = world.0.apply(WorldInput::ShopBuy);
+        let bought = events
+            .iter()
+            .any(|e| matches!(e, WorldEvent::ItemBought { .. }));
+        play_cue(
+            &mut commands,
+            &assets,
+            &settings.0,
+            if bought { "buy" } else { "cancel" },
+        );
     }
     if keys.just_pressed(KeyCode::KeyX) || keys.just_pressed(KeyCode::Escape) {
         world.0.apply(WorldInput::ShopClose);
+        play_cue(&mut commands, &assets, &settings.0, "cancel");
         return;
     }
 
@@ -789,10 +844,12 @@ fn menu_open(mut commands: Commands, theme: Res<Theme>, mut cursor: ResMut<MenuC
 
 #[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn menu_input(
+    mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
     theme: Res<Theme>,
     world: Res<WorldRes>,
     time: Res<Time>,
+    assets: Res<AssetServer>,
     mut cursor: ResMut<MenuCursor>,
     mut settings: ResMut<SettingsRes>,
     mut settings_ui: ResMut<SettingsOpen>,
@@ -801,9 +858,11 @@ fn menu_input(
 ) {
     if keys.just_pressed(KeyCode::ArrowDown) {
         cursor.0 = (cursor.0 + 1) % MENU_ROWS.len();
+        play_cue(&mut commands, &assets, &settings.0, "cursor");
     }
     if keys.just_pressed(KeyCode::ArrowUp) {
         cursor.0 = (cursor.0 + MENU_ROWS.len() - 1) % MENU_ROWS.len();
+        play_cue(&mut commands, &assets, &settings.0, "cursor");
     }
     for (row, mut background) in &mut rows {
         let selected = row.0 == cursor.0;
@@ -814,6 +873,7 @@ fn menu_input(
         };
     }
     if keys.just_pressed(KeyCode::Escape) || keys.just_pressed(KeyCode::KeyX) {
+        play_cue(&mut commands, &assets, &settings.0, "cancel");
         if settings_ui.0 {
             settings_ui.0 = false;
         } else {
@@ -822,6 +882,7 @@ fn menu_input(
         return;
     }
     if !settings_ui.0 && (keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter)) {
+        play_cue(&mut commands, &assets, &settings.0, "confirm");
         match cursor.0 {
             1 => {
                 next.set(AppState::Dialogue); // the party screen state
@@ -927,6 +988,24 @@ fn audio_unlock(keys: Res<ButtonInput<KeyCode>>, mut unlocked: ResMut<AudioUnloc
     if !unlocked.0 && keys.get_just_pressed().next().is_some() {
         unlocked.0 = true;
     }
+}
+
+/// One-shot UI cue (P9: the cue WAVs existed since P5 — nothing ever
+/// played them). Despawns itself when done.
+pub fn play_cue(
+    commands: &mut Commands,
+    assets: &AssetServer,
+    settings: &save::Settings,
+    name: &str,
+) {
+    if settings.volume_sfx == 0 {
+        return;
+    }
+    let volume = f32::from(settings.volume_sfx) / 100.0 * 0.8;
+    commands.spawn((
+        AudioPlayer::new(assets.load(format!("sfx/{name}.wav"))),
+        PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::Linear(volume)),
+    ));
 }
 
 fn music_director(

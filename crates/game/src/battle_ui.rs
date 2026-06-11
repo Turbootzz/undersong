@@ -509,15 +509,20 @@ fn pump_messages(
     }
     queue.timer += time.delta_secs();
     let skip = keys.just_pressed(KeyCode::KeyZ);
-    let pace = if settings.0.battle_animations {
-        match settings.0.text_speed {
-            0 => 0.8,
-            30 => 0.5,
-            _ => 0.3,
+    // Battle pacing rides its own setting (P9); holding Z fast-forwards
+    // at 4× without skipping lines outright.
+    let mut pace = if settings.0.battle_animations {
+        match settings.0.battle_pace {
+            0 => 1.1,
+            1 => 0.7,
+            _ => 0.4,
         }
     } else {
         0.05 // animations off: near-instant pacing
     };
+    if keys.pressed(KeyCode::KeyZ) {
+        pace /= 4.0;
+    }
     if queue.timer >= pace || skip {
         queue.timer = 0.0;
         if let Some(line) = queue.lines.pop_front()
@@ -533,7 +538,9 @@ fn pump_messages(
 
 #[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn battle_input(
+    mut commands: Commands,
     keys: Res<ButtonInput<KeyCode>>,
+    assets: Res<AssetServer>,
     theme: Res<Theme>,
     settings: Res<crate::app::SettingsRes>,
     mut world: ResMut<WorldRes>,
@@ -576,9 +583,11 @@ fn battle_input(
         }
         let pick = bench[cursor.index % bench.len()];
         if keys.just_pressed(KeyCode::ArrowRight) {
+            crate::app::play_cue(&mut commands, &assets, &settings.0, "cursor");
             cursor.index = (cursor.index + 1) % bench.len();
         }
         if keys.just_pressed(KeyCode::ArrowLeft) {
+            crate::app::play_cue(&mut commands, &assets, &settings.0, "cursor");
             cursor.index = (cursor.index + bench.len() - 1) % bench.len();
         }
         if let Some(session) = &world.0.battle {
@@ -647,9 +656,11 @@ fn battle_input(
             .map_or(1, |s| s.state.sides[0].active_mote().moves.len().max(1))
     };
     if keys.just_pressed(KeyCode::ArrowRight) {
+        crate::app::play_cue(&mut commands, &assets, &settings.0, "cursor");
         cursor.index = (cursor.index + 1) % limit;
     }
     if keys.just_pressed(KeyCode::ArrowLeft) {
+        crate::app::play_cue(&mut commands, &assets, &settings.0, "cursor");
         cursor.index = (cursor.index + limit - 1) % limit;
     }
 
