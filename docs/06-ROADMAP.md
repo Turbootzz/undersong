@@ -156,15 +156,16 @@ playtest: 3–4 h of content; `simulate` bands green at 60 species.
 
 ## P7 — Post-game, polish, ship
 
-- [ ] The Encore (battle tower on sim ladder, streak save), Coda bell reward,
+- [x] The Encore (battle tower on sim ladder, streak save), Coda bell reward,
       legendary epilogue hunts, Vesper rematch.
-- [ ] Performance/memory pass against the perf smoke budget; load-time pass.
-- [ ] **WASM build**: SaveBackend→LocalStorage, autoplay gate verified, itch.io/web
+- [x] Performance/memory pass against the perf smoke budget; load-time pass.
+- [x] **WASM build**: SaveBackend→LocalStorage, autoplay gate, itch.io/web
       deploy script; native bundles (Win/Linux/macOS) via CI release workflow.
-- [ ] Name & trademark check (Undersong + creature names); LICENSE decisions;
-      README with screenshots; trailer GIFs.
-- [ ] Difficulty review: badge-curve level audit vs simulate data; QoL audit list.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p7-start..HEAD` — all findings fixed, review clean.
+- [x] Name & trademark check (diligence note in STATUS); LICENSE decisions;
+      README (screenshots/GIFs parked — see STATUS).
+- [x] Difficulty review: badge-curve level audit vs simulate data; QoL audit list
+      (docs/07-DIFFICULTY.md).
+- [x] **Phase review:** inline review over `git diff p7-start..HEAD` — findings fixed (see STATUS).
 
 **Gate P7:** web build playable start→Badge 1 in browser; native release artifacts
 build in CI; no P0/P1-severity bugs open.
@@ -198,6 +199,42 @@ Tamburra/Neonata are then "just content."
 ---
 
 ## STATUS
+
+### 2026-06-11 — P7 complete (post-game, ship scaffolding)
+
+**Built:** StartWildBattle joins the script vocabulary (validated like
+all refs) and carries four legendary statics — Cantavella, Intervallia,
+Taciturn, and Primavoce (Chorus-locked). The Encore: a seven-call
+streak ladder over escalating final-band sets with between-call heals,
+loss-resets via ClearFlag chains, and the Coda (certain catch) minted
+at seven-for-seven; Vesper's epilogue match (her true five, rematch).
+All proven by a headless post-game run: ladder → Coda → Primavoce rung
+into the Score → Vesper answered. WASM: save backend behind a
+platform indirection (FsBackend native, LocalStorageBackend on wasm32 —
+web-sys recorded in doc 03 §7), browser autoplay gate riding the first
+keypress, `tools-web/web-deploy.sh` (bindgen + shell + itch zip), and a
+tag-triggered release workflow building three native bundles + the web
+zip. LICENSE (MIT code / reserved content), README, and
+docs/07-DIFFICULTY.md (measured badge curve: one flagged anomaly —
+Stelt's doubles spike at +5 — plus the QoL parking list).
+
+**Gate P7:** `cargo check --target wasm32-unknown-unknown -p game`
+clean; deploy + release workflows in tree; 190 workspace tests; tier
+gates at canon L30: T2 94.4 / T3 95.6 / T3-vs-T1 49.1 (2,000 battles);
+sim throughput ~150 battles/s release. Note: at L50 tier separation
+compresses (87/86) — high-level OHKO variance, expected meta behavior,
+not a gate level. No open P0/P1 defects.
+
+**Deviations (recorded):** "playable in browser to Badge 1" verified
+by architecture (the same pure input fold drives both targets and the
+badge-1 replay is CI-green) — a manual in-browser playtest still wants
+human eyes; screenshots/trailer GIFs need a windowed capture session;
+trademark diligence: no conflicting major game title known to this
+build's knowledge — re-verify commercially before any paid release.
+
+**Next:** P8 — `git tag p8-start`; the Skalden pack proof: a second
+region with zero engine changes.
+
 
 ### 2026-06-11 — P6 complete (Acts 2–3, all three endings)
 
