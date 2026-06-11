@@ -1,0 +1,16 @@
+// Fogato — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "fogato", name_key: "motif.fogato", types: [Frost, Phantom],
+    base_stats: (hp: 58, atk: 44, def: 52, spa: 72, spd: 66, spe: 58),
+    catch_rate: 110, base_exp_yield: 118,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sleet_staccato"), (1, "hollow_hum"), (9, "dampen"), (16, "frost_lull"), (23, "hail_chorale"), (31, "phantom_rest"), (39, "requiem_swell")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 110657731496745, sigil_seed: 110657731496745,
+    dex: (height_dm: 7, weight_hg: 240, entry_key: "dex.fogato"),
+)

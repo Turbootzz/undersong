@@ -1,0 +1,16 @@
+// Frostrel — P5 batch E (type-gap fill)
+Motif(
+    id: "frostrel", name_key: "motif.frostrel", types: [Frost],
+    base_stats: (hp: 50, atk: 44, def: 52, spa: 60, spd: 58, spe: 52),
+    catch_rate: 180, base_exp_yield: 62,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sleet_staccato"), (1, "tackle"), (9, "dampen"), (15, "frost_lull"), (22, "hail_chorale"), (29, "hollow_hum")],
+    abilities: ["vigor"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: Some((method: Level(23), target: "glacialto")),
+    cry_seed: 88713517277062, sigil_seed: 88713517277062,
+    dex: (height_dm: 8, weight_hg: 200, entry_key: "dex.frostrel"),
+)

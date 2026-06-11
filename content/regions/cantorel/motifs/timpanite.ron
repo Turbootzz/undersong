@@ -1,7 +1,7 @@
 // Timpanite — Timpani x -ite (mineral suffix). A squat tortoise-Mote whose layered-s
 Motif(
     id: "timpanite", name_key: "motif.timpanite", types: [Stone],
-    base_stats: (hp: 75, atk: 60, def: 92, spa: 35, spd: 80, spe: 30),
+    base_stats: (hp: 75, atk: 60, def: 84, spa: 35, spd: 80, spe: 30),
     catch_rate: 190, base_exp_yield: 84,
     ev_yield: {def: 1},
     growth_curve: MediumSlow,

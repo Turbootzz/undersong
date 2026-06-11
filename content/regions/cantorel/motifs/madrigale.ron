@@ -1,0 +1,16 @@
+// Madrigale — P5 batch E (type-gap fill)
+Motif(
+    id: "madrigale", name_key: "motif.madrigale", types: [Bloom, Resonant],
+    base_stats: (hp: 62, atk: 48, def: 56, spa: 78, spd: 78, spe: 66),
+    catch_rate: 70, base_exp_yield: 152,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "bud_strum"), (1, "overtone"), (10, "dampen"), (17, "leaf_pick"), (24, "root_chord"), (31, "sostenuto"), (39, "resonate")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("amplify"),
+    tags: ["habitat.forest", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 151325373323280, sigil_seed: 151325373323280,
+    dex: (height_dm: 7, weight_hg: 217, entry_key: "dex.madrigale"),
+)

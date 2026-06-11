@@ -1,0 +1,16 @@
+// Dunelay — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "dunelay", name_key: "motif.dunelay", types: [Stone, Gale],
+    base_stats: (hp: 60, atk: 56, def: 66, spa: 40, spd: 50, spe: 56),
+    catch_rate: 150, base_exp_yield: 95,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "pebble_beat"), (1, "zephyr_pluck"), (9, "quick_step"), (15, "stone_toll"), (22, "wing_beat"), (29, "downbeat"), (36, "boulder_coda")],
+    abilities: ["floating"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 60955320407628, sigil_seed: 60955320407628,
+    dex: (height_dm: 6, weight_hg: 242, entry_key: "dex.dunelay"),
+)

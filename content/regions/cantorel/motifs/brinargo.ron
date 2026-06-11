@@ -1,0 +1,16 @@
+// Brinargo — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "brinargo", name_key: "motif.brinargo", types: [Tide],
+    base_stats: (hp: 52, atk: 58, def: 46, spa: 44, spd: 42, spe: 66),
+    catch_rate: 200, base_exp_yield: 58,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "tackle"), (7, "quick_step"), (13, "breaker_beat"), (19, "undertow"), (26, "quick_march")],
+    abilities: ["vigor"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.coast", "performer.ferry"],
+    tm_set: [],
+    evolution: Some((method: Level(21), target: "largotide")),
+    cry_seed: 154847401520329, sigil_seed: 154847401520329,
+    dex: (height_dm: 7, weight_hg: 223, entry_key: "dex.brinargo"),
+)

@@ -1,0 +1,16 @@
+// Vesperbat — P5 batch E (type-gap fill)
+Motif(
+    id: "vesperbat", name_key: "motif.vesperbat", types: [Phantom, Gale],
+    base_stats: (hp: 54, atk: 58, def: 46, spa: 58, spd: 56, spe: 78),
+    catch_rate: 100, base_exp_yield: 128,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "hollow_hum"), (1, "zephyr_pluck"), (9, "quick_step"), (16, "gale_riff"), (23, "phantom_rest"), (31, "requiem_swell"), (39, "tempest_coda")],
+    abilities: ["damper"],
+    hidden_ability: Some("keysmith"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 241725413774946, sigil_seed: 241725413774946,
+    dex: (height_dm: 9, weight_hg: 211, entry_key: "dex.vesperbat"),
+)

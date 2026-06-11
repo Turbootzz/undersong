@@ -1,0 +1,16 @@
+// Requiemoth — P5 batch E (type-gap fill)
+Motif(
+    id: "requiemoth", name_key: "motif.requiemoth", types: [Phantom, Frost],
+    base_stats: (hp: 72, atk: 50, def: 60, spa: 90, spd: 80, spe: 64),
+    catch_rate: 50, base_exp_yield: 178,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "hollow_hum"), (1, "sleet_staccato"), (11, "dampen"), (18, "frost_lull"), (25, "phantom_rest"), (33, "hail_chorale"), (41, "requiem_swell")],
+    abilities: ["damper"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.ruin", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 229564593232334, sigil_seed: 229564593232334,
+    dex: (height_dm: 9, weight_hg: 236, entry_key: "dex.requiemoth"),
+)

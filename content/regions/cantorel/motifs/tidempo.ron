@@ -1,0 +1,16 @@
+// Tidempo — P5 batch E (type-gap fill)
+Motif(
+    id: "tidempo", name_key: "motif.tidempo", types: [Tide, Volt],
+    base_stats: (hp: 60, atk: 52, def: 58, spa: 78, spd: 60, spe: 74),
+    catch_rate: 110, base_exp_yield: 130,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "static_strum"), (9, "volt_pluck"), (16, "undertow"), (23, "stun_chord"), (30, "breaker_beat"), (38, "riptide_finale")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 3630757816196, sigil_seed: 3630757816196,
+    dex: (height_dm: 7, weight_hg: 267, entry_key: "dex.tidempo"),
+)

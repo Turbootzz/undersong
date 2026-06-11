@@ -1,0 +1,16 @@
+// Maridian — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "maridian", name_key: "motif.maridian", types: [Tide, Stone],
+    base_stats: (hp: 82, atk: 62, def: 88, spa: 58, spd: 76, spe: 30),
+    catch_rate: 80, base_exp_yield: 150,
+    ev_yield: {def: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "pebble_beat"), (10, "dampen"), (17, "stone_toll"), (24, "undertow"), (31, "fermata_guard"), (40, "boulder_coda")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 152930880427575, sigil_seed: 152930880427575,
+    dex: (height_dm: 10, weight_hg: 233, entry_key: "dex.maridian"),
+)

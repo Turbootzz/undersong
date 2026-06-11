@@ -1,0 +1,16 @@
+// Pyrelodie — P5 batch E (type-gap fill)
+Motif(
+    id: "pyrelodie", name_key: "motif.pyrelodie", types: [Ember, Gale],
+    base_stats: (hp: 64, atk: 78, def: 56, spa: 76, spd: 58, spe: 88),
+    catch_rate: 85, base_exp_yield: 158,
+    ev_yield: {spe: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "ember_note"), (1, "zephyr_pluck"), (8, "quick_step"), (14, "flare_brass"), (21, "cinder_waltz"), (27, "gale_riff"), (34, "tempest_coda"), (42, "crescendo")],
+    abilities: ["heat_haze"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 211774976602601, sigil_seed: 223042452400279,
+    dex: (height_dm: 10, weight_hg: 249, entry_key: "dex.pyrelodie"),
+)

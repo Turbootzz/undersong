@@ -1,0 +1,16 @@
+// Largotide — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "largotide", name_key: "motif.largotide", types: [Tide, Feral],
+    base_stats: (hp: 78, atk: 70, def: 62, spa: 50, spd: 58, spe: 88),
+    catch_rate: 90, base_exp_yield: 160,
+    ev_yield: {atk: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "tackle"), (7, "quick_step"), (13, "breaker_beat"), (19, "undertow"), (25, "downbeat"), (33, "fortissimo_slam"), (41, "riptide_finale")],
+    abilities: ["vigor"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.coast", "performer.ferry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 154847401520329, sigil_seed: 208810373678457,
+    dex: (height_dm: 8, weight_hg: 287, entry_key: "dex.largotide"),
+)

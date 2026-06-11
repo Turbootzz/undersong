@@ -1,0 +1,16 @@
+// Ampurr — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "ampurr", name_key: "motif.ampurr", types: [Volt],
+    base_stats: (hp: 55, atk: 52, def: 50, spa: 66, spd: 58, spe: 72),
+    catch_rate: 160, base_exp_yield: 90,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "static_strum"), (1, "tackle"), (8, "volt_pluck"), (14, "quick_step"), (21, "stun_chord"), (28, "downbeat"), (35, "shatter_aria")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: Some((method: Level(24), target: "voltacelle")),
+    cry_seed: 264182075737234, sigil_seed: 264182075737234,
+    dex: (height_dm: 8, weight_hg: 230, entry_key: "dex.ampurr"),
+)

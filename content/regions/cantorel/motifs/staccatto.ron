@@ -1,0 +1,16 @@
+// Staccatto — P5 batch E (type-gap fill)
+Motif(
+    id: "staccatto", name_key: "motif.staccatto", types: [Volt, Alloy],
+    base_stats: (hp: 58, atk: 58, def: 62, spa: 50, spd: 52, spe: 66),
+    catch_rate: 120, base_exp_yield: 112,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "static_strum"), (1, "cymbal_tap"), (9, "volt_pluck"), (16, "quick_step"), (23, "alloy_clang"), (30, "stun_chord"), (38, "shatter_aria")],
+    abilities: ["metronome_soul"],
+    hidden_ability: Some("live_wire"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 8807421566952, sigil_seed: 8807421566952,
+    dex: (height_dm: 7, weight_hg: 219, entry_key: "dex.staccatto"),
+)

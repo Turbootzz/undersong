@@ -1,0 +1,16 @@
+// Crescendola — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "crescendola", name_key: "motif.crescendola", types: [Resonant],
+    base_stats: (hp: 72, atk: 58, def: 64, spa: 90, spd: 82, spe: 70),
+    catch_rate: 45, base_exp_yield: 190,
+    ev_yield: {spa: 3},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "dampen"), (12, "sostenuto"), (20, "crescendo"), (28, "resonate"), (36, "requiem_swell"), (45, "shatter_aria")],
+    abilities: ["amplify"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.ruin", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 8104109857339, sigil_seed: 8104109857339,
+    dex: (height_dm: 10, weight_hg: 260, entry_key: "dex.crescendola"),
+)

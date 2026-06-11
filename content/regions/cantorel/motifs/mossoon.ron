@@ -1,11 +1,11 @@
 // Mossoon — P5 batch A (Arbor Vale / routes 2–3)
 Motif(
     id: "mossoon", name_key: "motif.mossoon", types: [Bloom],
-    base_stats: (hp: 50, atk: 54, def: 58, spa: 46, spd: 60, spe: 44),
+    base_stats: (hp: 50, atk: 54, def: 64, spa: 56, spd: 72, spe: 44),
     catch_rate: 200, base_exp_yield: 58,
     ev_yield: {spd: 1},
     growth_curve: MediumFast,
-    learnset: [(1, "tackle"), (1, "bud_strum"), (6, "dampen"), (12, "leaf_pick"), (18, "root_chord"), (26, "da_capo")],
+    learnset: [(1, "tackle"), (1, "bud_strum"), (6, "dampen"), (12, "leaf_pick"), (18, "root_chord"), (22, "da_capo"), (30, "sostenuto"), (32, "briar_bow")],
     abilities: ["damper"],
     hidden_ability: Some("vigor"),
     tags: ["habitat.forest"],

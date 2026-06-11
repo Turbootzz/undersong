@@ -1,0 +1,16 @@
+// Sirenetta — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "sirenetta", name_key: "motif.sirenetta", types: [Tide, Resonant],
+    base_stats: (hp: 60, atk: 42, def: 54, spa: 86, spd: 72, spe: 68),
+    catch_rate: 75, base_exp_yield: 145,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "overtone"), (10, "dampen"), (17, "undertow"), (24, "sostenuto"), (32, "resonate"), (40, "riptide_finale")],
+    abilities: ["amplify"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.coast", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 249806648294461, sigil_seed: 249806648294461,
+    dex: (height_dm: 8, weight_hg: 212, entry_key: "dex.sirenetta"),
+)

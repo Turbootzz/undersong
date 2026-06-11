@@ -1,0 +1,16 @@
+// Forgeling — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "forgeling", name_key: "motif.forgeling", types: [Alloy, Ember],
+    base_stats: (hp: 70, atk: 80, def: 78, spa: 56, spd: 62, spe: 44),
+    catch_rate: 100, base_exp_yield: 140,
+    ev_yield: {atk: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "cymbal_tap"), (1, "ember_note"), (13, "flare_brass"), (17, "alloy_clang"), (24, "cinder_waltz"), (31, "anvil_anthem"), (40, "anvil_chorus")],
+    abilities: ["amplify"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 5024482520123, sigil_seed: 5024482520123,
+    dex: (height_dm: 10, weight_hg: 224, entry_key: "dex.forgeling"),
+)

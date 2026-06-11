@@ -1,0 +1,16 @@
+// Mutewing — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "mutewing", name_key: "motif.mutewing", types: [Venom, Phantom],
+    base_stats: (hp: 58, atk: 72, def: 54, spa: 48, spd: 56, spe: 82),
+    catch_rate: 90, base_exp_yield: 140,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sour_note"), (1, "grace_note"), (9, "quick_step"), (16, "venom_trill"), (23, "hollow_hum"), (30, "toxic_toccata"), (38, "venom_cadenza")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("vigor"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 232023883701481, sigil_seed: 232023883701481,
+    dex: (height_dm: 8, weight_hg: 206, entry_key: "dex.mutewing"),
+)

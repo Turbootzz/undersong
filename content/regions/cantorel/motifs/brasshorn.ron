@@ -1,0 +1,16 @@
+// Brasshorn — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "brasshorn", name_key: "motif.brasshorn", types: [Alloy, Feral],
+    base_stats: (hp: 80, atk: 88, def: 76, spa: 52, spd: 60, spe: 54),
+    catch_rate: 70, base_exp_yield: 165,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "cymbal_tap"), (1, "tackle"), (10, "downbeat"), (17, "alloy_clang"), (24, "quick_march"), (31, "fortissimo_slam"), (40, "anvil_chorus")],
+    abilities: ["iron_ear"],
+    hidden_ability: Some("chorister"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 128388281253810, sigil_seed: 128388281253810,
+    dex: (height_dm: 9, weight_hg: 255, entry_key: "dex.brasshorn"),
+)

@@ -1,0 +1,16 @@
+// Glacialto — P5 batch E (type-gap fill)
+Motif(
+    id: "glacialto", name_key: "motif.glacialto", types: [Frost, Stone],
+    base_stats: (hp: 76, atk: 60, def: 80, spa: 84, spd: 72, spe: 38),
+    catch_rate: 80, base_exp_yield: 162,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sleet_staccato"), (1, "pebble_beat"), (9, "dampen"), (15, "frost_lull"), (22, "hail_chorale"), (28, "stone_toll"), (36, "boulder_coda"), (44, "requiem_swell")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 88713517277062, sigil_seed: 101979475652161,
+    dex: (height_dm: 8, weight_hg: 226, entry_key: "dex.glacialto"),
+)

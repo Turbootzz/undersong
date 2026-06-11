@@ -1,0 +1,16 @@
+// Cinderle — P5 batch E (type-gap fill)
+Motif(
+    id: "cinderle", name_key: "motif.cinderle", types: [Ember],
+    base_stats: (hp: 48, atk: 56, def: 42, spa: 58, spd: 44, spe: 62),
+    catch_rate: 190, base_exp_yield: 60,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ember_note"), (1, "tackle"), (8, "quick_step"), (14, "flare_brass"), (21, "cinder_waltz"), (28, "downbeat")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("amplify"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: Some((method: Level(22), target: "pyrelodie")),
+    cry_seed: 211774976602601, sigil_seed: 211774976602601,
+    dex: (height_dm: 7, weight_hg: 216, entry_key: "dex.cinderle"),
+)

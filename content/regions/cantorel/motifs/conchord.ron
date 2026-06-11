@@ -1,0 +1,16 @@
+// Conchord — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "conchord", name_key: "motif.conchord", types: [Tide, Alloy],
+    base_stats: (hp: 66, atk: 54, def: 84, spa: 58, spd: 72, spe: 28),
+    catch_rate: 130, base_exp_yield: 110,
+    ev_yield: {def: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "cymbal_tap"), (10, "dampen"), (16, "alloy_clang"), (23, "fermata_guard"), (30, "undertow"), (38, "anvil_chorus")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 132247534784186, sigil_seed: 132247534784186,
+    dex: (height_dm: 9, weight_hg: 227, entry_key: "dex.conchord"),
+)

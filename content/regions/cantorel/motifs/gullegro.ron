@@ -1,0 +1,16 @@
+// Gullegro — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "gullegro", name_key: "motif.gullegro", types: [Gale, Tide],
+    base_stats: (hp: 58, atk: 60, def: 50, spa: 52, spd: 48, spe: 80),
+    catch_rate: 170, base_exp_yield: 86,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "zephyr_pluck"), (1, "ripple"), (8, "wing_beat"), (14, "gale_riff"), (20, "undertow"), (27, "downbeat"), (34, "tempest_coda")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("floating"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 144415080744196, sigil_seed: 144415080744196,
+    dex: (height_dm: 6, weight_hg: 210, entry_key: "dex.gullegro"),
+)

@@ -1,0 +1,16 @@
+// Terracant — P5 batch E (type-gap fill)
+Motif(
+    id: "terracant", name_key: "motif.terracant", types: [Stone, Bloom],
+    base_stats: (hp: 84, atk: 80, def: 78, spa: 46, spd: 62, spe: 32),
+    catch_rate: 75, base_exp_yield: 160,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "pebble_beat"), (1, "bud_strum"), (11, "leaf_pick"), (18, "stone_toll"), (25, "root_chord"), (33, "boulder_coda"), (42, "fermata_guard")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.forest", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 276076600869524, sigil_seed: 276076600869524,
+    dex: (height_dm: 7, weight_hg: 255, entry_key: "dex.terracant"),
+)

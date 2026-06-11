@@ -1,0 +1,16 @@
+// Graviole — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "graviole", name_key: "motif.graviole", types: [Stone, Resonant],
+    base_stats: (hp: 88, atk: 74, def: 90, spa: 70, spd: 72, spe: 32),
+    catch_rate: 55, base_exp_yield: 175,
+    ev_yield: {def: 2},
+    growth_curve: Slow,
+    learnset: [(1, "pebble_beat"), (1, "overtone"), (11, "stone_toll"), (19, "dampen"), (23, "fermata_guard"), (35, "boulder_coda"), (38, "resonate")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("tuning_fork"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 39643350655265, sigil_seed: 39643350655265,
+    dex: (height_dm: 8, weight_hg: 233, entry_key: "dex.graviole"),
+)

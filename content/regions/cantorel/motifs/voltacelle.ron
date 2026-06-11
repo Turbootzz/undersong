@@ -1,0 +1,16 @@
+// Voltacelle — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "voltacelle", name_key: "motif.voltacelle", types: [Volt, Resonant],
+    base_stats: (hp: 68, atk: 60, def: 62, spa: 84, spd: 74, spe: 82),
+    catch_rate: 70, base_exp_yield: 168,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "static_strum"), (1, "overtone"), (12, "volt_pluck"), (14, "quick_step"), (21, "stun_chord"), (27, "sostenuto"), (34, "resonate"), (42, "shatter_aria")],
+    abilities: ["amplify"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.urban", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 264182075737234, sigil_seed: 260211036108514,
+    dex: (height_dm: 9, weight_hg: 278, entry_key: "dex.voltacelle"),
+)

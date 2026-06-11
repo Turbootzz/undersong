@@ -1,0 +1,16 @@
+// Kelpitan — P5 batch B (routes 4–5 / Quiet Coast)
+Motif(
+    id: "kelpitan", name_key: "motif.kelpitan", types: [Bloom, Tide],
+    base_stats: (hp: 74, atk: 68, def: 70, spa: 52, spd: 64, spe: 36),
+    catch_rate: 120, base_exp_yield: 122,
+    ev_yield: {hp: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "bud_strum"), (1, "ripple"), (9, "leaf_pick"), (15, "dampen"), (22, "root_chord"), (29, "undertow"), (37, "briar_bow")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("thorn_coat"),
+    tags: ["habitat.coast", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 244530720111809, sigil_seed: 244530720111809,
+    dex: (height_dm: 8, weight_hg: 231, entry_key: "dex.kelpitan"),
+)

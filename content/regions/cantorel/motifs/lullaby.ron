@@ -1,0 +1,16 @@
+// Lullabye — P5 batch C/D (Port Calando / rares)
+Motif(
+    id: "lullaby", name_key: "motif.lullaby", types: [Phantom, Resonant],
+    base_stats: (hp: 66, atk: 40, def: 58, spa: 88, spd: 84, spe: 60),
+    catch_rate: 60, base_exp_yield: 170,
+    ev_yield: {spd: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "hollow_hum"), (1, "overtone"), (10, "dampen"), (18, "phantom_rest"), (26, "sostenuto"), (34, "requiem_swell"), (42, "resonate")],
+    abilities: ["damper"],
+    hidden_ability: Some("keysmith"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 132036867863204, sigil_seed: 132036867863204,
+    dex: (height_dm: 7, weight_hg: 262, entry_key: "dex.lullaby"),
+)
