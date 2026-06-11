@@ -146,3 +146,34 @@ Night palette: multiply overworld by `#9aa0c8` at 60% (data-driven curve per hou
 - Check current Bevy UI API on docs.rs before building — UI is the most
   version-drifted part of Bevy. Budget one spike task in P2 for "render the battle
   layout statically" before wiring data.
+
+
+---
+
+## v2 Art Direction (P10+, decided 2026-06-11 with the user)
+
+Supersedes the flat-quad placeholder look everywhere it conflicts.
+
+1. **Canvas**: 640×360 internal, 32px tile grid, integer scaling to window.
+2. **Source of art**: everything generated deterministically by `tools sprites`
+   (seeded like cries/sigils — one seed family per species keeps evolution lines
+   visually related). **Override rule**: a PNG at `assets/custom/<same relative
+   path>` always replaces its generated counterpart; the loader checks custom
+   first. Hand-made art needs zero code changes.
+3. **Tiles**: textured, with edge/corner variants (grass↔path↔water blending,
+   tree clusters, building walls/roofs/doors). Region palette keys: Cantorel
+   warm parchment-and-moss; Skalden cold fjord blues and bone.
+4. **Characters**: 32px-tall sprites, 4 directions, 2-frame walk. Distinct
+   archetype silhouettes (hat/robe/apron/pack) + class accent colors.
+5. **Monsters**: body-plan grammar. Primary type + tags pick a silhouette family
+   (quadruped, bird, serpent, moth, fish, blob, golem, sprite); the species seed
+   drives proportions, markings, and palette within doc-05 ramps. Outputs:
+   16×16 menu icon, 32×32 overworld, 96×96 battle front, 96×96 battle back.
+   Readability rule: silhouette first — a galliard must read as *a creature*
+   at battle size before any detail goes in.
+6. **Battle scene**: classic Gen-3 layout — foe front-view upper-right on a
+   ground platform, ally back-view lower-left, HP boxes with name/level/bar/
+   status, message bar below. The sigil medallion moves to the Score screen
+   and dex entries (it stays the species' "signature", not its battle body).
+7. **UI chrome**: 9-slice parchment panels with ink borders and gilt accents,
+   text blips during dialogue, cursor/confirm/cancel cues on every menu.

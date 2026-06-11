@@ -187,6 +187,82 @@ Tamburra/Neonata are then "just content."
 
 ---
 
+## P9 — Feel & Correctness (first playtest findings)
+
+Source: the 2026-06-11 playtest (the user's first hands-on session).
+
+- [ ] **Tile-skip fix**: held/tapped movement sometimes steps two tiles, making
+      it hard to stop facing an NPC. Grid walk gets a per-tile cadence with
+      buffered input; tap = one step, tap-to-turn preserved.
+- [ ] **Geography audit**: exiting a map through its west edge must land you on
+      the destination's *east* edge still facing west (reported: left exit →
+      left-side arrival). One coherent region compass table in `scripts/mapgen.py`,
+      every door pair fixed, plus a validator rule (`map.door_direction`) so it
+      can't regress. Replays re-recorded, driver paths updated.
+- [ ] **Battle text pacing**: its own Options entry (separate from dialogue text
+      speed) + hold-Z fast-forward. Default slower than today.
+- [ ] **SFX wiring**: menu cursor/confirm/cancel everywhere (title, screens hub,
+      battle menu, shop), dialogue text blips. The cue WAVs already exist.
+- [ ] **Facing affordance**: a visible indicator for the tile the player faces
+      (presenter-only), so "am I looking at the NPC?" answers itself.
+- [ ] **Phase review** over `git diff p9-start..HEAD`; STATUS updated.
+
+**Gate P9:** both reported bugs unreproducible; `map.door_direction` rule green;
+all six replays re-recorded and passing; battle-text setting demonstrably changes
+pacing; menu/dialogue SFX audible in a windowed run.
+
+## P10 — The sprite pipeline (640×360, 32px, generated + override)
+
+Decisions (2026-06-11): internal resolution 640×360 with 32px tiles; all art
+generated deterministically; any PNG dropped in `assets/custom/**` (same relative
+path) replaces its generated counterpart — hand-craftable later, autonomous now.
+
+- [ ] **Resolution switch**: 640×360 internal, 32px grid, integer window scaling.
+- [ ] **`tools sprites` — tiles**: textured grass/path/water/trees/buildings with
+      edge/corner variants; per-region palettes (doc 05).
+- [ ] **`tools sprites` — characters**: the player (4 directions × walk frames)
+      and the NPC archetype set (villager, trainer, maestro, nurse, clerk, keeper,
+      admin…), distinct silhouettes + palette accents.
+- [ ] **`tools sprites` — monsters**: body-plan grammar — per-species pixel
+      creatures (32×32 overworld-icon + 96×96 battle front + back) assembled from
+      type/tag-driven silhouettes (quadruped, bird, serpent, moth, fish, blob,
+      golem…), seeded like the cries so lines stay recognizably related.
+- [ ] **Renderer**: sprite atlases replace flat quads; walk animation; layer order
+      (ground / decor / actors / overhang); custom-override loader.
+- [ ] **Phase review**; STATUS with screenshots.
+
+**Gate P10:** every tile, NPC, player direction, and all 130 species render real
+sprites (no flat squares anywhere); an override PNG demonstrably wins over its
+generated twin; replays untouched (presenter-only phase).
+
+## P11 — Presentation: UI skin, juice & music v2
+
+- [ ] **Battle scene, Gen-3 layout**: foe front sprite top-right on a platform,
+      ally back sprite bottom-left, styled HP boxes (name/level/HP bar/status),
+      entry animations, damage flashes on sprites.
+- [ ] **UI skin**: 9-slice panels for dialogue/menus/shop, name tags on dialogue,
+      styled screens hub (Party with mini-icons, Score with sigils), title screen.
+- [ ] **Transitions**: battle swirl-in, map fade, door eases.
+- [ ] **Music v2**: richer stem generator — drums/bass/lead voices, song
+      structure (intro/loop), per-region keys & modes (Cantorel major-ish,
+      Skalden folk-modal), battle intros. Same determinism, regenerated assets.
+- [ ] **Phase review**; STATUS with screenshots.
+
+**Gate P11:** windowed run shows the new battle layout, skinned UI, transitions;
+music v2 stems replace v1; replays still green (presenter-only).
+
+## P12 — Release pass
+
+- [ ] Browser build verified by hand to Badge 1 (closes the P7 deviation).
+- [ ] README screenshots + GIFs from the new presentation.
+- [ ] itch.io packaging (web zip + native bundles via the release workflow).
+- [ ] QoL quick wins from docs/07-DIFFICULTY.md as scope allows (whiteout loss
+      cap needs a doc 02 ruling first).
+- [ ] **Phase review**; final STATUS.
+
+**Gate P12:** a stranger could download/play from the artifacts alone; v0.2.0 tag
+builds all release artifacts in CI.
+
 ## Icebox (parked, deliberate)
 
 - Breeding/eggs; held-item move interactions beyond the launch framework
