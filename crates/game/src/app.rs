@@ -49,7 +49,8 @@ impl Plugin for UndersongPlugin {
             )
             .insert_resource(Toast::default())
             .insert_resource(CurrentMusic::default())
-            .add_systems(Update, music_director)
+            .insert_resource(CreditsState::default())
+            .add_systems(Update, (music_director, credits_watch))
             .add_systems(
                 Update,
                 (toast_ui, night_tint).run_if(in_state(AppState::Overworld)),
@@ -950,6 +951,111 @@ fn music_director(
         ));
     }
     current.playing = desired;
+}
+
+/// Ending credits (doc 06 P6): full-screen roll per ending; the Da
+/// Capo variant ignores input for its final 30 seconds — the player
+/// sits with it, exactly as long as it sounds.
+#[derive(Resource, Default)]
+pub struct CreditsState {
+    pub shown: bool,
+    pub dead_input: f32,
+}
+
+#[derive(Component)]
+struct CreditsUi;
+
+fn credits_watch(
+    mut commands: Commands,
+    time: Res<Time>,
+    keys: Res<ButtonInput<KeyCode>>,
+    theme: Option<Res<Theme>>,
+    world: Res<WorldRes>,
+    mut state: ResMut<CreditsState>,
+    existing: Query<Entity, With<CreditsUi>>,
+) {
+    let Some(theme) = theme else { return };
+    let ending = ["chorus", "dacapo", "tacet"]
+        .into_iter()
+        .find(|e| world.0.vars.flags.contains(&format!("credits.{e}")));
+    let Some(ending) = ending else { return };
+
+    if !state.shown {
+        state.shown = true;
+        state.dead_input = if ending == "dacapo" { 30.0 } else { 0.0 };
+        let (title, lines) = match ending {
+            "chorus" => (
+                "THE CHORUS",
+                "The song was never written for one voice.
+
+UNDERSONG
+
+every name on the Roster, read aloud
+every Mote you ever attuned
+you",
+            ),
+            "dacapo" => (
+                "DA CAPO",
+                "From the beginning.
+
+UNDERSONG
+
+the Roster gains a row
+the music steadies
+(the input does not respond — that is the point)",
+            ),
+            _ => (
+                "TACET",
+                "The rest is part of the music too.
+
+UNDERSONG
+
+the world, one voice quieter
+Aria, free
+the cost, posted later",
+            ),
+        };
+        commands
+            .spawn((
+                CreditsUi,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    row_gap: Val::Px(12.0),
+                    ..default()
+                },
+                GlobalZIndex(50),
+                BackgroundColor(theme.color(&theme.palette.ink)),
+            ))
+            .with_children(|root| {
+                root.spawn((
+                    Text::new(title),
+                    TextFont::from_font_size(24.0),
+                    TextColor(theme.color(&theme.palette.gilt)),
+                ));
+                root.spawn((
+                    Text::new(lines),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.parchment)),
+                ));
+            });
+        return;
+    }
+    if state.dead_input > 0.0 {
+        state.dead_input -= time.delta_secs();
+        return; // Da Capo: the held note doesn't care what you press.
+    }
+    if keys.just_pressed(KeyCode::KeyZ) && !existing.is_empty() {
+        for entity in &existing {
+            commands.entity(entity).despawn();
+        }
+    }
 }
 
 #[derive(Resource, Default)]

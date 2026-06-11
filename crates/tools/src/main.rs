@@ -295,6 +295,7 @@ fn validate(options: &Options) -> Result<bool> {
             let mut script_keys: Vec<String> = Vec::new();
             let mut script_warps: Vec<(undersong_core::ids::MapId, undersong_core::ids::MapId)> =
                 Vec::new();
+            let mut script_flags: Vec<String> = Vec::new();
 
             // Region scripts parse, too.
             for map_id in pack.maps.keys() {
@@ -326,6 +327,7 @@ fn validate(options: &Options) -> Result<bool> {
                                 &mut findings,
                             );
                             collect_script_warps(&cmds, map_id, &mut script_warps);
+                            collect_script_flags(&cmds, &mut script_flags);
                         }
                     }
                 }
@@ -337,6 +339,20 @@ fn validate(options: &Options) -> Result<bool> {
                 &items,
                 &script_warps,
             ));
+
+            // Gate P6: ending reachability — every credits flag must be
+            // settable by some script in the pack.
+            if region == "cantorel" {
+                for ending in ["credits.dacapo", "credits.tacet", "credits.chorus"] {
+                    if !script_flags.iter().any(|f| f == ending) {
+                        findings.push(data::Finding {
+                            severity: data::Severity::Error,
+                            rule: "story.endings",
+                            message: format!("no script sets `{ending}` — ending unreachable"),
+                        });
+                    }
+                }
+            }
 
             // Doc 04 §3 rules 1 & 8: all referenced strings resolve.
             let core_strings = data::load_core_strings(&options.content)
@@ -364,6 +380,25 @@ fn validate(options: &Options) -> Result<bool> {
 }
 
 /// Recursive Choice/If sanity for script content (doc 03 §5).
+/// Collects every flag a script can set (ending reachability rule).
+fn collect_script_flags(cmds: &[script::Cmd], flags: &mut Vec<String>) {
+    for cmd in cmds {
+        match cmd {
+            script::Cmd::SetFlag { flag } => flags.push(flag.clone()),
+            script::Cmd::Choice { branches, .. } => {
+                for (_, branch) in branches {
+                    collect_script_flags(branch, flags);
+                }
+            }
+            script::Cmd::If { then, r#else, .. } => {
+                collect_script_flags(then, flags);
+                collect_script_flags(r#else, flags);
+            }
+            _ => {}
+        }
+    }
+}
+
 /// Collects script-driven warp edges for the reachability rule.
 fn collect_script_warps(
     cmds: &[script::Cmd],
