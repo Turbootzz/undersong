@@ -180,7 +180,7 @@ impl Driver {
                     .world
                     .pending_learn_queue
                     .first()
-                    .and_then(|(party_index, _)| self.world.party.get(usize::from(*party_index)))
+                    .and_then(|(party_index, _)| self.world.party.get(*party_index))
                     .map(|member| {
                         let power = |id: &undersong_core::ids::MoveId| {
                             self.world
