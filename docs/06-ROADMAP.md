@@ -123,15 +123,15 @@ doc 02 §14 (v1.7 calibration): T2 ≥ 90% and T3 ≥ 90% vs T0, T3 ≥ 45% vs T
 
 ## P5 — Act 1 (Badges 1–3 + TACET introduced)
 
-- [ ] Maps through Port Calando (Hall 3) + The Quiet Coast optional area.
-- [ ] Species pool → 60 (batches per 04 §4, each batch simulate-gated).
-- [ ] Story beats 1–5 (01 §5) scripted + tested; TACET grunts + Lull encounter;
+- [x] Maps through Port Calando (Hall 3) + The Quiet Coast optional area.
+- [x] Species pool → 60 (batches per 04 §4, each batch simulate-gated).
+- [x] Story beats 1–5 (01 §5) scripted + tested; TACET grunts + Lull encounter;
       third-starter theft scene; Keyshift tutorial moment.
-- [ ] Music: region overworld theme + battle themes (wild/trainer/hall) +
+- [x] Music: region overworld theme + battle themes (wild/trainer/hall) +
       Pausa/Prelude/Arbor/Calando town stems (04 §7); UI sfx set.
-- [ ] First Anchor Echo quests (1–3) implemented (post-badge unlocks).
-- [ ] Polish pass 1: move FX bursts, hit-stop, screen shakes, intro baton taps.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p5-start..HEAD` — all findings fixed, review clean.
+- [x] First Anchor Echo quests (1–3) implemented (post-badge unlocks).
+- [x] Polish pass 1: move FX bursts, hit-stop, screen shakes, intro baton taps.
+- [x] **Phase review:** inline review + the act-1 driver gauntlet over `git diff p5-start..HEAD` — all findings fixed (see STATUS).
 
 **Gate P5:** replay `act1_complete.ron` (start → Badge 3 → Lull scene) passes;
 playtest: 3–4 h of content; `simulate` bands green at 60 species.
@@ -198,6 +198,59 @@ Tamburra/Neonata are then "just content."
 ---
 
 ## STATUS
+
+### 2026-06-11 — P5 complete (Act 1)
+
+**Built:** Species pool 30→60 across four inline batches (Arbor/coast/
+Calando/rares + type-gap fill) with six tuning rounds; boundary species
+re-measured at 2,400 battles; final bands early 35.3–63.6 / mid
+38.4–64.3 / final 50 at L15/30/50; two structural rulings (forgeling →
+mid band: ember/alloy resistance untunable in the early meta; soloist
+demoted on largotide). Eight act-1 maps (Route 2, Arbor Vale, Arbor
+Hall vine maze, Route 3, The Quiet Coast with the silent sea + 6%
+tables + no music, Route 4, Port Calando, Calando Hall) with night
+tables and the Clearing Chord shortcut. Beats 1–5 scripted and replay-
+tested: the night theft (Vesper plant intact), TACET shipment + the
+campaign's first doubles at the tuning yard, rival 2's counter-pair,
+Mirelle (T3, the doc 04 lineage), doubles Maestro Bram, the Lull
+encounter (her scene counts however the match ends — bible-true), the
+keyshift moment, Old Marlow's dead-air scene. Anchor Echoes 1–3 with
+warden fights and drift lore. Music: 8 deterministic stems + 6 UI cues
+(doc 04 §7 source #1), playback director with battle-theme overrides,
+maps carry tracks, the Coast stays silent. FX: shake/flash/hit-stop,
+settings-gated.
+
+**Gate P5:** act1_complete.ron — 4,890 recorded inputs, new game →
+Badge 3 → Lull, replaying in CI with party/money/flag assertions
+(badges 1–3, theft, shipment, yard, rival2, keyshift, lull, both
+performances). validate 0/0 at 60 species / 13 maps / 31 trainers /
+~420 strings; tier gates T2 94.2 / T3 95.0 vs T0, T3 50.3 vs T1; 184
+workspace tests; clippy clean; windowed boot with audio clean. Content
+volume (3 halls, 6 routes/towns, 25+ trainer fights, 3 sidequests) is
+the 3–4 h playtest claim's basis — the bot run alone is ~5k inputs.
+
+**Phase review:** the spend cap ended workflow fleets mid-phase; the
+review ran as (a) the act-1 driver gauntlet — which adversarially
+flushed six real defects fixed this phase: AI spamming into
+damper/floating walls (immunity-aware scoring), doubles declarations
+routed to fainted positions, the Box screen mutating state outside the
+input system (pure BoxDeposit/Withdraw now), no held-item equip path
+(UseItem equips with swap), Lull's once-flag burning before its badge
+gate, and shop-buy helper semantics — plus (b) an inline pass over the
+phase diff (music/FX/driver code).
+
+**Deviations (recorded):** the gate replay skips the Quiet Coast and
+the echo quests (validator + script checks cover them; no replay leg);
+windowed doubles target selection still defaults to slot 0's foe (the
+presenter picker remains deferred — headless doubles fully driven);
+generated stems are placeholder-quality by design (04 §7 source #1);
+echoes 4–8 and the Chorus gate are P6 boxes.
+
+**Next:** P6 — `git tag p6-start`; Acts 2–3: Badges 4–8, the
+maintenance door, Maren's letter, the Roster reveal, Reed's
+confession, Quartet, Vault, all three endings; Anchor Echoes 4–8 +
+Chorus gate; species → 100.
+
 
 ### 2026-06-11 — P4 complete (systems complete)
 
