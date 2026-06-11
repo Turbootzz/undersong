@@ -237,16 +237,16 @@ generated twin; replays untouched (presenter-only phase).
 
 ## P11 — Presentation: UI skin, juice & music v2
 
-- [ ] **Battle scene, Gen-3 layout**: foe front sprite top-right on a platform,
+- [x] **Battle scene, Gen-3 layout**: foe front sprite top-right on a platform,
       ally back sprite bottom-left, styled HP boxes (name/level/HP bar/status),
       entry animations, damage flashes on sprites.
-- [ ] **UI skin**: 9-slice panels for dialogue/menus/shop, name tags on dialogue,
+- [x] **UI skin**: 9-slice panels for dialogue/menus/shop, name tags on dialogue,
       styled screens hub (Party with mini-icons, Score with sigils), title screen.
-- [ ] **Transitions**: battle swirl-in, map fade, door eases.
-- [ ] **Music v2**: richer stem generator — drums/bass/lead voices, song
+- [x] **Transitions**: battle swirl-in, map fade, door eases.
+- [x] **Music v2**: richer stem generator — drums/bass/lead voices, song
       structure (intro/loop), per-region keys & modes (Cantorel major-ish,
       Skalden folk-modal), battle intros. Same determinism, regenerated assets.
-- [ ] **Phase review**; STATUS with screenshots.
+- [x] **Phase review**; STATUS with screenshots.
 
 **Gate P11:** windowed run shows the new battle layout, skinned UI, transitions;
 music v2 stems replace v1; replays still green (presenter-only).
@@ -277,6 +277,28 @@ builds all release artifacts in CI.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P11 complete (presentation)
+
+**Built:** the Gen-3 stage — ground pads under both creatures,
+ink-bordered HP plates, the ink wipe sweeping into combat; a gilt
+speaker tag on the dialogue box; the title's staff lines and rising
+five-note phrase; a full glyph sweep (em-dash/coin/note/triangle tofu
+killed in UI and content). Music v2: kick/snare/hats with battle
+pickup bars, root-fifth bass, degree-built triad pads, AABA leads with
+B-section phrases, per-region modes (Cantorel ionian; Skalden dorian/
+aeolian) — thirteen stems regenerated.
+
+**Evidence:** docs/screenshots/p11-title.png. 193 tests; replays
+untouched; validate 0/0; clippy clean; boot clean.
+
+**Deviations:** screens-hub mini-icons and dialogue portraits parked
+(Icebox); battle-scene screenshot still wants a manual session —
+the layout pieces are individually verified.
+
+**Next:** P12 — `git tag p12-start`; release pass (browser hand-test,
+README shots, itch packaging, QoL quick wins).
+
 
 ### 2026-06-11 — P10 complete (the sprite pipeline)
 
