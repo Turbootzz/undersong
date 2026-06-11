@@ -177,11 +177,18 @@ fn run() -> Result<bool> {
                 ("battle_wild", 0xCA_0010, Mood::BattleWild),
                 ("battle_trainer", 0xCA_0011, Mood::BattleTrainer),
                 ("battle_hall", 0xCA_0012, Mood::BattleHall),
+                // Skalden (P8): the folk identity rides different seeds
+                // and the rounder town voicing.
+                ("skalden_bed", 0x5CA_0001, Mood::Town),
+                ("town_skald", 0x5CA_0002, Mood::Town),
+                ("town_varde", 0x5CA_0003, Mood::Town),
+                ("battle_skalden", 0x5CA_0010, Mood::BattleTrainer),
+                ("battle_skalden_hall", 0x5CA_0011, Mood::BattleHall),
             ] {
                 music::render_track(id, seed, mood, &tracks)?;
             }
             music::render_sfx(&out.join("sfx"))?;
-            println!("music: 8 tracks + 6 cues → {}", out.display());
+            println!("music: 13 tracks + 6 cues → {}", out.display());
             Ok(true)
         }
         Some("importmap") => {
@@ -235,7 +242,7 @@ fn validate(options: &Options) -> Result<bool> {
                     .join(path)
                     .exists()
             };
-            findings.extend(data::validate_maps(&maps, &pool, &script_exists));
+            findings.extend(data::validate_maps(&maps, &pool, &script_exists, &Default::default()));
 
             // Scripts must parse as the Cmd vocabulary, and Choice
             // branches must not be empty (doc 03 §5).
@@ -277,6 +284,28 @@ fn validate(options: &Options) -> Result<bool> {
     // Region packs (doc 04 §3): every directory under content/regions/.
     let regions_root = options.content.join("regions");
     if regions_root.exists() {
+        // First pass: every pack's map ids (cross-region warp targets).
+        let mut all_map_ids: std::collections::BTreeSet<undersong_core::ids::MapId> =
+            Default::default();
+        {
+            let mut dirs: Vec<_> = std::fs::read_dir(&regions_root)
+                .with_context(|| format!("reading {}", regions_root.display()))?
+                .filter_map(Result::ok)
+                .map(|e| e.path())
+                .filter(|p| p.is_dir())
+                .collect();
+            dirs.sort();
+            for dir in dirs {
+                let region = dir
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let pack = data::load_region(&options.content, &region)
+                    .with_context(|| format!("loading region `{region}`"))?;
+                all_map_ids.extend(pack.maps.keys().cloned());
+            }
+        }
         let mut region_dirs: Vec<_> = std::fs::read_dir(&regions_root)
             .with_context(|| format!("reading {}", regions_root.display()))?
             .filter_map(Result::ok)
@@ -333,11 +362,17 @@ fn validate(options: &Options) -> Result<bool> {
                 }
             }
 
+            let external: std::collections::BTreeSet<undersong_core::ids::MapId> = all_map_ids
+                .iter()
+                .filter(|m| !pack.maps.contains_key(*m))
+                .cloned()
+                .collect();
             findings.extend(data::validate_region(
                 &pack,
                 &content,
                 &items,
                 &script_warps,
+                &external,
             ));
 
             // Gate P6: ending reachability — every credits flag must be

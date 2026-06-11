@@ -1874,45 +1874,83 @@ pub fn load_dev_world(content_root: &std::path::Path, seed: u64) -> Result<World
 pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<WorldState, String> {
     let core_content = data::load_core(content_root).map_err(|e| e.to_string())?;
     let items = data::load_items(content_root).map_err(|e| e.to_string())?;
-    let pack = data::load_region(content_root, "cantorel").map_err(|e| e.to_string())?;
 
-    let maps_root = content_root.join("regions/cantorel/maps");
+    // Every pack under content/regions/ joins one world (P8: adding a
+    // region must require no engine change). The primary region — the
+    // one providing the entry point — is `cantorel` when present,
+    // otherwise the alphabetically first pack.
+    let regions_root = content_root.join("regions");
+    let mut region_ids: Vec<String> = std::fs::read_dir(&regions_root)
+        .map_err(|e| e.to_string())?
+        .filter_map(Result::ok)
+        .filter(|e| e.path().is_dir())
+        .filter_map(|e| e.file_name().to_str().map(String::from))
+        .collect();
+    region_ids.sort();
+    if region_ids.is_empty() {
+        return Err("no region packs found".into());
+    }
+    let primary = if region_ids.iter().any(|r| r == "cantorel") {
+        "cantorel".to_string()
+    } else {
+        region_ids[0].clone()
+    };
+
+    let mut all_maps = BTreeMap::new();
     let mut scripts = BTreeMap::new();
-    for (id, map) in &pack.maps {
-        let mut paths: Vec<String> = map.npcs.iter().filter_map(|n| n.script.clone()).collect();
-        for trigger in &map.triggers {
-            if let TriggerKind::Script { path } = &trigger.kind {
-                paths.push(path.clone());
+    let mut merged_strings: std::collections::BTreeMap<String, String> = data::load_core_strings(
+        content_root,
+    )
+    .map_err(|e| e.to_string())?
+    .iter()
+    .map(|(k, v)| (k.clone(), v.clone()))
+    .collect();
+    let mut primary_pack: Option<data::RegionPack> = None;
+    let mut registry: Option<Registry> = None;
+
+    for region in &region_ids {
+        let pack = data::load_region(content_root, region).map_err(|e| e.to_string())?;
+        let maps_root = regions_root.join(region).join("maps");
+        for (id, map) in &pack.maps {
+            let mut paths: Vec<String> =
+                map.npcs.iter().filter_map(|n| n.script.clone()).collect();
+            for trigger in &map.triggers {
+                if let TriggerKind::Script { path } = &trigger.kind {
+                    paths.push(path.clone());
+                }
+            }
+            for path in paths {
+                let file = maps_root.join(id.as_str()).join("scripts").join(&path);
+                let text = std::fs::read_to_string(&file)
+                    .map_err(|e| format!("{}: {e}", file.display()))?;
+                let cmds: Vec<Cmd> =
+                    ron::from_str(&text).map_err(|e| format!("{}: {e}", file.display()))?;
+                scripts.insert((id.clone(), path), cmds);
             }
         }
-        for path in paths {
-            let file = maps_root.join(id.as_str()).join("scripts").join(&path);
-            let text =
-                std::fs::read_to_string(&file).map_err(|e| format!("{}: {e}", file.display()))?;
-            let cmds: Vec<Cmd> =
-                ron::from_str(&text).map_err(|e| format!("{}: {e}", file.display()))?;
-            scripts.insert((id.clone(), path), cmds);
+        all_maps.extend(pack.maps.clone());
+        for (key, value) in pack.strings.iter() {
+            merged_strings.insert(key.clone(), value.clone());
+        }
+        match &mut registry {
+            None => registry = Some(Registry::from_content(&core_content, &pack, &items)),
+            Some(existing) => existing.extend_with_pack(&pack),
+        }
+        if *region == primary {
+            primary_pack = Some(pack);
         }
     }
+    let primary_pack = primary_pack.expect("primary region present");
 
-    let registry = Registry::from_content(&core_content, &pack, &items);
-    let core_strings = data::load_core_strings(content_root).map_err(|e| e.to_string())?;
     let mut world = WorldState::new(
-        pack.maps.clone(),
+        all_maps,
         scripts,
-        pack.def.entry_map.clone(),
-        pack.def.entry_spawn,
+        primary_pack.def.entry_map.clone(),
+        primary_pack.def.entry_spawn,
         seed,
     );
-    let mut merged: std::collections::BTreeMap<String, String> = core_strings
-        .iter()
-        .map(|(k, v)| (k.clone(), v.clone()))
-        .collect();
-    for (key, value) in pack.strings.iter() {
-        merged.insert(key.clone(), value.clone());
-    }
-    world.strings = merged.into();
-    world.region_id = pack.def.id.clone();
-    world.registry = Some(registry);
+    world.strings = merged_strings.into();
+    world.region_id = primary_pack.def.id.clone();
+    world.registry = registry;
     Ok(world)
 }

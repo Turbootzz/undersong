@@ -315,6 +315,7 @@ pub fn validate_maps(
     maps: &std::collections::BTreeMap<undersong_core::ids::MapId, crate::map::MapDef>,
     pool: &crate::content::SpeciesPool,
     script_exists: &dyn Fn(&undersong_core::ids::MapId, &str) -> bool,
+    external_maps: &std::collections::BTreeSet<undersong_core::ids::MapId>,
 ) -> Vec<Finding> {
     use crate::map::TriggerKind;
 
@@ -351,6 +352,9 @@ pub fn validate_maps(
                     to,
                     facing: _,
                 } => match maps.get(target) {
+                    // Cross-region doors (P8): the target lives in
+                    // another pack — bounds checked at load, not here.
+                    None if external_maps.contains(target) => {}
                     None => findings.push(Finding::error(
                         "map.warp_target",
                         format!("`{mid}` warps to unknown map `{target}`"),
@@ -581,6 +585,7 @@ pub fn validate_region(
     core: &CoreContent,
     items: &crate::region::ItemSet,
     script_warps: &[(undersong_core::ids::MapId, undersong_core::ids::MapId)],
+    external_maps: &std::collections::BTreeSet<undersong_core::ids::MapId>,
 ) -> Vec<Finding> {
     use std::collections::VecDeque;
 
@@ -753,7 +758,7 @@ pub fn validate_region(
     // Maps: structural rules + dex-membership of encounters + warp graph
     // connectivity from the entry map (doc 04 §3 rule 2).
     let script_exists = |_: &undersong_core::ids::MapId, _: &str| true; // checked by tools on disk
-    findings.extend(validate_maps(&pack.maps, &pool, &script_exists));
+    findings.extend(validate_maps(&pack.maps, &pool, &script_exists, external_maps));
     for (mid, map) in &pack.maps {
         if let Some(encounters) = &map.encounters {
             for (species, ..) in &encounters.slots {

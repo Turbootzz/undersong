@@ -35,6 +35,41 @@ pub struct Registry {
 }
 
 impl Registry {
+    /// Folds a further region pack into an existing registry (P8
+    /// multi-region worlds): species, moves, trainers, encounter-side
+    /// data merge by id; later packs may not silently shadow core ids.
+    pub fn extend_with_pack(&mut self, pack: &data::RegionPack) {
+        for spec in pack.moves.iter() {
+            self.moves.entry(spec.id.clone()).or_insert_with(|| spec.clone());
+        }
+        for (id, motif) in pack.motifs.iter() {
+            self.species
+                .entry(id.clone())
+                .or_insert_with(|| motif.spec());
+            if let Some(evolution) = &motif.evolution {
+                if let data::EvolutionMethod::Level(level) = evolution.method {
+                    self.evolutions
+                        .entry(id.clone())
+                        .or_insert_with(|| (level, evolution.target.clone()));
+                }
+                self.all_evolutions
+                    .entry(id.clone())
+                    .or_default()
+                    .push((evolution.method.clone(), evolution.target.clone()));
+            }
+            if !motif.tm_set.is_empty() {
+                self.tm_sets
+                    .entry(id.clone())
+                    .or_insert_with(|| motif.tm_set.iter().map(|tm| tm.as_str().into()).collect());
+            }
+        }
+        for (id, trainer) in pack.trainers.iter() {
+            self.trainers
+                .entry(id.clone())
+                .or_insert_with(|| trainer.clone());
+        }
+    }
+
     pub fn from_content(
         core_content: &data::CoreContent,
         pack: &data::RegionPack,
