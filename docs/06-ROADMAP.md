@@ -104,18 +104,18 @@ headless replay `new_game_to_first_badge.ron` passes in CI; `validate` + `simula
 
 ## P4 — Systems complete (everything the era expects)
 
-- [ ] Full Box UI (16 boxes, quick-move); day/night cycle + per-time encounter
+- [x] Full Box UI (16 boxes, quick-move); day/night cycle + per-time encounter
       tables; weather moves/abilities wired to overworld weather zones.
-- [ ] Evolutions: all four methods (02 §9) incl. Duet Stone; friendship counter.
-- [ ] Items pass: held items framework, all bell tiers, TMs (reusable), vitamins,
+- [x] Evolutions: all four methods (02 §9) incl. Duet Stone; friendship counter.
+- [x] Items pass: held items framework, all bell tiers, TMs (reusable), vitamins,
       Mute Charm, key items; Bag pockets final.
-- [ ] Performances framework: all 6 (02 §11) with overworld interactions
+- [x] Performances framework: all 6 (02 §11) with overworld interactions
       (cut brush, smash rocks, surf tiles, boulders, fly map).
-- [ ] Trainer classes + payouts + rematch flag support; doubles battles.
-- [ ] Abilities: all 24 implemented + tested; AI tier 3 (2-ply expectimax) done.
-- [ ] Score (dex) screen with measure-fill; Programme (badge case); Player Card.
-- [ ] Options: Set/Shift; battle anim toggle; reduced-motion + high-contrast.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p4-start..HEAD` — all findings fixed, review clean.
+- [x] Trainer classes + payouts + rematch flag support; doubles battles.
+- [x] Abilities: all 24 implemented + tested; AI tier 3 (2-ply expectimax) done.
+- [x] Score (dex) screen with measure-fill; Programme (badge case); Player Card.
+- [x] Options: Set/Shift; battle anim toggle; reduced-motion + high-contrast.
+- [x] **Phase review:** adversarial workflow + inline `/review` over `git diff p4-start..HEAD` — all findings fixed (see STATUS).
 
 **Gate P4:** `cargo test --workspace` includes ability/evolution/perf-skill suites,
 green; fuzz now includes doubles; replay corpus extended; tier regression per
@@ -198,6 +198,64 @@ Tamburra/Neonata are then "just content."
 ---
 
 ## STATUS
+
+### 2026-06-11 — P4 complete (systems complete)
+
+**Built:** All 24 abilities (doc 02 §10) with engine hooks at entry,
+damage, contact, guards, EOT, and catching; held-item framework (Oran
+Chime; Exp Share at the engine exp award per v1.8 #3). Doubles battles:
+per-position engine (Side.positions, per-position volatiles/targeting/
+retarget-fizzle per v1.5 #2, understudy, doubles exp/EV per v1.7),
+session driving with parked declarations, ai::choose_doubles; new
+doubles suite + 2,000-battle doubles fuzz + tandem golden
+(REPLAY_VERSION 5). T3 anchored expectimax (v1.5 #3 + v1.8 #2) with the
+§14 v1.7 calibration erratum — measured dataset replaced the impossible
+85%-vs-T1 gate (mirror symmetry floor: T1vT1 49.2%). Item pass: ItemKind
+for conditional bells/TMs/vitamins/MuteCharm/Held + pockets; tm_sets;
+validators (TM refs, night-table law, obstacle bounds). World systems:
+1200-tick clock with night tables and phase events; Mute Charm; UseItem
+(potions, vitamins with caps, reusable TMs with slot picks, stones);
+friendship per v1.5 #5 with stable party_index mapping; all four
+evolution methods; weather zones (open + refresh per v1.6 #6);
+performances ×6 (brush/rock/boulder-with-blocking-push/surf/fly/lumen
+tint); trainer rematch (rewards once); era Shift (KO-replacement,
+singles, free_switch). Screens hub: Party+Bag (pockets, item use, TM
+slot flow), Repertoire (16 boxes, quick-move, last-conscious guard),
+Score (measure-fill, hidden unseen), Programme, Player Card, Options
+(Set/Shift, anim pacing, reduced motion, high contrast — all wired,
+settings restored on Continue). Dex flags; toasts; night/dark tint.
+
+**Gate P4:** 182 workspace tests green (ability suite 18, doubles 9,
+world systems 9, T3 policy, session bridge 7 incl. a full 2v2);
+doubles fuzz in properties; replay corpus extended (tandem + regen v5);
+tier regression per §14 v1.7: T2 96.0% / T3 95.5% vs T0 (≥90), T3
+48.6% vs T1 (≥45); validate 0/0; clippy clean both configs; windowed
+boot clean; badge-run artifact re-recorded and replaying.
+
+**Phase review:** adversarial workflow (7 lenses; the run hit the API
+spend cap partway — 4 confirmed findings delivered, the remaining
+suspects were triaged and fixed inline by hand): invisible Shift flow
+(now fully rendered + KO-gated + singles-only), silent trainer-battle
+Run (now rejected per v1.4 #3), night tint persisting over battles
+(despawn + live alpha + high-contrast), Fainted position-vs-party-index
+mapping (stable field added), settings never restored on Continue,
+doubles item gating, bag cursor clamp, boulder pushes vanishing,
+rematch item dupes, evolution dex gaps, badge_count restore. Rulings:
+doc 02 v1.8 (5 entries).
+
+**Deviations (recorded):** no doubles/cracked-rock/water/badge-6
+CONTENT exists yet (engine + session + tests prove the systems; content
+arrives with P5+ maps); the windowed presenter cannot yet drive doubles
+targeting (no doubles content to drive — UI lands with the first
+doubles trainer in P5); item/friendship/Duet-Stone evolutions have no
+content users yet (tests synthesize); boxes are a flat Vec paged ×30
+("16 boxes" is the pager, capacity unbounded); bag pockets are
+grouping tags, not separate tabs.
+
+**Next:** P5 — `git tag p5-start`; Act 1 content: Badges 1–3, routes
+2–6, TACET arc opening, Arbor Vale + Mirelle (Hall 2), doubles trainer
+content, region map screen.
+
 
 ### 2026-06-10 — P3 complete (vertical slice: first playable)
 
