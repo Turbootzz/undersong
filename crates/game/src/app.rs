@@ -159,6 +159,9 @@ struct DialogueUi;
 struct DialogueText;
 
 #[derive(Component)]
+struct NameTagText;
+
+#[derive(Component)]
 struct MenuUi;
 
 #[derive(Component)]
@@ -471,6 +474,7 @@ fn handle_events(
     // battle scene (wild rolls, LoS engagements, scripted fights).
     if world.0.battle.is_some() {
         anim.0 = None;
+        wipe.0 = Some(0.0); // the ink sweep into combat (P11)
         next.set(AppState::Battle);
     }
     for event in events {
@@ -671,7 +675,8 @@ fn dialogue_ui(
     world: Res<WorldRes>,
     theme: Option<Res<Theme>>,
     existing: Query<Entity, With<DialogueUi>>,
-    mut text: Query<&mut Text, With<DialogueText>>,
+    mut text: Query<&mut Text, (With<DialogueText>, Without<NameTagText>)>,
+    mut tag: Query<&mut Text, (With<NameTagText>, Without<DialogueText>)>,
 ) {
     let Some(theme) = theme else { return };
     match &world.0.dialogue {
@@ -680,8 +685,12 @@ fn dialogue_ui(
                 .current
                 .clone()
                 .unwrap_or((String::new(), String::new()));
-            let speaker = world.0.text(&format!("npc.{who}"));
-            let line = format!("{speaker}: {}", world.0.text(&key));
+            let speaker = if who == "narrator" {
+                String::new()
+            } else {
+                world.0.text(&format!("npc.{who}"))
+            };
+            let line = world.0.text(&key).to_string();
             // The choice list, when open, is appended to the text so the
             // pure cursor is visible; the dedicated popup widget arrives
             // with real fonts in P3 (doc 05 §4).
@@ -704,6 +713,22 @@ fn dialogue_ui(
                 None => line,
             };
             if existing.is_empty() {
+                // Name tag: a gilt tab riding the box's top edge (P11).
+                commands.spawn((
+                    DialogueUi,
+                    NameTagText,
+                    Text::new(speaker.clone()),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.parchment)),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(14.0),
+                        bottom: Val::Px(64.0),
+                        padding: UiRect::axes(Val::Px(8.0), Val::Px(3.0)),
+                        ..default()
+                    },
+                    BackgroundColor(theme.color(&theme.palette.ink)),
+                ));
                 // Bottom-anchored parchment box (doc 05 §4): ink border,
                 // four faint staff lines behind the text.
                 commands
@@ -754,10 +779,17 @@ fn dialogue_ui(
                                 ));
                             });
                     });
-            } else if let Ok(mut existing_text) = text.single_mut()
-                && existing_text.0 != line
-            {
-                existing_text.0 = line;
+            } else {
+                if let Ok(mut existing_text) = text.single_mut()
+                    && existing_text.0 != line
+                {
+                    existing_text.0 = line;
+                }
+                if let Ok(mut tag_text) = tag.single_mut()
+                    && tag_text.0 != speaker
+                {
+                    tag_text.0 = speaker;
+                }
             }
         }
         None => {
@@ -828,7 +860,7 @@ fn shop_ui(
         return;
     };
     let mut lines = vec![format!(
-        "COMMISSARY — ₵{}   (Z buy · X leave)",
+        "COMMISSARY - {}c   (Z buy / X leave)",
         world.0.money
     )];
     for (index, item_id) in stock.iter().enumerate() {
@@ -841,7 +873,7 @@ fn shop_ui(
             .unwrap_or(0);
         let name = world.0.text(&format!("item.{item_id}"));
         let marker = if index == *cursor { ">" } else { " " };
-        lines.push(format!("{marker} {name:<16} ₵{price}"));
+        lines.push(format!("{marker} {name:<16} {price}c"));
     }
     let body = lines.join("\n");
 
@@ -1246,7 +1278,7 @@ UNDERSONG
 
 the Roster gains a row
 the music steadies
-(the input does not respond — that is the point)",
+(the input does not respond - that is the point)",
             ),
             _ => (
                 "TACET",
@@ -1465,6 +1497,34 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
             BackgroundColor(theme.color(&theme.palette.ink)),
         ))
         .with_children(|root| {
+            // Five staff lines behind the wordmark (doc 05 §4 motif).
+            for i in 0..5u8 {
+                root.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Percent(12.0),
+                        right: Val::Percent(12.0),
+                        top: Val::Px(56.0 + f32::from(i) * 8.0),
+                        height: Val::Px(1.0),
+                        ..default()
+                    },
+                    BackgroundColor(theme.color(&theme.palette.parchment_dim).with_alpha(0.35)),
+                ));
+            }
+            // A rising five-note phrase sitting on the staff.
+            for (i, lift) in [0.0_f32, 8.0, 4.0, 16.0, 24.0].iter().enumerate() {
+                root.spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Percent(30.0 + i as f32 * 9.0),
+                        top: Val::Px(82.0 - lift),
+                        width: Val::Px(7.0),
+                        height: Val::Px(6.0),
+                        ..default()
+                    },
+                    BackgroundColor(theme.color(&theme.palette.gilt)),
+                ));
+            }
             root.spawn((
                 Text::new("U N D E R S O N G"),
                 TextFont::from_font_size(24.0),
@@ -1482,7 +1542,7 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
             let rows: Vec<String> = match &has_save {
                 Some(header) => vec![
                     format!(
-                        "Continue — {} badge(s), {}s played  (Z)",
+                        "Continue - {} badge(s), {}s played  (Z)",
                         header.badge_bits.count_ones(),
                         header.playtime_s
                     ),

@@ -171,6 +171,7 @@ fn run() -> Result<bool> {
             let out = PathBuf::from(value("--out", "assets"));
             let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
             let chars = sprites::render_characters(&out.join("sprites/chars"))?;
+            sprites::render_platform(&out.join("sprites/battle"))?;
             let mut creatures = 0;
             let regions_root = content.join("regions");
             let mut dirs: Vec<_> = std::fs::read_dir(&regions_root)?
@@ -204,26 +205,40 @@ fn run() -> Result<bool> {
                 .unwrap_or_else(|| "assets".to_string());
             let out = PathBuf::from(out);
             let tracks = out.join("music");
-            // (track id, seed, mood) — Quiet Coast intentionally absent.
-            use music::Mood;
-            for (id, seed, mood) in [
-                ("cantorel_bed", 0xCA_0001u64, Mood::Bed),
-                ("town_pausa", 0xCA_0002, Mood::Town),
-                ("town_prelude", 0xCA_0003, Mood::Town),
-                ("town_arbor", 0xCA_0004, Mood::Town),
-                ("town_calando", 0xCA_0005, Mood::Town),
-                ("battle_wild", 0xCA_0010, Mood::BattleWild),
-                ("battle_trainer", 0xCA_0011, Mood::BattleTrainer),
-                ("battle_hall", 0xCA_0012, Mood::BattleHall),
-                // Skalden (P8): the folk identity rides different seeds
-                // and the rounder town voicing.
-                ("skalden_bed", 0x5CA_0001, Mood::Town),
-                ("town_skald", 0x5CA_0002, Mood::Town),
-                ("town_varde", 0x5CA_0003, Mood::Town),
-                ("battle_skalden", 0x5CA_0010, Mood::BattleTrainer),
-                ("battle_skalden_hall", 0x5CA_0011, Mood::BattleHall),
+            // (track, seed, mood, mode) — Quiet Coast intentionally
+            // absent; Skalden takes the folk modes (doc 06 P11).
+            use music::{Mode, Mood};
+            for (id, seed, mood, mode) in [
+                ("cantorel_bed", 0xCA_0001u64, Mood::Bed, Mode::Ionian),
+                ("town_pausa", 0xCA_0002, Mood::Town, Mode::Ionian),
+                ("town_prelude", 0xCA_0003, Mood::Town, Mode::Ionian),
+                ("town_arbor", 0xCA_0004, Mood::Town, Mode::Ionian),
+                ("town_calando", 0xCA_0005, Mood::Town, Mode::Ionian),
+                ("battle_wild", 0xCA_0010, Mood::BattleWild, Mode::Aeolian),
+                (
+                    "battle_trainer",
+                    0xCA_0011,
+                    Mood::BattleTrainer,
+                    Mode::Aeolian,
+                ),
+                ("battle_hall", 0xCA_0012, Mood::BattleHall, Mode::Ionian),
+                ("skalden_bed", 0x5CA_0001, Mood::Bed, Mode::Dorian),
+                ("town_skald", 0x5CA_0002, Mood::Town, Mode::Dorian),
+                ("town_varde", 0x5CA_0003, Mood::Town, Mode::Aeolian),
+                (
+                    "battle_skalden",
+                    0x5CA_0010,
+                    Mood::BattleTrainer,
+                    Mode::Dorian,
+                ),
+                (
+                    "battle_skalden_hall",
+                    0x5CA_0011,
+                    Mood::BattleHall,
+                    Mode::Aeolian,
+                ),
             ] {
-                music::render_track(id, seed, mood, &tracks)?;
+                music::render_track(id, seed, mood, mode, &tracks)?;
             }
             music::render_sfx(&out.join("sfx"))?;
             println!("music: 13 tracks + 6 cues → {}", out.display());

@@ -210,7 +210,11 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
                     let dx = x as i32 - c;
                     let dy = y as i32 - c;
                     if dx * dx + dy * dy < 240 {
-                        let f = if (x * 5 + y * 11).is_multiple_of(7) { 1.25 } else { 1.0 };
+                        let f = if (x * 5 + y * 11).is_multiple_of(7) {
+                            1.25
+                        } else {
+                            1.0
+                        };
                         let mut p = shade(base, f);
                         p[3] = 235;
                         img.put_pixel(x, y, p);
@@ -754,6 +758,31 @@ fn creature_front(seed: u64, primary: Type, secondary: Option<Type>, tags: &[Str
 }
 
 // ----- entry points -------------------------------------------------------
+
+/// The battle ground pad (a soft shadow ellipse, drawn once).
+pub fn render_platform(out: &Path) -> Result<()> {
+    std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
+    let (w, h) = (120u32, 32u32);
+    let mut img = RgbaImage::new(w, h);
+    let (cx, cy) = (w as i32 / 2, h as i32 / 2);
+    for y in 0..h as i32 {
+        for x in 0..w as i32 {
+            let dx = f64::from(x - cx) / f64::from(cx - 2);
+            let dy = f64::from(y - cy) / f64::from(cy - 2);
+            let d = dx * dx + dy * dy;
+            if d <= 1.0 {
+                let mut c = shade(PARCHMENT, 0.82);
+                if d > 0.78 {
+                    c = shade(PARCHMENT, 0.7);
+                }
+                c[3] = 230;
+                img.put_pixel(x as u32, y as u32, c);
+            }
+        }
+    }
+    img.save(out.join("platform.png"))
+        .context("writing platform")
+}
 
 pub fn render_tiles(out: &Path) -> Result<usize> {
     std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;

@@ -160,7 +160,7 @@ pub fn queue_battle_events(
                                 if *target == 0 { "your mote" } else { "the foe" }
                             );
                             if *crit {
-                                line.push_str(" — crit!");
+                                line.push_str(" - crit!");
                             }
                             match effectiveness {
                                 undersong_core::types::Eff::Double => line.push_str(" (resonant!)"),
@@ -192,9 +192,9 @@ pub fn queue_battle_events(
                         E::ExpGained { amount, .. } => Some(format!("gained {amount} exp")),
                         E::LeveledUp { level, .. } => Some(format!("level {level}!")),
                         E::AttuneAttempt { rings, caught } => Some(if *caught {
-                            "♪ ♪ ♪ ♪ — the fermata settles!".to_string()
+                            "* * * * - the fermata settles!".to_string()
                         } else {
-                            format!("{} — it shatters out!", "♪ ".repeat(usize::from(*rings)))
+                            format!("{} - it shatters out!", "* ".repeat(usize::from(*rings)))
                         }),
                         E::EscapeAttempt { fled, .. } => Some(if *fled {
                             "slipped away!".into()
@@ -227,7 +227,7 @@ pub fn queue_battle_events(
             }
             WorldEvent::LearnPrompt { species, move_id } => {
                 queue.lines.push_back(format!(
-                    "{} wants to learn {} (Z: replace first move · X: skip)",
+                    "{} wants to learn {} (Z: replace first move / X: skip)",
                     name(species),
                     move_name(move_id)
                 ));
@@ -239,7 +239,7 @@ pub fn queue_battle_events(
             }
             WorldEvent::EvolutionPrompt { from, into } => {
                 queue.lines.push_back(format!(
-                    "{}'s phrase is shifting toward {}… (Z: let it · X: hold it back)",
+                    "{}'s phrase is shifting toward {}... (Z: let it / X: hold it back)",
                     name(from),
                     name(into)
                 ));
@@ -252,10 +252,10 @@ pub fn queue_battle_events(
             WorldEvent::Whiteout => {
                 queue
                     .lines
-                    .push_back("your motes fall silent… (half your ₵ lost)".into());
+                    .push_back("your motes fall silent... (half your coin lost)".into());
             }
             WorldEvent::MoneyChanged { money } => {
-                queue.lines.push_back(format!("₵{money}"));
+                queue.lines.push_back(format!("{money}c"));
             }
             WorldEvent::ActionRejected { reason_key } => {
                 queue.lines.push_back(world.text(reason_key));
@@ -263,7 +263,7 @@ pub fn queue_battle_events(
             WorldEvent::ShiftOffered => {
                 queue
                     .lines
-                    .push_back("send in another mote? (◀▶ pick · Z send · X keep)".into());
+                    .push_back("send in another mote? (arrows pick / Z send / X keep)".into());
             }
             _ => {}
         }
@@ -319,14 +319,42 @@ fn battle_enter(
             BackgroundColor(theme.color(&theme.palette.parchment)),
         ))
         .with_children(|root| {
+            // Ground pads (P11: the Gen-3 stage).
+            for (right, left, bottom, top, w) in [
+                (Some(44.0_f32), None, None, Some(108.0_f32), 132.0_f32),
+                (None, Some(30.0), Some(64.0), None, 132.0),
+            ] {
+                let mut node = Node {
+                    position_type: PositionType::Absolute,
+                    width: Val::Px(w),
+                    height: Val::Px(34.0),
+                    ..default()
+                };
+                if let Some(v) = right {
+                    node.right = Val::Px(v);
+                }
+                if let Some(v) = left {
+                    node.left = Val::Px(v);
+                }
+                if let Some(v) = bottom {
+                    node.bottom = Val::Px(v);
+                }
+                if let Some(v) = top {
+                    node.top = Val::Px(v);
+                }
+                root.spawn((
+                    ImageNode::new(assets.load(game::art::art("sprites/battle/platform.png"))),
+                    node,
+                ));
+            }
             // Foe sigil, upper right.
             root.spawn((
                 FoeSprite,
                 ShownSpecies(foe.species.clone()),
-                ImageNode::new(assets.load(format!(
+                ImageNode::new(assets.load(game::art::art(&format!(
                     "sprites/monsters/{}/{}.front.png",
                     world.0.region_id, foe.species
-                ))),
+                )))),
                 Node {
                     position_type: PositionType::Absolute,
                     right: Val::Px(60.0),
@@ -340,10 +368,10 @@ fn battle_enter(
             root.spawn((
                 PlayerSpriteImg,
                 ShownSpecies(us.species.clone()),
-                ImageNode::new(assets.load(format!(
+                ImageNode::new(assets.load(game::art::art(&format!(
                     "sprites/monsters/{}/{}.back.png",
                     world.0.region_id, us.species
-                ))),
+                )))),
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(48.0),
@@ -362,10 +390,12 @@ fn battle_enter(
                     width: Val::Px(170.0),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(6.0)),
+                    border: UiRect::all(Val::Px(2.0)),
                     row_gap: Val::Px(3.0),
                     ..default()
                 },
                 BackgroundColor(theme.color(&theme.palette.parchment_dim)),
+                BorderColor::all(theme.color(&theme.palette.ink)),
             ))
             .with_children(|plate| {
                 plate.spawn((
@@ -402,10 +432,12 @@ fn battle_enter(
                     width: Val::Px(170.0),
                     flex_direction: FlexDirection::Column,
                     padding: UiRect::all(Val::Px(6.0)),
+                    border: UiRect::all(Val::Px(2.0)),
                     row_gap: Val::Px(3.0),
                     ..default()
                 },
                 BackgroundColor(theme.color(&theme.palette.parchment_dim)),
+                BorderColor::all(theme.color(&theme.palette.ink)),
             ))
             .with_children(|plate| {
                 plate.spawn((
@@ -593,7 +625,7 @@ fn battle_input(
         if let Some(session) = &world.0.battle {
             let species = &session.state.sides[0].party[usize::from(pick)].species;
             let line = format!(
-                "send {}? (◀▶ pick · Z send · X keep)",
+                "send {}? (arrows pick / Z send / X keep)",
                 world.0.text(&format!("motif.{species}"))
             );
             if let Ok(mut message) = message_text.single_mut()

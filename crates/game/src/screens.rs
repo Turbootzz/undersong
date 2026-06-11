@@ -321,7 +321,7 @@ fn screens_render(
     };
     let world = &world.0;
     let mut lines: Vec<String> = vec![format!(
-        "◀ Q   {}   E ▶      (X: close)",
+        "< Q   {}   E >      (X: close)",
         match state.screen {
             Screen::Party => "PARTY & BAG",
             Screen::Boxes => "REPERTOIRE",
@@ -368,7 +368,7 @@ fn screens_render(
                 }
             }
             lines.push(format!(
-                "— BAG (Tab {}) — ₵{}",
+                "- BAG (Tab {}) - {}c",
                 if state.in_bag { "→ party" } else { "→ bag" },
                 world.money
             ));
@@ -392,10 +392,10 @@ fn screens_render(
         }
         Screen::Boxes => {
             lines.push(format!(
-                "Box {} / 16   (◀ ▶ pages, Z: move)",
+                "Box {} / 16   (arrow pages, Z: move)",
                 state.box_page + 1
             ));
-            lines.push("— party —".into());
+            lines.push("- party -".into());
             for (index, member) in world.party.iter().enumerate() {
                 let marker = if index == state.cursor { ">" } else { " " };
                 lines.push(format!(
@@ -404,7 +404,7 @@ fn screens_render(
                     member.level
                 ));
             }
-            lines.push("— resting —".into());
+            lines.push("- resting -".into());
             let party_len = world.party.len();
             for (offset, (box_index, member)) in world
                 .boxes
@@ -456,7 +456,7 @@ fn screens_render(
                 let name = if world.vars.flags.contains(&format!("dex.seen.{species}")) {
                     world.text(&format!("motif.{species}"))
                 } else {
-                    "—— ——".into()
+                    "-- --".into()
                 };
                 lines.push(format!("{mark} {name}"));
             }
@@ -475,7 +475,7 @@ fn screens_render(
             ];
             for (index, name) in names.iter().enumerate() {
                 let earned = world.vars.flags.contains(&format!("badge.{}", index + 1));
-                lines.push(format!("{} {name} clef", if earned { "♪" } else { "·" }));
+                lines.push(format!("{} {name} clef", if earned { "*" } else { "." }));
             }
         }
         Screen::Card => {
@@ -489,7 +489,7 @@ fn screens_render(
                 .filter(|f| f.starts_with("dex.caught."))
                 .count();
             lines.push("conductor-in-training".into());
-            lines.push(format!("₵{}", world.money));
+            lines.push(format!("{}c", world.money));
             lines.push(format!("badges: {badges}/8"));
             lines.push(format!("score: {caught} caught"));
             lines.push(format!("steps: {}", world.steps));
