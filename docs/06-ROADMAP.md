@@ -319,19 +319,19 @@ Decisions: repo-only under `wiki/`, **Bun + TypeScript + TailwindCSS +
 Vue 3 (Vite)**; the user hosts it himself later. Spoiler toggle hides
 story beats, endings, legendaries, late-game locations.
 
-- [ ] **`tools wiki`**: exports `wiki/src/data/*.json` straight from
+- [x] **`tools wiki`**: exports `wiki/src/data/*.json` straight from
       `content/` (species, moves, type chart, learnsets, evolutions,
       encounter tables per map, trainers) — content stays the single
       source of truth; the export runs in CI to catch drift.
-- [ ] **The site**: species browser with sprites/sigils, per-species
+- [x] **The site**: species browser with sprites/sigils, per-species
       pages, type-chart matrix, move list, locations; spoiler toggle;
       Tailwind styling; `bun run build` produces a static dist the user
       can host anywhere.
-- [ ] **Visual playtest harness**: the windowed app replays a recorded
+- [x] **Visual playtest harness**: the windowed app replays a recorded
       input file (`UNDERSONG_VISUAL_REPLAY=<file>`) while capturing a
       timed screenshot series to `docs/playtests/<run>/` — the agent's
       eyes for every future phase.
-- [ ] **Phase review**; STATUS.
+- [x] **Phase review**; STATUS.
 
 **Gate P16:** `bun run build` succeeds from a fresh clone (bun present);
 the wiki answers "what beats what" and "where do I find X" without
@@ -355,6 +355,28 @@ opening RON files; a harness run produces a reviewable frame series.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P16 complete — THE SECOND PLAYTEST ARC (P13–P16) DONE
+
+**Built:** `tools wiki` JSON export with in-band spoiler flags + a CI
+drift check; the Companion Score (Bun/TS/Tailwind v4/Vue 3): species
+browser with sprites, detail pages (stats/learnsets/evolutions/
+where-to-find day & night), the type matrix, moves, persistent
+spoiler toggle — `bun run build` ships a static dist the user hosts
+himself. The visual playtest harness replays any recorded run in the
+windowed app and films a frame series to docs/playtests/ (first
+outing: the badge-one run walking hall 1's now-visible maze).
+
+**The arc:** P13 real backs + hand-authored stars + anime characters
+(hero variants await the user's pick in docs/playtests/); P14 roofs/
+doors/windows/flowers + color; P15 panel screens + the Score-dex;
+P16 the wiki + the harness. 193 tests throughout; replays re-recorded
+only where the world itself changed (P12's economy cap).
+
+**For the user:** `cd wiki && bun install && bun run dev` to browse;
+pick a hero (A gilt / B teal / C violet); the parked list (battle
+animations, more music, more story) stays in §Parked.
+
 
 ### 2026-06-11 — P15 complete (UI overhaul + the Score-dex)
 
