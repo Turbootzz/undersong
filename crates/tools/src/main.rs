@@ -242,7 +242,12 @@ fn validate(options: &Options) -> Result<bool> {
                     .join(path)
                     .exists()
             };
-            findings.extend(data::validate_maps(&maps, &pool, &script_exists, &Default::default()));
+            findings.extend(data::validate_maps(
+                &maps,
+                &pool,
+                &script_exists,
+                &Default::default(),
+            ));
 
             // Scripts must parse as the Cmd vocabulary, and Choice
             // branches must not be empty (doc 03 §5).
@@ -287,6 +292,7 @@ fn validate(options: &Options) -> Result<bool> {
         // First pass: every pack's map ids (cross-region warp targets).
         let mut all_map_ids: std::collections::BTreeSet<undersong_core::ids::MapId> =
             Default::default();
+        let mut all_pack_moves: Vec<undersong_core::moves::MoveSpec> = Vec::new();
         {
             let mut dirs: Vec<_> = std::fs::read_dir(&regions_root)
                 .with_context(|| format!("reading {}", regions_root.display()))?
@@ -304,6 +310,7 @@ fn validate(options: &Options) -> Result<bool> {
                 let pack = data::load_region(&options.content, &region)
                     .with_context(|| format!("loading region `{region}`"))?;
                 all_map_ids.extend(pack.maps.keys().cloned());
+                all_pack_moves.extend(pack.moves.iter().cloned());
             }
         }
         let mut region_dirs: Vec<_> = std::fs::read_dir(&regions_root)
@@ -354,6 +361,7 @@ fn validate(options: &Options) -> Result<bool> {
                                 &path,
                                 &mut script_keys,
                                 &mut findings,
+                                &all_map_ids,
                             );
                             collect_script_warps(&cmds, map_id, &mut script_warps);
                             collect_script_flags(&cmds, &mut script_flags);
@@ -367,9 +375,16 @@ fn validate(options: &Options) -> Result<bool> {
                 .filter(|m| !pack.maps.contains_key(*m))
                 .cloned()
                 .collect();
+            // Moves are shared across packs at load (the registry is a
+            // union) — validate against the same union.
+            let mut content_union = content.clone();
+            content_union
+                .moves
+                .moves
+                .extend(all_pack_moves.iter().cloned());
             findings.extend(data::validate_region(
                 &pack,
-                &content,
+                &content_union,
                 &items,
                 &script_warps,
                 &external,
@@ -395,9 +410,8 @@ fn validate(options: &Options) -> Result<bool> {
             findings.extend(data::validate_strings(&pack, &core_strings, &script_keys));
 
             // TM references resolve (doc 02 v1.6 #2).
-            let move_exists = |id: &undersong_core::ids::MoveId| {
-                content.moves.get(id).is_some() || pack.moves.iter().any(|m| &m.id == id)
-            };
+            let move_exists =
+                |id: &undersong_core::ids::MoveId| content_union.moves.get(id).is_some();
             findings.extend(data::validate_item_moves(&items, &move_exists));
         }
     }
@@ -466,6 +480,7 @@ fn collect_script_refs(
     path: &std::path::Path,
     keys: &mut Vec<String>,
     findings: &mut Vec<data::Finding>,
+    all_maps: &std::collections::BTreeSet<undersong_core::ids::MapId>,
 ) {
     for cmd in cmds {
         match cmd {
@@ -477,12 +492,12 @@ fn collect_script_refs(
                 keys.push(key.clone());
                 for (label, branch) in branches {
                     keys.push(label.clone());
-                    collect_script_refs(branch, pack, items, path, keys, findings);
+                    collect_script_refs(branch, pack, items, path, keys, findings, all_maps);
                 }
             }
             script::Cmd::If { then, r#else, .. } => {
-                collect_script_refs(then, pack, items, path, keys, findings);
-                collect_script_refs(r#else, pack, items, path, keys, findings);
+                collect_script_refs(then, pack, items, path, keys, findings, all_maps);
+                collect_script_refs(r#else, pack, items, path, keys, findings, all_maps);
             }
             script::Cmd::GiveMote { species, .. } if !pack.motifs.contains_key(species) => {
                 findings.push(data::Finding {
@@ -512,7 +527,9 @@ fn collect_script_refs(
                     message: format!("{}: unknown item `{id}`", path.display()),
                 });
             }
-            script::Cmd::Warp { map, .. } if !pack.maps.contains_key(map) => {
+            script::Cmd::Warp { map, .. }
+                if !pack.maps.contains_key(map) && !all_maps.contains(map) =>
+            {
                 findings.push(data::Finding {
                     severity: data::Severity::Error,
                     rule: "script.ref",

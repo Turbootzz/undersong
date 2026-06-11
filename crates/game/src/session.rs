@@ -40,7 +40,9 @@ impl Registry {
     /// data merge by id; later packs may not silently shadow core ids.
     pub fn extend_with_pack(&mut self, pack: &data::RegionPack) {
         for spec in pack.moves.iter() {
-            self.moves.entry(spec.id.clone()).or_insert_with(|| spec.clone());
+            self.moves
+                .entry(spec.id.clone())
+                .or_insert_with(|| spec.clone());
         }
         for (id, motif) in pack.motifs.iter() {
             self.species

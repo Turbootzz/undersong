@@ -758,7 +758,12 @@ pub fn validate_region(
     // Maps: structural rules + dex-membership of encounters + warp graph
     // connectivity from the entry map (doc 04 §3 rule 2).
     let script_exists = |_: &undersong_core::ids::MapId, _: &str| true; // checked by tools on disk
-    findings.extend(validate_maps(&pack.maps, &pool, &script_exists, external_maps));
+    findings.extend(validate_maps(
+        &pack.maps,
+        &pool,
+        &script_exists,
+        external_maps,
+    ));
     for (mid, map) in &pack.maps {
         if let Some(encounters) = &map.encounters {
             for (species, ..) in &encounters.slots {

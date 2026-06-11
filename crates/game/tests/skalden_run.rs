@@ -21,7 +21,12 @@ fn skalden_mini_arc_completes_as_pure_content() {
         .expect("the union world loads with the pack present");
     let mut driver = Driver::new(world);
     // A Chorus-finished save in miniature (travel unlock condition).
-    for flag in ["ending.chosen", "ending.chorus", "credits.chorus", "badge.8"] {
+    for flag in [
+        "ending.chosen",
+        "ending.chorus",
+        "credits.chorus",
+        "badge.8",
+    ] {
         driver.world.vars.flags.insert(flag.into());
     }
     let mut rng = undersong_core::rng::BattleRng::from_seed(58);
@@ -48,9 +53,9 @@ fn skalden_mini_arc_completes_as_pure_content() {
     // The boat leaves from Port Calando's quay.
     driver.world.current_map = "port_calando".into();
     driver.world.player = (9, 11);
-    driver.go_y(5);
+    driver.go_y(4); // under the echo keeper's row
     driver.go_x(2);
-    driver.go_y(4); // the quay trigger
+    driver.go_y(3); // the quay trigger
     driver.drain();
     assert_eq!(
         driver.world.current_map.as_str(),
@@ -100,11 +105,18 @@ fn skalden_mini_arc_completes_as_pure_content() {
                 d.close_shop();
             },
         );
-        // Walk the road east to the next town.
+        // Surface from the hall, then walk the road east.
+        if driver.world.current_map.as_str().starts_with("skald_hall") {
+            driver.go_x(6);
+            driver.go_y(0);
+        }
         if n < 4 {
             driver.go_y(7);
             driver.go_x(driver.world.map().width - 1);
         }
     }
-    assert!(driver.has_flag("skalden.badge.4"), "the folk circuit closes");
+    assert!(
+        driver.has_flag("skalden.badge.4"),
+        "the folk circuit closes"
+    );
 }

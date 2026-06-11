@@ -943,7 +943,8 @@ fn music_director(
     assets: Res<AssetServer>,
     mut current: ResMut<CurrentMusic>,
     players: Query<Entity, With<MusicPlayer>>,
-    unlocked: Res<AudioUnlocked>,) {
+    unlocked: Res<AudioUnlocked>,
+) {
     if cfg!(target_arch = "wasm32") && !unlocked.0 {
         return; // autoplay gate: wait for the first gesture
     }
@@ -969,7 +970,6 @@ fn music_director(
     }
     current.playing = desired;
 }
-
 
 /// The platform's save backend: filesystem natively, localStorage on
 /// the web (doc 03 §4).

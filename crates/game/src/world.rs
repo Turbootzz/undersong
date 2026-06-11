@@ -1898,13 +1898,12 @@ pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<Worl
 
     let mut all_maps = BTreeMap::new();
     let mut scripts = BTreeMap::new();
-    let mut merged_strings: std::collections::BTreeMap<String, String> = data::load_core_strings(
-        content_root,
-    )
-    .map_err(|e| e.to_string())?
-    .iter()
-    .map(|(k, v)| (k.clone(), v.clone()))
-    .collect();
+    let mut merged_strings: std::collections::BTreeMap<String, String> =
+        data::load_core_strings(content_root)
+            .map_err(|e| e.to_string())?
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
     let mut primary_pack: Option<data::RegionPack> = None;
     let mut registry: Option<Registry> = None;
 
@@ -1912,8 +1911,7 @@ pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<Worl
         let pack = data::load_region(content_root, region).map_err(|e| e.to_string())?;
         let maps_root = regions_root.join(region).join("maps");
         for (id, map) in &pack.maps {
-            let mut paths: Vec<String> =
-                map.npcs.iter().filter_map(|n| n.script.clone()).collect();
+            let mut paths: Vec<String> = map.npcs.iter().filter_map(|n| n.script.clone()).collect();
             for trigger in &map.triggers {
                 if let TriggerKind::Script { path } = &trigger.kind {
                     paths.push(path.clone());
