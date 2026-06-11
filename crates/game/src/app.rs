@@ -31,6 +31,7 @@ impl Plugin for UndersongPlugin {
             .insert_resource(SettingsRes(save::Settings::default()))
             .insert_resource(SettingsOpen(false))
             .insert_resource(Wipe(None))
+            .insert_resource(DialogueReveal::default())
             .add_systems(OnEnter(AppState::Boot), boot_load)
             .add_systems(
                 Update,
@@ -62,6 +63,7 @@ impl Plugin for UndersongPlugin {
                     credits_watch,
                     screenshot_key,
                     boot_battle_rig,
+                    theater_demo_rig,
                     visual_replay,
                 ),
             )
@@ -416,6 +418,7 @@ fn player_input(
     mut next: ResMut<NextState<AppState>>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
     mut toast: ResMut<Toast>,
+    mut reveal: ResMut<DialogueReveal>,
 ) {
     // An open mart owns the keys (shop_ui routes them).
     if world.0.shop.is_some() {
@@ -423,6 +426,11 @@ fn player_input(
     }
     // Interact / advance dialogue / answer choice.
     if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+        // Mid-reveal Z completes the typewriter instead of advancing.
+        if world.0.dialogue.is_some() && !reveal.done() {
+            reveal.complete();
+            return;
+        }
         let was_talking = world.0.dialogue.is_some();
         let events = world.0.apply(WorldInput::Interact);
         let line = events
@@ -716,10 +724,35 @@ fn camera_follow(
 
 // ----- dialogue UI ------------------------------------------------------
 
+/// Typewriter state for the overworld dialogue box (P17): one line
+/// reveals per-character; Z completes the reveal, then advances.
+#[derive(Resource, Default)]
+pub struct DialogueReveal {
+    /// The (speaker, string-key) pair the reveal belongs to.
+    key: Option<(String, String)>,
+    shown: f32,
+    chars: usize,
+}
+
+impl DialogueReveal {
+    pub fn done(&self) -> bool {
+        self.key.is_none() || self.shown as usize >= self.chars
+    }
+
+    pub fn complete(&mut self) {
+        self.shown = self.chars as f32;
+    }
+}
+
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn dialogue_ui(
     mut commands: Commands,
+    time: Res<Time>,
+    assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
     world: Res<WorldRes>,
     theme: Option<Res<Theme>>,
+    mut reveal: ResMut<DialogueReveal>,
     existing: Query<Entity, With<DialogueUi>>,
     mut text: Query<&mut Text, (With<DialogueText>, Without<NameTagText>)>,
     mut tag: Query<&mut Text, (With<NameTagText>, Without<DialogueText>)>,
@@ -736,7 +769,28 @@ fn dialogue_ui(
             } else {
                 world.0.text(&format!("npc.{who}"))
             };
-            let line = world.0.text(&key).to_string();
+            let full_line = world.0.text(&key).to_string();
+            // Per-character reveal, keyed by the line — choice cursor
+            // re-renders must not restart it.
+            let line_key = (who.clone(), key.clone());
+            if reveal.key.as_ref() != Some(&line_key) {
+                reveal.key = Some(line_key);
+                reveal.shown = 0.0;
+                reveal.chars = full_line.chars().count();
+            }
+            let speed = f32::from(settings.0.text_speed);
+            if speed <= 0.0 || dialogue.choice.is_some() {
+                reveal.complete();
+            } else if !reveal.done() {
+                let before = reveal.shown as usize;
+                reveal.shown =
+                    (reveal.shown + speed * time.delta_secs()).min(reveal.chars as f32);
+                // A soft blip every third character.
+                if reveal.shown as usize / 3 > before / 3 {
+                    play_cue_volume(&mut commands, &assets, &settings.0, "blip", 0.5);
+                }
+            }
+            let line: String = full_line.chars().take(reveal.shown as usize).collect();
             // The choice list, when open, is appended to the text so the
             // pure cursor is visible; the dedicated popup widget arrives
             // with real fonts in P3 (doc 05 §4).
@@ -839,6 +893,7 @@ fn dialogue_ui(
             }
         }
         None => {
+            reveal.key = None;
             for entity in &existing {
                 commands.entity(entity).despawn();
             }
@@ -1189,10 +1244,22 @@ pub fn play_cue(
     settings: &save::Settings,
     name: &str,
 ) {
+    play_cue_volume(commands, assets, settings, name, 1.0);
+}
+
+/// A cue with a per-call gain on top of the SFX setting (typewriter
+/// blips ride softer than confirms).
+pub fn play_cue_volume(
+    commands: &mut Commands,
+    assets: &AssetServer,
+    settings: &save::Settings,
+    name: &str,
+    gain: f32,
+) {
     if settings.volume_sfx == 0 {
         return;
     }
-    let volume = f32::from(settings.volume_sfx) / 100.0 * 0.8;
+    let volume = f32::from(settings.volume_sfx) / 100.0 * 0.8 * gain;
     commands.spawn((
         AudioPlayer::new(assets.load(format!("sfx/{name}.wav"))),
         PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::Linear(volume)),
@@ -1258,6 +1325,124 @@ fn boot_battle_rig(
     }
 }
 
+/// Dev rig: UNDERSONG_BOOT_THEATER={fight|catch|evolve} boots straight
+/// into a staged wild battle and autoplays it while filming frames to
+/// docs/playtests/theater-<mode>/ — the P17 battle-theater self-review
+/// instrument. Exits the app when the show ends.
+#[derive(Default)]
+struct TheaterRigState {
+    started: bool,
+    bells: u32,
+    linger: f32,
+    shots: u32,
+    since_shot: f32,
+}
+
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
+fn theater_demo_rig(
+    mut commands: Commands,
+    time: Res<Time>,
+    state: Res<State<AppState>>,
+    mut world: ResMut<WorldRes>,
+    mut next: ResMut<NextState<AppState>>,
+    mut theater: ResMut<crate::battle_ui::Theater>,
+    mut exit: MessageWriter<AppExit>,
+    mut rig: Local<TheaterRigState>,
+) {
+    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+    let Ok(mode) = std::env::var("UNDERSONG_BOOT_THEATER") else {
+        return;
+    };
+    if time.elapsed_secs() < 2.0 {
+        return;
+    }
+    if !rig.started {
+        rig.started = true;
+        let mut rng = undersong_core::rng::BattleRng::from_seed(0x7EA7E2);
+        let Some(registry) = &world.0.registry else {
+            return;
+        };
+        let (ally, ally_level, foe, foe_level) = match mode.as_str() {
+            "catch" => ("embaritone", 30, "galliard", 6),
+            "evolve" => ("ampurr", 23, "bloomara", 4),
+            _ => ("embaritone", 24, "galliard", 16),
+        };
+        let mut party = Vec::new();
+        if let Some(mut mote) = registry.wild_individual(&ally.into(), ally_level, &mut rng) {
+            mote.ot = "player".into();
+            if mode == "evolve" {
+                // Park exp a hair under the evolution level (ampurr →
+                // voltacelle at 24) so one win triggers the scene.
+                if let Some(spec) = registry.species.get(&mote.species) {
+                    mote.exp = spec.growth_curve.total_exp(24).saturating_sub(10);
+                }
+            }
+            party.push(mote);
+        }
+        world.0.party = party;
+        if mode == "catch" {
+            world.0.bag.insert("fermata".into(), 10);
+        }
+        world.0.start_wild_battle(foe.into(), foe_level);
+        if world.0.battle.is_some() {
+            next.set(AppState::Battle);
+        }
+        return;
+    }
+    // Film: a frame every ~0.6s while the show runs (the impact strips
+    // run 0.48s — a slower cadence never catches them).
+    rig.since_shot += time.delta_secs();
+    if rig.since_shot > 0.6 && rig.shots < 160 {
+        rig.since_shot = 0.0;
+        rig.shots += 1;
+        let dir = std::path::PathBuf::from("docs/playtests").join(format!("theater-{mode}"));
+        std::fs::create_dir_all(&dir).ok();
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(
+                dir.join(format!("frame_{:02}.png", rig.shots)),
+            ));
+    }
+    // Autopilot: act only between theater beats, exactly like a player.
+    if *state.get() != AppState::Battle || !theater.idle() {
+        return;
+    }
+    if world.0.pending_shift {
+        world.0.apply(WorldInput::Shift(None));
+        return;
+    }
+    if !world.0.pending_learn_queue.is_empty() {
+        let events = world.0.apply(WorldInput::Learn { replace: None });
+        crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
+        return;
+    }
+    if !world.0.pending_evolutions.is_empty() {
+        let events = world.0.apply(WorldInput::Evolve { accept: true });
+        crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
+        return;
+    }
+    if world.0.battle.is_some() {
+        let cmd = if mode == "catch" {
+            rig.bells += 1;
+            if rig.bells > 12 {
+                game::session::BattleCmd::Run
+            } else {
+                game::session::BattleCmd::Bell
+            }
+        } else {
+            game::session::BattleCmd::Move { slot: 0 }
+        };
+        let events = world.0.apply(WorldInput::Battle(cmd));
+        crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
+        return;
+    }
+    // The show is over: linger so the film catches the last line.
+    rig.linger += time.delta_secs();
+    if rig.linger > 4.0 {
+        exit.write(AppExit::Success);
+    }
+}
+
 /// The visual playtest harness (P16): UNDERSONG_VISUAL_REPLAY=<file>
 /// replays a recorded run inside the windowed app, pacing the input
 /// stream and capturing a frame series to docs/playtests/<stem>/ —
@@ -1280,6 +1465,7 @@ fn visual_replay(
     mut rendered: ResMut<RenderedMap>,
     mut anim: ResMut<PlayerAnim>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
+    mut theater: ResMut<crate::battle_ui::Theater>,
     mut rig: Local<VisualReplay>,
 ) {
     use bevy::render::view::screenshot::{Screenshot, save_to_disk};
@@ -1317,36 +1503,52 @@ fn visual_replay(
     }
     let total = rig.inputs.as_ref().map(Vec::len).unwrap_or(0);
     let finished = rig.index >= total;
-    // Pace: a small slice per frame keeps motion watchable.
-    let end = (rig.index + 4).min(total);
-    let battle_now = world.0.battle.is_some();
-    for i in rig.index..end {
-        let _ = finished;
-        let input = rig.inputs.as_ref().expect("loaded")[i].clone();
-        let events = world.0.apply(input);
-        for event in &events {
-            if matches!(event, WorldEvent::Warped { .. }) {
-                rendered.0 = None;
-                anim.0 = None;
-                if let Ok(mut transform) = player.single_mut() {
-                    let (x, y) = world.0.player;
-                    transform.translation =
-                        Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+    let in_battle_scene = *state.get() == AppState::Battle;
+    // Battle scenes run on the theater's clock (P17): feed nothing
+    // while it plays, one input per idle frame, and only drop the
+    // curtain when the last animation has landed.
+    if in_battle_scene && !theater.idle() {
+        // hold — the film watches the theater
+    } else if in_battle_scene
+        && world.0.battle.is_none()
+        && world.0.pending_learn_queue.is_empty()
+        && world.0.pending_evolutions.is_empty()
+    {
+        next.set(AppState::Overworld); // the player's post-battle Z
+    } else {
+        // Pace: a small slice per frame keeps motion watchable.
+        let per_frame = if in_battle_scene { 1 } else { 4 };
+        let end = (rig.index + per_frame).min(total);
+        let battle_now = world.0.battle.is_some();
+        for i in rig.index..end {
+            let _ = finished;
+            let input = rig.inputs.as_ref().expect("loaded")[i].clone();
+            let events = world.0.apply(input);
+            let battle_after = world.0.battle.is_some();
+            // Mid-battle events drive the theater; the starting batch is
+            // skipped (battle_enter resets the theater and seeds the
+            // entry choreography, mirroring real play).
+            if battle_now {
+                crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
+            }
+            for event in &events {
+                if matches!(event, WorldEvent::Warped { .. }) {
+                    rendered.0 = None;
+                    anim.0 = None;
+                    if let Ok(mut transform) = player.single_mut() {
+                        let (x, y) = world.0.player;
+                        transform.translation =
+                            Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+                    }
                 }
             }
-        }
-        let battle_after = world.0.battle.is_some();
-        if battle_after != battle_now {
-            next.set(if battle_after {
-                AppState::Battle
-            } else {
-                AppState::Overworld
-            });
-            let _ = battle_now;
+            if battle_after && !battle_now {
+                next.set(AppState::Battle);
+                rig.index = i + 1;
+                break; // let the scene switch render before continuing
+            }
             rig.index = i + 1;
-            break; // let the scene switch render before continuing
         }
-        rig.index = i + 1;
     }
     // Frame series: one shot every ~2.5s, capped (keeps shooting a few
     // beats after the run ends so the final scene lands on film).

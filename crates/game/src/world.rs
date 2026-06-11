@@ -982,6 +982,15 @@ impl WorldState {
         let _ = events;
     }
 
+    /// Starts a wild battle directly — the scripted-static path
+    /// (`SideEffectReq::StartWildBattle`) and the presenter's dev rigs
+    /// share it.
+    pub fn start_wild_battle(&mut self, species: SpeciesId, level: u8) {
+        self.pending_encounter = Some((species, level));
+        let mut events = Vec::new();
+        self.maybe_start_wild_battle(&mut events);
+    }
+
     /// Starts a trainer battle by id (script `StartBattle`).
     pub fn start_trainer_battle(&mut self, trainer_id: &undersong_core::ids::TrainerId) {
         let Some(registry) = &self.registry else {
