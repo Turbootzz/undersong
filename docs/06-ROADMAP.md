@@ -343,15 +343,15 @@ Decisions (2026-06-11): hero = **variant B** (teal wayfarer); pixel font
 vendored; move effects **type-flavored**; self-review mandate active
 (see docs/09-HANDOFF.md §Self-review).
 
-- [ ] **Task zero — hero B**: in `crates/tools/src/heroes.rs`,
+- [x] **Task zero — hero B**: in `crates/tools/src/heroes.rs`,
       `render_heroes` paints the live `player.*` set with `legend_a()`;
       switch to `legend_b()`, regenerate (`cargo run -p tools -- sprites`),
       and verify with a boot screenshot. Consider giving B its own hair
       rows later (currently variants share the A silhouette).
-- [ ] **Battle entry**: foe sprite slides in from the right with its cry;
+- [x] **Battle entry**: foe sprite slides in from the right with its cry;
       ally back lobs in from the left; plates fade in after. The ink wipe
       already covers the scene switch.
-- [ ] **Move animations, type-flavored**: a small effect vocabulary in
+- [x] **Move animations, type-flavored**: a small effect vocabulary in
       `battle_ui.rs` driven by `BattleEvent::MoveUsed`'s move type —
       attacker lunge (UI node offset tween) + per-type impact on the
       target: Ember flame burst, Tide splash arc, Volt jagged flash,
@@ -360,24 +360,24 @@ vendored; move effects **type-flavored**; self-review mandate active
       clang ring, Resonant concentric rings, Feral plain slash. Sprite
       effects can be generated 32×32 frame strips by `tools sprites`
       (effects module) — 3-4 frames each, despawn on finish.
-- [ ] **Damage feedback**: target flash + shake exists (FxState) — add
+- [x] **Damage feedback**: target flash + shake exists (FxState) — add
       HP bar tweening (drain over ~0.4s instead of snapping) and a
       brief freeze-frame on crits.
-- [ ] **Faint & switch**: faint = sprite drops + fades with a low cue;
+- [x] **Faint & switch**: faint = sprite drops + fades with a low cue;
       switch-in = slide + cry.
-- [ ] **Capture theater**: bell ring → sprite shrinks into a gilt point →
+- [x] **Capture theater**: bell ring → sprite shrinks into a gilt point →
       three wobble pulses (matching the engine's shake count if
       exposed; otherwise three) → settle chime or break-out.
-- [ ] **The evolution scene**: on `Evolve { accept: true }`, a dedicated
+- [x] **The evolution scene**: on `Evolve { accept: true }`, a dedicated
       overlay — darken, the old sprite silhouettes white, flashes
       alternate old/new silhouette accelerating, resolve to the new
       front sprite + cry + fanfare cue + "what? <name> is evolving!"
       typewriter text. Skippable with X (era-honest: B button cancels
       nothing once accepted, only the *scene* fast-forwards).
-- [ ] **Typewriter text**: battle messages and overworld dialogue reveal
+- [x] **Typewriter text**: battle messages and overworld dialogue reveal
       per-character (speed from the existing settings) with a soft blip
       every 2-3 characters; Z reveals fully, then advances.
-- [ ] **Self-review + phase review**; STATUS with harness film notes.
+- [x] **Self-review + phase review**; STATUS with harness film notes.
 
 **Gate P17:** a harness film of one wild fight + one capture + one
 evolution shows every animation; the agent's playfeel review (honest
@@ -479,6 +479,69 @@ a harness film; recontext pairs counted in STATUS; validate 0/0.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P17 complete (battle theater)
+
+**Built:** Hero B (teal wayfarer) is the live player set. The battle
+presenter translates the event stream into a *theater*: a strict queue
+of typewriter lines and blocking animations — entry (foe slides in
+with its cry, ally lobs in, plates slide after), attacker lunges,
+type-flavored impact strips (12 types, generated 4-frame 32×32 art in
+`tools effects`), flash + shake + crit freeze-frame, HP bars that
+drain ~0.4 s with ticking numbers and keep painting after the session
+ends, faint drop+fade with a low cue, switch-in slides with cries, the
+capture sequence (bell ring → shrink to a gilt point → wobbles per the
+engine's ring count → settle chime or break-out), and the evolution
+overlay (accelerating silhouette flashes, X fast-forwards, calm
+dissolve under reduced-motion). Overworld dialogue types per-character
+with soft blips; Z completes, then advances. Seven new cues (bell,
+wobble, settle, breakout, faint, blip, P18's alert pre-made). New rig:
+`UNDERSONG_BOOT_THEATER={fight|catch|evolve}` autoplays a staged
+battle and films it; the visual replay harness paces battles on the
+theater's clock; `scripts/film.sh` wraps unattended capture.
+
+**Gate P17:** harness films show every animation —
+docs/playtests/theater-fight (impact sparks, drains), theater-catch
+(gilt point, wobbles, break-outs, the settle, "joins your score!"
+with the emptied platform), theater-evolve (white-silhouette overlay,
+the post-battle killing-blow drain painting 0/20). The badge-1 visual
+replay runs its real recorded battles through the theater. 195 tests
+(≥193); replays untouched (presenter-only); clippy clean; boot clean.
+
+**Phase review:** 7-lens adversarial workflow (40 agents) over
+`p17-start..HEAD`: 33 raw → 32 confirmed (~17 distinct after
+cross-lens dedup), 1 refuted. All distinct findings fixed (3d243fe):
+the dead screen shake (BattleRoot marker), the reduced-motion
+evolution strobe, plates flashing the next foe's label onto the dying
+mote, eventless bag-heal drift (a reconcile pass), untracked Drained/
+SeededDrain, films missing the evolution scene, zero-damage flashes,
+Z/X leaking through animation frames, duplicate-species switch
+resolution, the P9 animations-off pacing contract, instant-path
+cries/cues, multi-prompt message forcing, and the rig/film.sh nits.
+Parked, recorded: repeated-identical-dialogue-line reveal skip
+(latent — no shipped content repeats a line back-to-back); player.up
+walk frame duplicate (P18's walk-v2 box rebuilds the gait anyway);
+`[Burn]` mechanical status names on plates (P19's flavor sweep).
+
+**Playfeel review (the agent's own eyes, honest):** The battle finally
+has the era's rhythm — declare, lunge, strike, drain, narrate — and
+the draining bar with its ticking number is the single biggest feel
+upgrade; the capture line of gilt-point → wobble → settle is legible
+even in stills, and the evolution overlay reads instantly as *that*
+scene. What's still stiff: the attacker lunge (18 px, 0.22 s) barely
+registers — it wants more travel and a beat of anticipation; the stage
+is a still photograph between beats (a 1–2 px idle bob would cheaply
+add life); the 64 px impact effects read small against the 96 px
+sprites and ember's sparks nearly vanish into parchment — P19's
+palette pass should deepen effect contrast; the shadow ellipses ignore
+sprite footprints (galliard floats above its shadow); and the bare
+message strip deserves the era's framed text box. Films carry no
+audio, so the cue choreography is verified by code path and a windowed
+listen, not by frames.
+
+**Next:** P18 — `git tag p18-start`; overworld feel (spotted! bubble,
+walk v2, world touches, night/weather reads).
+
 
 ### 2026-06-11 — P16 complete — THE SECOND PLAYTEST ARC (P13–P16) DONE
 
