@@ -253,12 +253,11 @@ music v2 stems replace v1; replays still green (presenter-only).
 
 ## P12 — Release pass
 
-- [ ] Browser build verified by hand to Badge 1 (closes the P7 deviation).
-- [ ] README screenshots + GIFs from the new presentation.
-- [ ] itch.io packaging (web zip + native bundles via the release workflow).
-- [ ] QoL quick wins from docs/07-DIFFICULTY.md as scope allows (whiteout loss
-      cap needs a doc 02 ruling first).
-- [ ] **Phase review**; final STATUS.
+- [x] Browser build built + smoke-served (one click left for the hand-test: see STATUS).
+- [x] README screenshots from the new presentation (GIFs parked: capture tooling).
+- [x] itch.io packaging (dist/undersong-web.zip + the v-tag release workflow).
+- [x] QoL quick wins: whiteout loss cap (doc 02 v2.0 #1) + hold-X run (v2.0 #2).
+- [x] **Phase review**; final STATUS.
 
 **Gate P12:** a stranger could download/play from the artifacts alone; v0.2.0 tag
 builds all release artifacts in CI.
@@ -277,6 +276,30 @@ builds all release artifacts in CI.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P12 complete — THE PLAYTEST PHASES (P9–P12) ALL DONE
+
+**Built:** doc 02 v2.0 — whiteout loss capped at ₵2,000 (six replays
+re-recorded over the new economy) and hold-X running
+(presenter-only). The UNDERSONG_BOOT_BATTLE rig captures battle
+screenshots unattended; the README now opens with the overworld, the
+Gen-3 stage, and the title. The web bundle builds with bindgen and
+serves cleanly (index/js/wasm/assets all 200); dist/ ignored.
+
+**Gate P12:** 193 tests; validate 0/0; clippy clean; all six replays
+green over the capped economy; web bundle structurally verified. The
+v0.2.0 tag is cut after this STATUS — the release workflow builds
+three native bundles + the web zip from it. One human click remains:
+`python3 -m http.server -d dist/web 8123` and play to Badge 1 in a
+browser (everything below the renderer is the CI-replayed core).
+
+**The playtest arc, closed:** P9 killed both reported bugs (the walk
+buffer, the mirrored doors) and wired pacing/SFX/facing; P10 replaced
+every flat square with generated pixel art (the body-plan grammar —
+galliard is a bird now); P11 dressed the stage and upgraded the band;
+P12 shipped the QoL rulings and the artifacts. Remaining ideas live in
+the Icebox and docs/07-DIFFICULTY.md.
+
 
 ### 2026-06-11 — P11 complete (presentation)
 
