@@ -217,19 +217,19 @@ Decisions (2026-06-11): internal resolution 640×360 with 32px tiles; all art
 generated deterministically; any PNG dropped in `assets/custom/**` (same relative
 path) replaces its generated counterpart — hand-craftable later, autonomous now.
 
-- [ ] **Resolution switch**: 640×360 internal, 32px grid, integer window scaling.
-- [ ] **`tools sprites` — tiles**: textured grass/path/water/trees/buildings with
+- [x] **Resolution switch**: 640×360 internal, 32px grid, integer window scaling.
+- [x] **`tools sprites` — tiles**: textured grass/path/water/trees/buildings with
       edge/corner variants; per-region palettes (doc 05).
-- [ ] **`tools sprites` — characters**: the player (4 directions × walk frames)
+- [x] **`tools sprites` — characters**: the player (4 directions × walk frames)
       and the NPC archetype set (villager, trainer, maestro, nurse, clerk, keeper,
       admin…), distinct silhouettes + palette accents.
-- [ ] **`tools sprites` — monsters**: body-plan grammar — per-species pixel
+- [x] **`tools sprites` — monsters**: body-plan grammar — per-species pixel
       creatures (32×32 overworld-icon + 96×96 battle front + back) assembled from
       type/tag-driven silhouettes (quadruped, bird, serpent, moth, fish, blob,
       golem…), seeded like the cries so lines stay recognizably related.
-- [ ] **Renderer**: sprite atlases replace flat quads; walk animation; layer order
+- [x] **Renderer**: sprite atlases replace flat quads; walk animation; layer order
       (ground / decor / actors / overhang); custom-override loader.
-- [ ] **Phase review**; STATUS with screenshots.
+- [x] **Phase review**; STATUS with screenshots.
 
 **Gate P10:** every tile, NPC, player direction, and all 130 species render real
 sprites (no flat squares anywhere); an override PNG demonstrably wins over its
@@ -277,6 +277,37 @@ builds all release artifacts in CI.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P10 complete (the sprite pipeline)
+
+**Built:** `tools sprites` — ten textured 32px tiles, sixty-four
+character frames (player two-beat gait × four directions; seven NPC
+archetype outfits), and 130 creatures from the body-plan grammar
+(quadruped/bird/serpent/moth/fish/blob/golem/wisp picked by primary
+type + tags; species seed drives proportions, markings, accents; every
+silhouette gets the doc-05 ink outline). The renderer replaced every
+flat quad: textured ground (the `indoor` flag picks plank floor vs
+masonry for ground 4), bushes/signs/canopies, NPCs with live facing,
+the animated player. Battles load creature fronts/backs; sigils stay
+the Score's signature. 640×360 internal on a 32px grid, UI proportions
+held by a 4/3 UiScale. `game::art::art()` checks `assets/custom/`
+first — hand-drawn art replaces generated art with zero code changes
+(test-proven). F12/`UNDERSONG_SHOT` screenshots.
+
+**Evidence:** `docs/screenshots/p10-overworld.png` (Pausa: brick
+buildings with gilt eaves, tufted grass, pebbled path, player + NPC
+readable at a glance). Creature samples verified by eye: galliard
+reads bird, embaritone quadruped, voltacelle moth, tidalegro fish,
+gravoross golem. 193 tests; replays untouched (presenter-only phase);
+validate 0/0; clippy clean.
+
+**Deviation:** battle-scene screenshot pending a windowed battle
+session (the creature art is verified at the file level; the Gen-3
+battle layout itself is P11's first box).
+
+**Next:** P11 — `git tag p11-start`; UI skin, battle layout, juice,
+music v2.
+
 
 ### 2026-06-11 — P9 complete (feel & correctness)
 
