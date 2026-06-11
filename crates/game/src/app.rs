@@ -210,6 +210,24 @@ fn art_sprite(assets: &AssetServer, rel: &str, size: f32) -> Sprite {
     }
 }
 
+/// Character sprites are 32×44 (P13 anime proportions), anchored so
+/// the feet stand on the tile and the head overflows upward.
+fn char_sprite(assets: &AssetServer, rel: &str) -> (Sprite, bevy::sprite::Anchor) {
+    (
+        Sprite {
+            image: assets.load(art(rel)),
+            custom_size: Some(Vec2::new(TILE, TILE * 44.0 / 32.0)),
+            ..default()
+        },
+        bevy::sprite::Anchor::BOTTOM_CENTER,
+    )
+}
+
+/// Transform for a bottom-anchored character on tile (x, y).
+fn char_pos(x: u32, y: u32, z: f32) -> Transform {
+    Transform::from_xyz(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, z)
+}
+
 fn quad(color: Color, size: f32) -> Sprite {
     Sprite {
         color,
@@ -321,8 +339,8 @@ fn rebuild_map_if_needed(
             };
             commands.spawn((
                 NpcSprite(npc.id.clone()),
-                art_sprite(&assets, &format!("sprites/chars/{key}.{dir}.0.png"), TILE),
-                tile_pos(npc.at.0, npc.at.1, 2.0),
+                char_sprite(&assets, &format!("sprites/chars/{key}.{dir}.0.png")),
+                char_pos(npc.at.0, npc.at.1, 2.0),
             ));
         }
     }
@@ -332,8 +350,8 @@ fn rebuild_map_if_needed(
     if player.is_empty() {
         commands.spawn((
             PlayerSprite,
-            art_sprite(&assets, "sprites/chars/player.down.0.png", TILE),
-            tile_pos(world.0.player.0, world.0.player.1, 2.0),
+            char_sprite(&assets, "sprites/chars/player.down.0.png"),
+            char_pos(world.0.player.0, world.0.player.1, 2.0),
         ));
         let mut marker_color = theme.color(&theme.palette.gilt);
         marker_color.set_alpha(0.45);
@@ -442,14 +460,8 @@ fn player_input(
     if stepped && !warped {
         let to = world.0.player;
         anim.0 = Some((
-            Vec2::new(
-                from.0 as f32 * TILE + TILE / 2.0,
-                from.1 as f32 * TILE + TILE / 2.0,
-            ),
-            Vec2::new(
-                to.0 as f32 * TILE + TILE / 2.0,
-                to.1 as f32 * TILE + TILE / 2.0,
-            ),
+            Vec2::new(from.0 as f32 * TILE + TILE / 2.0, from.1 as f32 * TILE),
+            Vec2::new(to.0 as f32 * TILE + TILE / 2.0, to.1 as f32 * TILE),
             0.0,
         ));
     }
@@ -512,11 +524,8 @@ fn handle_events(
                 wipe.0 = Some(0.0);
                 if let Ok(mut transform) = player.single_mut() {
                     let (x, y) = world.0.player;
-                    transform.translation = Vec3::new(
-                        x as f32 * TILE + TILE / 2.0,
-                        y as f32 * TILE + TILE / 2.0,
-                        2.0,
-                    );
+                    transform.translation =
+                        Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
                 }
                 // Autosave on map change (doc 03 §4).
                 autosave(&world.0);
@@ -528,11 +537,8 @@ fn handle_events(
                 anim.0 = None;
                 if let Ok(mut transform) = player.single_mut() {
                     let (x, y) = world.0.player;
-                    transform.translation = Vec3::new(
-                        x as f32 * TILE + TILE / 2.0,
-                        y as f32 * TILE + TILE / 2.0,
-                        2.0,
-                    );
+                    transform.translation =
+                        Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
                 }
             }
             _ => {}
@@ -578,7 +584,11 @@ fn facing_marker(
         Facing::Left => (-TILE, 0.0),
         Facing::Right => (TILE, 0.0),
     };
-    marker.translation = Vec3::new(player.translation.x + dx, player.translation.y + dy, 1.5);
+    marker.translation = Vec3::new(
+        player.translation.x + dx,
+        player.translation.y + TILE / 2.0 + dy,
+        1.5,
+    );
 }
 
 // ----- NPCs ------------------------------------------------------------
@@ -604,7 +614,7 @@ fn sync_npc_sprites(
         if let Some(state) = states.iter().find(|n| n.id == marker.0) {
             transform.translation = Vec3::new(
                 state.at.0 as f32 * TILE + TILE / 2.0,
-                state.at.1 as f32 * TILE + TILE / 2.0,
+                state.at.1 as f32 * TILE,
                 2.0,
             );
             // Facing follows the world (wander, FaceNpc effects).
@@ -1120,11 +1130,7 @@ fn resync_after_battle(
     }
     if let Ok(mut transform) = player.single_mut() {
         let (x, y) = world.0.player;
-        transform.translation = Vec3::new(
-            x as f32 * TILE + TILE / 2.0,
-            y as f32 * TILE + TILE / 2.0,
-            2.0,
-        );
+        transform.translation = Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
     }
 }
 

@@ -293,102 +293,117 @@ fn outfit(key: &str) -> Outfit {
     }
 }
 
-/// One 32×32 character frame. `dir`: 0 down, 1 up, 2 left, 3 right.
-/// `step`: walk frame (legs alternate).
+/// One 32×44 character frame (anime proportions, bottom-anchored).
+/// `dir`: 0 down, 1 up, 2 left, 3 right. `step`: walk frame.
 fn character(o: &Outfit, dir: u8, step: bool) -> RgbaImage {
-    let mut img = RgbaImage::new(TILE, TILE);
+    let mut img = RgbaImage::new(32, 44);
     let mut px = |x: i32, y: i32, c: Rgba<u8>| {
-        if (0..TILE as i32).contains(&x) && (0..TILE as i32).contains(&y) {
+        if (0..32).contains(&x) && (0..44).contains(&y) {
             img.put_pixel(x as u32, y as u32, c);
         }
     };
-    let cx = 16i32;
+    let cx = 15i32;
     // legs (alternate on step)
-    let (l_off, r_off) = if step { (1, -1) } else { (-1, 1) };
+    let (l_off, r_off) = if step { (1, -1) } else { (0, 0) };
     for (lx, off) in [(cx - 5, l_off), (cx + 2, r_off)] {
-        for y in 22..28i32 {
+        for y in 31..40i32 {
             for x in lx..lx + 4 {
                 px(x, y + off, INK);
             }
         }
     }
-    // coat / body
-    for y in 12..23i32 {
-        let w = 7 + i32::from(y > 14);
-        for x in (cx - w)..(cx + w) {
+    // coat / body (shorter than the head — anime ratio)
+    for y in 18..32i32 {
+        let w = 7 + i32::from(y > 21);
+        for x in (cx - w)..=(cx + w) {
             px(x, y, o.coat);
         }
     }
-    // trim sash
-    for x in (cx - 7)..(cx + 7) {
-        px(x, 20, o.trim);
+    for x in (cx - 7)..=(cx + 7) {
+        px(x, 28, o.trim);
     }
     // arms
-    for y in 13..20i32 {
+    for y in 19..27i32 {
         px(cx - 9, y, o.coat);
-        px(cx - 8, y, shade(o.coat, 0.8));
-        px(cx + 7, y, shade(o.coat, 0.8));
-        px(cx + 8, y, o.coat);
+        px(cx - 10, y, shade(o.coat, 0.8));
+        px(cx + 9, y, o.coat);
+        px(cx + 10, y, shade(o.coat, 0.8));
     }
-    // head
-    for y in 3..13i32 {
+    // big head
+    for y in 3..18i32 {
         let w = match y {
-            3 | 12 => 4,
-            4 | 11 => 5,
-            _ => 6,
+            3 | 17 => 5,
+            4 | 16 => 7,
+            _ => 8,
         };
-        for x in (cx - w)..(cx + w) {
+        for x in (cx - w)..=(cx + w) {
             px(x, y, o.skin);
         }
     }
-    // hair / hat
+    // hair / hat crown
     if o.hat {
-        for y in 1..5i32 {
-            let w = if y == 1 { 5 } else { 7 };
-            for x in (cx - w)..(cx + w) {
+        for y in 1..6i32 {
+            let w = if y == 1 { 6 } else { 8 };
+            for x in (cx - w)..=(cx + w) {
                 px(x, y, o.trim);
             }
         }
-        for x in (cx - 8)..(cx + 8) {
-            px(x, 5, o.trim);
+        for x in (cx - 9)..=(cx + 9) {
+            px(x, 6, o.trim);
         }
     } else {
-        for y in 2..6i32 {
-            let w = if y == 2 { 4 } else { 6 };
-            for x in (cx - w)..(cx + w) {
+        for y in 2..8i32 {
+            let w = if y == 2 { 5 } else { 8 };
+            for x in (cx - w)..=(cx + w) {
                 px(x, y, o.hair);
             }
         }
+        // side locks
+        for y in 8..13i32 {
+            px(cx - 8, y, o.hair);
+            px(cx + 8, y, o.hair);
+        }
     }
-    // face by direction
     match dir {
         0 => {
-            // down: two eyes
-            px(cx - 3, 8, INK);
-            px(cx - 2, 8, INK);
-            px(cx + 1, 8, INK);
-            px(cx + 2, 8, INK);
+            // down: big anime eyes (2×3 with glint)
+            for (ex, _) in [(cx - 5, 0), (cx + 3, 0)] {
+                for dy in 0..3i32 {
+                    for dx in 0..3i32 {
+                        px(ex + dx, 10 + dy, INK);
+                    }
+                }
+                px(ex, 10, Rgba([242, 233, 216, 255]));
+            }
+            // mouth
+            px(cx, 15, shade(o.skin, 0.7));
+            px(cx + 1, 15, shade(o.skin, 0.7));
         }
         1 => {
-            // up: hair back, no face
-            for y in 6..12i32 {
-                let w = 5;
-                for x in (cx - w)..(cx + w) {
+            for y in 8..18i32 {
+                let w = 7;
+                for x in (cx - w)..=(cx + w) {
                     px(x, y, o.hair);
                 }
             }
         }
         2 => {
-            // left: one eye, west side
-            px(cx - 4, 8, INK);
-            px(cx - 3, 8, INK);
+            for dy in 0..3i32 {
+                for dx in 0..3i32 {
+                    px(cx - 6 + dx, 10 + dy, INK);
+                }
+            }
+            px(cx - 6, 10, Rgba([242, 233, 216, 255]));
         }
         _ => {
-            px(cx + 2, 8, INK);
-            px(cx + 3, 8, INK);
+            for dy in 0..3i32 {
+                for dx in 0..3i32 {
+                    px(cx + 4 + dx, 10 + dy, INK);
+                }
+            }
+            px(cx + 6, 10, Rgba([242, 233, 216, 255]));
         }
     }
-    // ink outline pass: any opaque pixel bordering transparency darkens
     outline(&mut img);
     img
 }
@@ -456,301 +471,730 @@ fn body_plan(primary: Type, tags: &[String]) -> Plan {
     }
 }
 
-/// 96×96 battle-front creature. Symmetric body, plan-driven anatomy,
-/// seeded proportions and markings.
-#[expect(clippy::too_many_lines, reason = "one body grammar, eight plans")]
-fn creature_front(seed: u64, primary: Type, secondary: Option<Type>, tags: &[String]) -> RgbaImage {
-    const S: u32 = 96;
+/// Three-tone ramp around a base color (dark/base/light + outline ink).
+struct Ramp {
+    dark: Rgba<u8>,
+    base: Rgba<u8>,
+    light: Rgba<u8>,
+}
+
+fn ramp(c: Rgba<u8>) -> Ramp {
+    Ramp {
+        dark: shade(c, 0.72),
+        base: c,
+        light: shade(c, 1.22),
+    }
+}
+
+/// Body context shared by front and back renderers.
+struct Body {
+    plan: Plan,
+    cx: i32,
+    body_w: i32,
+    body_h: i32,
+    body_cy: i32,
+    head_r: i32,
+    head_cy: i32,
+    ramp: Ramp,
+    accent: Ramp,
+    belly: Rgba<u8>,
+    ear_kind: u32,
+    tail_kind: u32,
+    crest: bool,
+}
+
+fn body_from_seed(seed: u64, primary: Type, secondary: Option<Type>, tags: &[String]) -> Body {
     let mut rng = BattleRng::from_seed(seed ^ 0x0059_217e);
-    let mut img = RgbaImage::new(S, S);
     let plan = body_plan(primary, tags);
     let base = type_color(primary);
-    let accent = secondary.map(type_color).unwrap_or(shade(base, 1.25));
-    let belly = shade(PARCHMENT, 0.97);
+    let accent = secondary.map(type_color).unwrap_or(shade(base, 1.3));
+    let body_w = 15 + rng.below(9) as i32;
+    let body_h = 13 + rng.below(9) as i32;
+    let body_cy = 58i32 - i32::from(plan == Plan::Bird) * 4;
+    let head_r = 10 + rng.below(5) as i32;
+    Body {
+        plan,
+        cx: 48,
+        body_w,
+        body_h,
+        body_cy,
+        head_r,
+        head_cy: body_cy - body_h - head_r + 7,
+        ramp: ramp(base),
+        accent: ramp(accent),
+        belly: shade(PARCHMENT, 0.97),
+        ear_kind: rng.below(3),
+        tail_kind: rng.below(3),
+        crest: rng.chance(2, 5),
+    }
+}
 
-    let cx = 48i32;
-    // seeded proportions
-    let body_w = 16 + rng.below(8) as i32; // half-width
-    let body_h = 14 + rng.below(8) as i32;
-    let body_cy = 56i32 - i32::from(plan == Plan::Bird) * 4;
-    let head_r = 9 + rng.below(5) as i32;
-    let head_cy = body_cy - body_h - head_r + 6;
-
-    let px = |img: &mut RgbaImage, x: i32, y: i32, c: Rgba<u8>| {
-        if (0..S as i32).contains(&x) && (0..S as i32).contains(&y) {
+/// Shaded blot: light from the upper-left, dithered transition bands.
+fn blot_shaded(img: &mut RgbaImage, cx: i32, cy: i32, rx: i32, ry: i32, r: &Ramp) {
+    let s = 96i32;
+    for y in (cy - ry)..=(cy + ry) {
+        for x in (cx - rx)..=(cx + rx) {
+            if !(0..s).contains(&x) || !(0..s).contains(&y) {
+                continue;
+            }
+            let dx = f64::from(x - cx) / f64::from(rx.max(1));
+            let dy = f64::from(y - cy) / f64::from(ry.max(1));
+            let d = dx * dx + dy * dy;
+            if d > 1.0 {
+                continue;
+            }
+            // light vector: up-left
+            let lit = dx * -0.5 + dy * -0.7;
+            let dither = (x + y) % 2 == 0;
+            let c = if d > 0.74 && lit < 0.1 {
+                if dither && d < 0.86 { r.base } else { r.dark }
+            } else if lit > 0.34 {
+                if dither || lit > 0.52 {
+                    r.light
+                } else {
+                    r.base
+                }
+            } else {
+                r.base
+            };
             img.put_pixel(x as u32, y as u32, c);
         }
-    };
-    let blot = |img: &mut RgbaImage, cx: i32, cy: i32, rx: i32, ry: i32, c: Rgba<u8>| {
-        for y in (cy - ry)..=(cy + ry) {
-            for x in (cx - rx)..=(cx + rx) {
-                let dx = f64::from(x - cx) / f64::from(rx.max(1));
-                let dy = f64::from(y - cy) / f64::from(ry.max(1));
-                if dx * dx + dy * dy <= 1.0 {
-                    px(img, x, y, c);
-                }
-            }
-        }
-    };
+    }
+}
 
-    match plan {
-        Plan::Quadruped => {
-            // legs first (behind body)
-            for off in [-body_w + 4, body_w - 8] {
-                for leg in 0..2i32 {
-                    let lx = cx + off + leg * 4;
-                    for y in body_cy + body_h - 6..body_cy + body_h + 10 {
-                        px(&mut img, lx, y, shade(base, 0.8));
-                        px(&mut img, lx + 1, y, shade(base, 0.8));
-                        px(&mut img, lx + 2, y, shade(base, 0.7));
+fn px96(img: &mut RgbaImage, x: i32, y: i32, c: Rgba<u8>) {
+    if (0..96).contains(&x) && (0..96).contains(&y) {
+        img.put_pixel(x as u32, y as u32, c);
+    }
+}
+
+/// Ears/horns/crest kit, used by quadruped-ish heads.
+fn head_features(img: &mut RgbaImage, b: &Body, facing_front: bool) {
+    let (cx, head_cy, head_r) = (b.cx, b.head_cy, b.head_r);
+    match b.ear_kind {
+        0 => {
+            // pointed ears
+            for side in [-1i32, 1] {
+                for i in 0..7i32 {
+                    let w = (7 - i) / 2;
+                    for dx in -w..=w {
+                        px96(
+                            img,
+                            cx + side * (head_r - 3) + dx,
+                            head_cy - head_r + 2 - i,
+                            if i > 4 { b.accent.base } else { b.ramp.base },
+                        );
                     }
                 }
             }
-            blot(&mut img, cx, body_cy, body_w, body_h, base);
-            blot(&mut img, cx, body_cy + 3, body_w - 6, body_h - 6, belly);
-            // ears
-            blot(
-                &mut img,
-                cx - head_r + 2,
-                head_cy - head_r + 2,
-                3,
-                5,
-                accent,
-            );
-            blot(
-                &mut img,
-                cx + head_r - 2,
-                head_cy - head_r + 2,
-                3,
-                5,
-                accent,
-            );
-            blot(&mut img, cx, head_cy, head_r, head_r, base);
-            // tail
-            let t = 1 + rng.below(3) as i32;
-            for i in 0..10i32 {
-                blot(&mut img, cx + body_w + i, body_cy - i * t / 2, 3, 3, accent);
+        }
+        1 => {
+            // round ears
+            for side in [-1i32, 1] {
+                blot_shaded(
+                    img,
+                    cx + side * (head_r - 2),
+                    head_cy - head_r + 1,
+                    4,
+                    4,
+                    &b.accent,
+                );
             }
         }
-        Plan::Bird => {
-            // wings out
-            for side in [-1i32, 1] {
-                for i in 0..body_w + 6 {
-                    let wx = cx + side * (body_w / 2 + i);
-                    let wy = body_cy - 6 - i / 2;
-                    blot(&mut img, wx, wy, 3, 5 - i / 8, accent);
+        _ => {
+            // single horn
+            for i in 0..9i32 {
+                let w = (9 - i) / 3;
+                for dx in -w..=w {
+                    px96(img, cx + dx, head_cy - head_r - i + 2, b.accent.light);
                 }
             }
-            blot(&mut img, cx, body_cy, body_w - 4, body_h + 2, base);
-            blot(&mut img, cx, body_cy + 4, body_w - 9, body_h - 5, belly);
-            blot(&mut img, cx, head_cy + 4, head_r - 1, head_r - 1, base);
-            // beak
-            for i in 0..5i32 {
-                px(&mut img, cx - 2 + i, head_cy + 6 + i / 2, GILT);
-                px(&mut img, cx - 1 + i, head_cy + 7 + i / 2, GILT);
+        }
+    }
+    if b.crest && facing_front {
+        for i in 0..5i32 {
+            px96(img, cx - 2 + i, head_cy - head_r - 1, b.accent.dark);
+        }
+    }
+}
+
+fn tail(img: &mut RgbaImage, b: &Body, dir: i32) {
+    match b.tail_kind {
+        0 => {
+            for i in 0..11i32 {
+                blot_shaded(
+                    img,
+                    b.cx + dir * (b.body_w + i),
+                    b.body_cy - i / 2,
+                    3,
+                    3,
+                    &b.accent,
+                );
             }
-            // feet
-            for off in [-4i32, 4] {
-                for y in body_cy + body_h..body_cy + body_h + 8 {
-                    px(&mut img, cx + off, y, GILT);
+        }
+        1 => {
+            // tuft tail
+            for i in 0..7i32 {
+                blot_shaded(
+                    img,
+                    b.cx + dir * (b.body_w + i),
+                    b.body_cy + 2,
+                    2,
+                    2,
+                    &b.ramp,
+                );
+            }
+            blot_shaded(
+                img,
+                b.cx + dir * (b.body_w + 8),
+                b.body_cy + 1,
+                4,
+                4,
+                &b.accent,
+            );
+        }
+        _ => {
+            // curl
+            for i in 0..10i32 {
+                let t = f64::from(i) * 0.6;
+                blot_shaded(
+                    img,
+                    b.cx + dir * (b.body_w + 2 + (t.cos() * 5.0) as i32),
+                    b.body_cy - 4 - (t.sin() * 6.0) as i32,
+                    2,
+                    2,
+                    &b.accent,
+                );
+            }
+        }
+    }
+}
+
+/// 96×96 battle-front creature, grammar v2: shaded, feature kits.
+#[expect(clippy::too_many_lines, reason = "one body grammar, eight plans")]
+fn creature_front(seed: u64, primary: Type, secondary: Option<Type>, tags: &[String]) -> RgbaImage {
+    let mut img = RgbaImage::new(96, 96);
+    let b = body_from_seed(seed, primary, secondary, tags);
+    let (cx, body_cy, body_w, body_h, head_r, head_cy) =
+        (b.cx, b.body_cy, b.body_w, b.body_h, b.head_r, b.head_cy);
+
+    match b.plan {
+        Plan::Quadruped => {
+            for off in [-body_w + 4, body_w - 8] {
+                for leg in 0..2i32 {
+                    let lx = cx + off + leg * 5;
+                    for y in body_cy + body_h - 6..body_cy + body_h + 11 {
+                        px96(&mut img, lx, y, b.ramp.dark);
+                        px96(&mut img, lx + 1, y, b.ramp.base);
+                        px96(&mut img, lx + 2, y, b.ramp.dark);
+                    }
+                    // paw
+                    for dx in -1..3i32 {
+                        px96(&mut img, lx + dx, body_cy + body_h + 11, b.ramp.dark);
+                    }
+                }
+            }
+            tail(&mut img, &b, 1);
+            blot_shaded(&mut img, cx, body_cy, body_w, body_h, &b.ramp);
+            let belly_ramp = ramp(b.belly);
+            blot_shaded(
+                &mut img,
+                cx,
+                body_cy + 3,
+                body_w - 7,
+                body_h - 6,
+                &belly_ramp,
+            );
+            head_features(&mut img, &b, true);
+            blot_shaded(&mut img, cx, head_cy, head_r, head_r, &b.ramp);
+            // muzzle
+            blot_shaded(
+                &mut img,
+                cx,
+                head_cy + head_r / 2,
+                head_r / 2,
+                3,
+                &ramp(b.belly),
+            );
+        }
+        Plan::Bird => {
+            for side in [-1i32, 1] {
+                for i in 0..body_w + 7 {
+                    let wx = cx + side * (body_w / 2 + i);
+                    let wy = body_cy - 7 - i / 2;
+                    blot_shaded(&mut img, wx, wy, 3, (6 - i / 7).max(2), &b.accent);
+                }
+            }
+            blot_shaded(&mut img, cx, body_cy, body_w - 3, body_h + 3, &b.ramp);
+            blot_shaded(
+                &mut img,
+                cx,
+                body_cy + 4,
+                body_w - 8,
+                body_h - 4,
+                &ramp(b.belly),
+            );
+            blot_shaded(&mut img, cx, head_cy + 4, head_r - 1, head_r - 1, &b.ramp);
+            if b.crest {
+                for i in 0..6i32 {
+                    px96(
+                        &mut img,
+                        cx - 1 + i / 2,
+                        head_cy - head_r + 2 - i,
+                        b.accent.base,
+                    );
+                }
+            }
+            for i in 0..5i32 {
+                px96(&mut img, cx - 2 + i, head_cy + 7 + i / 2, GILT);
+                px96(&mut img, cx - 1 + i, head_cy + 8 + i / 2, shade(GILT, 0.8));
+            }
+            for off in [-5i32, 5] {
+                for y in body_cy + body_h + 2..body_cy + body_h + 9 {
+                    px96(&mut img, cx + off, y, GILT);
+                }
+                for dx in -2..3i32 {
+                    px96(&mut img, cx + off + dx, body_cy + body_h + 9, GILT);
                 }
             }
         }
         Plan::Serpent => {
-            // coiled S of blobs
-            let coils = 4 + rng.below(2) as i32;
-            for i in 0..coils * 8 {
+            let coils = 4;
+            for i in 0..coils * 9 {
                 let t = f64::from(i) / 8.0;
-                let sx = cx + ((t * 2.2).sin() * f64::from(body_w)) as i32;
+                let sx = cx + ((t * 2.0).sin() * f64::from(body_w)) as i32;
                 let sy = body_cy + body_h - i * 2;
-                blot(
-                    &mut img,
-                    sx,
-                    sy,
-                    7,
-                    6,
-                    if i % 6 < 3 { base } else { shade(base, 0.85) },
-                );
+                let r = if i % 6 < 3 { &b.ramp } else { &b.accent };
+                blot_shaded(&mut img, sx, sy, 8, 6, r);
             }
-            blot(&mut img, cx, head_cy + 8, head_r, head_r - 2, base);
-            blot(&mut img, cx, head_cy + 12, head_r - 4, 3, accent);
+            blot_shaded(&mut img, cx, head_cy + 8, head_r, head_r - 2, &b.ramp);
+            head_features(&mut img, &b, true);
+            // tongue
+            px96(&mut img, cx, head_cy + 8 + head_r, hex(0xc4593a));
+            px96(&mut img, cx, head_cy + 9 + head_r, hex(0xc4593a));
         }
         Plan::Moth => {
-            // two wing pairs
             for side in [-1i32, 1] {
-                blot(
+                blot_shaded(
                     &mut img,
                     cx + side * (body_w + 4),
-                    body_cy - 10,
-                    body_w - 2,
-                    body_h,
-                    accent,
+                    body_cy - 11,
+                    body_w - 1,
+                    body_h + 1,
+                    &b.accent,
                 );
-                blot(
+                blot_shaded(
                     &mut img,
                     cx + side * (body_w + 1),
-                    body_cy + 6,
-                    body_w - 7,
-                    body_h - 5,
-                    shade(accent, 0.8),
+                    body_cy + 7,
+                    body_w - 6,
+                    body_h - 4,
+                    &b.accent,
                 );
-                // wing eye-spot
-                blot(
+                blot_shaded(
                     &mut img,
                     cx + side * (body_w + 4),
-                    body_cy - 10,
-                    4,
-                    4,
-                    shade(base, 0.7),
+                    body_cy - 11,
+                    5,
+                    5,
+                    &b.ramp,
                 );
             }
-            blot(&mut img, cx, body_cy, 7, body_h + 4, base);
-            blot(&mut img, cx, head_cy + 8, head_r - 2, head_r - 2, base);
-            // antennae
+            blot_shaded(&mut img, cx, body_cy, 7, body_h + 5, &b.ramp);
+            blot_shaded(&mut img, cx, head_cy + 8, head_r - 2, head_r - 2, &b.ramp);
             for side in [-1i32, 1] {
-                for i in 0..8i32 {
-                    px(&mut img, cx + side * (2 + i / 2), head_cy + 2 - i, INK);
+                for i in 0..9i32 {
+                    px96(&mut img, cx + side * (2 + i / 2), head_cy + 2 - i, INK);
                 }
+                px96(&mut img, cx + side * 6, head_cy - 7, b.accent.light);
             }
         }
         Plan::Fish => {
-            blot(&mut img, cx, body_cy - 8, body_w + 4, body_h, base);
-            blot(&mut img, cx, body_cy - 4, body_w - 3, body_h - 6, belly);
-            // tail fin
-            for i in 0..10i32 {
-                blot(
+            for i in 0..11i32 {
+                blot_shaded(
                     &mut img,
-                    cx - body_w - 4 - i / 2,
+                    cx - body_w - 5 - i / 2,
                     body_cy - 8 - i + 5,
                     2,
                     4,
-                    accent,
+                    &b.accent,
                 );
-                blot(
+                blot_shaded(
                     &mut img,
-                    cx - body_w - 4 - i / 2,
+                    cx - body_w - 5 - i / 2,
                     body_cy - 8 + i - 5,
                     2,
                     4,
-                    accent,
+                    &b.accent,
                 );
             }
-            // dorsal
+            blot_shaded(&mut img, cx, body_cy - 8, body_w + 5, body_h + 1, &b.ramp);
+            blot_shaded(
+                &mut img,
+                cx + 2,
+                body_cy - 4,
+                body_w - 3,
+                body_h - 6,
+                &ramp(b.belly),
+            );
             for i in 0..body_w {
-                px(
+                px96(
+                    &mut img,
+                    cx - body_w / 2 + i,
+                    body_cy - 9 - body_h - i % 4,
+                    b.accent.base,
+                );
+                px96(
                     &mut img,
                     cx - body_w / 2 + i,
                     body_cy - 8 - body_h - i % 4,
-                    accent,
+                    b.accent.dark,
                 );
             }
-            // no separate head: big eye on the body
+            // side fin
+            for i in 0..6i32 {
+                px96(&mut img, cx + 4 + i, body_cy - 2 + i / 2, b.accent.base);
+                px96(&mut img, cx + 5 + i, body_cy - 1 + i / 2, b.accent.dark);
+            }
         }
         Plan::Blob => {
-            blot(&mut img, cx, body_cy - 4, body_w + 2, body_h + 6, base);
-            // sprout
-            for i in 0..7i32 {
-                px(
+            blot_shaded(&mut img, cx, body_cy - 4, body_w + 3, body_h + 7, &b.ramp);
+            for i in 0..8i32 {
+                px96(
                     &mut img,
                     cx,
-                    body_cy - body_h - 10 - i,
+                    body_cy - body_h - 11 - i,
                     shade(hex(0x6a9a4e), 0.8),
                 );
+                px96(
+                    &mut img,
+                    cx + 1,
+                    body_cy - body_h - 11 - i,
+                    shade(hex(0x6a9a4e), 0.65),
+                );
             }
-            blot(&mut img, cx - 4, body_cy - body_h - 16, 5, 3, accent);
-            blot(&mut img, cx + 4, body_cy - body_h - 16, 5, 3, accent);
-            // freckles
-            for _ in 0..6 {
-                let fx = cx - body_w + 4 + rng.below((body_w as u32) * 2 - 8) as i32;
-                let fy = body_cy - 4 + rng.below(body_h as u32) as i32 - body_h / 2;
-                blot(&mut img, fx, fy, 1, 1, accent);
+            blot_shaded(&mut img, cx - 5, body_cy - body_h - 17, 5, 3, &b.accent);
+            blot_shaded(&mut img, cx + 5, body_cy - body_h - 17, 5, 3, &b.accent);
+            let mut rng = BattleRng::from_seed(seed ^ 0xb10b);
+            for _ in 0..7 {
+                let fx = cx - body_w + 4 + rng.below((b.body_w as u32) * 2 - 8) as i32;
+                let fy = body_cy - 4 + rng.below(b.body_h as u32) as i32 - body_h / 2;
+                px96(&mut img, fx, fy, b.accent.dark);
+                px96(&mut img, fx + 1, fy, b.accent.base);
             }
         }
         Plan::Golem => {
-            // stacked slabs, head clear of the shoulders
-            blot(
+            blot_shaded(
                 &mut img,
                 cx,
                 body_cy + 6,
-                body_w + 4,
+                body_w + 5,
                 body_h - 2,
-                shade(base, 0.85),
+                &Ramp {
+                    dark: shade(b.ramp.dark, 0.9),
+                    base: b.ramp.dark,
+                    light: b.ramp.base,
+                },
             );
-            blot(&mut img, cx, body_cy - 8, body_w, body_h - 4, base);
-            blot(
+            blot_shaded(&mut img, cx, body_cy - 8, body_w, body_h - 3, &b.ramp);
+            for side in [-1i32, 1] {
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w + 8),
+                    body_cy - 4,
+                    5,
+                    11,
+                    &b.ramp,
+                );
+                // knuckles
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w + 8),
+                    body_cy + 8,
+                    4,
+                    3,
+                    &b.accent,
+                );
+            }
+            head_features(&mut img, &b, true);
+            blot_shaded(
                 &mut img,
                 cx,
                 body_cy - body_h - 10,
                 head_r,
                 head_r - 1,
-                shade(base, 1.1),
+                &b.ramp,
             );
-            // arms: chunky side slabs
-            for side in [-1i32, 1] {
-                blot(
-                    &mut img,
-                    cx + side * (body_w + 7),
-                    body_cy - 4,
-                    5,
-                    10,
-                    shade(base, 0.75),
-                );
+            let mut rng = BattleRng::from_seed(seed ^ 0x901e);
+            for _ in 0..6 {
+                let fx = cx - body_w + rng.below((b.body_w as u32) * 2) as i32;
+                let fy = body_cy - 8 + rng.below(b.body_h as u32) as i32;
+                px96(&mut img, fx, fy, INK);
+                px96(&mut img, fx + 1, fy + 1, b.ramp.dark);
             }
-            // cracks
-            for _ in 0..5 {
-                let fx = cx - body_w + rng.below((body_w as u32) * 2) as i32;
-                let fy = body_cy - 8 + rng.below(body_h as u32) as i32;
-                px(&mut img, fx, fy, INK);
-                px(&mut img, fx + 1, fy + 1, INK);
+            for dx in -(body_w - 6)..(body_w - 6) {
+                px96(&mut img, cx + dx, body_cy - 8, GILT);
             }
-            // gilt seam
-            blot(&mut img, cx, body_cy - 8, body_w - 6, 1, GILT);
         }
         Plan::Wisp => {
-            // tapering ghost-body with ragged hem
             for i in 0..body_h * 2 {
                 let w = body_w - i / 3;
                 if w <= 2 {
                     break;
                 }
-                let mut c = base;
-                c[3] = 235;
-                blot(&mut img, cx, head_cy + 8 + i, w, 2, c);
+                blot_shaded(&mut img, cx, head_cy + 8 + i, w, 2, &b.ramp);
             }
-            blot(&mut img, cx, head_cy + 4, head_r + 2, head_r, base);
-            // trailing wisps
+            // ragged hem
+            for k in 0..4i32 {
+                let hx = cx - body_w / 2 + k * (body_w / 2);
+                blot_shaded(
+                    &mut img,
+                    hx,
+                    head_cy + 8 + body_h * 2 - 2 + (k % 2) * 3,
+                    2,
+                    3,
+                    &b.ramp,
+                );
+            }
+            blot_shaded(&mut img, cx, head_cy + 4, head_r + 2, head_r, &b.ramp);
+            head_features(&mut img, &b, true);
             for side in [-1i32, 1] {
-                for i in 0..8i32 {
-                    px(
+                for i in 0..9i32 {
+                    px96(
                         &mut img,
                         cx + side * (body_w - 2) + side * i / 2,
                         head_cy + 20 + i * 3,
-                        accent,
+                        b.accent.light,
                     );
                 }
             }
         }
     }
 
-    // eyes (every plan): parchment glint over ink
-    let eye_y = match plan {
+    // eyes: ink with parchment glint, slightly larger (v2)
+    let eye_y = match b.plan {
         Plan::Fish => body_cy - 10,
         Plan::Golem => body_cy - body_h - 11,
-        _ => head_cy + 6,
+        _ => head_cy + 5,
     };
-    let eye_dx = if plan == Plan::Fish {
-        10
+    let eye_dx = if b.plan == Plan::Fish {
+        11
     } else {
         head_r / 2 + 1
     };
     for side in [-1i32, 1] {
         let ex = cx + side * eye_dx;
-        for dy in 0..3i32 {
-            for dx in 0..2i32 {
-                px(&mut img, ex + dx, eye_y + dy, INK);
+        for dy in 0..4i32 {
+            for dx in 0..3i32 {
+                px96(&mut img, ex + dx, eye_y + dy, INK);
             }
         }
-        px(&mut img, ex, eye_y, PARCHMENT);
+        px96(&mut img, ex, eye_y, PARCHMENT);
+        px96(&mut img, ex + 1, eye_y + 1, shade(PARCHMENT, 0.8));
+    }
+
+    outline(&mut img);
+    img
+}
+
+/// 96×96 REAL back view (P13: the cropped-front fake was the "my
+/// monster looks weird" bug): same body, drawn from behind — no face,
+/// back markings, head from the rear.
+fn creature_back(seed: u64, primary: Type, secondary: Option<Type>, tags: &[String]) -> RgbaImage {
+    let mut img = RgbaImage::new(96, 96);
+    let b = body_from_seed(seed, primary, secondary, tags);
+    let (cx, body_cy, body_w, body_h, head_r, head_cy) =
+        (b.cx, b.body_cy, b.body_w, b.body_h, b.head_r, b.head_cy);
+
+    match b.plan {
+        Plan::Quadruped => {
+            // hind legs dominate from behind
+            for off in [-body_w + 2, body_w - 7] {
+                for y in body_cy + body_h - 8..body_cy + body_h + 12 {
+                    for dx in 0..5i32 {
+                        px96(
+                            &mut img,
+                            cx + off + dx,
+                            y,
+                            if dx == 2 { b.ramp.base } else { b.ramp.dark },
+                        );
+                    }
+                }
+            }
+            tail(&mut img, &b, 1);
+            blot_shaded(&mut img, cx, body_cy, body_w + 2, body_h + 2, &b.ramp);
+            // spine stripe
+            for y in (body_cy - body_h)..(body_cy + body_h - 4) {
+                px96(&mut img, cx, y, b.accent.dark);
+                px96(&mut img, cx + 1, y, b.accent.base);
+            }
+            head_features(&mut img, &b, false);
+            blot_shaded(&mut img, cx, head_cy, head_r, head_r, &b.ramp);
+        }
+        Plan::Bird => {
+            // folded wings from behind: two shaded panels
+            blot_shaded(&mut img, cx, body_cy, body_w - 2, body_h + 4, &b.ramp);
+            for side in [-1i32, 1] {
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w / 2 + 2),
+                    body_cy - 2,
+                    body_w / 2 + 2,
+                    body_h,
+                    &b.accent,
+                );
+            }
+            blot_shaded(&mut img, cx, head_cy + 4, head_r - 1, head_r - 1, &b.ramp);
+            if b.crest {
+                for i in 0..6i32 {
+                    px96(
+                        &mut img,
+                        cx - 1 + i / 2,
+                        head_cy - head_r + 2 - i,
+                        b.accent.base,
+                    );
+                }
+            }
+            // tail feathers
+            for k in -1..=1i32 {
+                for i in 0..7i32 {
+                    px96(
+                        &mut img,
+                        cx + k * 4,
+                        body_cy + body_h + 3 + i,
+                        b.accent.base,
+                    );
+                }
+            }
+        }
+        Plan::Serpent => {
+            for i in 0..36i32 {
+                let t = f64::from(i) / 8.0;
+                let sx = cx + ((t * 2.0).cos() * f64::from(body_w)) as i32;
+                let sy = body_cy + body_h - i * 2;
+                let r = if i % 6 < 3 { &b.ramp } else { &b.accent };
+                blot_shaded(&mut img, sx, sy, 8, 6, r);
+            }
+            blot_shaded(&mut img, cx, head_cy + 8, head_r, head_r - 2, &b.ramp);
+            head_features(&mut img, &b, false);
+        }
+        Plan::Moth => {
+            // wings dominate from behind
+            for side in [-1i32, 1] {
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w + 4),
+                    body_cy - 11,
+                    body_w,
+                    body_h + 2,
+                    &b.accent,
+                );
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w + 1),
+                    body_cy + 7,
+                    body_w - 5,
+                    body_h - 3,
+                    &b.accent,
+                );
+                // back-of-wing veining
+                for i in 0..body_h {
+                    px96(
+                        &mut img,
+                        cx + side * (body_w + 4),
+                        body_cy - 11 + i - body_h / 2,
+                        b.accent.dark,
+                    );
+                }
+            }
+            blot_shaded(&mut img, cx, body_cy, 6, body_h + 5, &b.ramp);
+            blot_shaded(&mut img, cx, head_cy + 8, head_r - 3, head_r - 3, &b.ramp);
+        }
+        Plan::Fish => {
+            // tail toward the viewer
+            for i in 0..13i32 {
+                blot_shaded(
+                    &mut img,
+                    cx + body_w + 2 - i / 2,
+                    body_cy - 8 - i + 6,
+                    3,
+                    4,
+                    &b.accent,
+                );
+                blot_shaded(
+                    &mut img,
+                    cx + body_w + 2 - i / 2,
+                    body_cy - 8 + i - 6,
+                    3,
+                    4,
+                    &b.accent,
+                );
+            }
+            blot_shaded(&mut img, cx, body_cy - 8, body_w + 3, body_h, &b.ramp);
+            for i in 0..body_w {
+                px96(
+                    &mut img,
+                    cx - body_w / 2 + i,
+                    body_cy - 9 - body_h - i % 4,
+                    b.accent.base,
+                );
+            }
+        }
+        Plan::Blob => {
+            blot_shaded(&mut img, cx, body_cy - 4, body_w + 3, body_h + 7, &b.ramp);
+            for i in 0..8i32 {
+                px96(
+                    &mut img,
+                    cx,
+                    body_cy - body_h - 11 - i,
+                    shade(hex(0x6a9a4e), 0.8),
+                );
+            }
+            // back freckle band
+            let mut rng = BattleRng::from_seed(seed ^ 0xb10c);
+            for _ in 0..9 {
+                let fx = cx - body_w + 4 + rng.below((b.body_w as u32) * 2 - 8) as i32;
+                let fy = body_cy - 8 + rng.below(b.body_h as u32) as i32 - body_h / 2;
+                px96(&mut img, fx, fy, b.accent.dark);
+            }
+        }
+        Plan::Golem => {
+            blot_shaded(&mut img, cx, body_cy + 6, body_w + 5, body_h - 2, &b.ramp);
+            blot_shaded(&mut img, cx, body_cy - 8, body_w, body_h - 3, &b.ramp);
+            for side in [-1i32, 1] {
+                blot_shaded(
+                    &mut img,
+                    cx + side * (body_w + 8),
+                    body_cy - 4,
+                    5,
+                    11,
+                    &b.ramp,
+                );
+            }
+            blot_shaded(
+                &mut img,
+                cx,
+                body_cy - body_h - 10,
+                head_r,
+                head_r - 1,
+                &b.ramp,
+            );
+            // back seam
+            for y in (body_cy - body_h - 4)..(body_cy + body_h) {
+                px96(&mut img, cx, y, b.ramp.dark);
+            }
+        }
+        Plan::Wisp => {
+            for i in 0..body_h * 2 {
+                let w = body_w - i / 3;
+                if w <= 2 {
+                    break;
+                }
+                blot_shaded(&mut img, cx, head_cy + 8 + i, w, 2, &b.ramp);
+            }
+            blot_shaded(&mut img, cx, head_cy + 4, head_r + 2, head_r, &b.ramp);
+            head_features(&mut img, &b, false);
+        }
     }
 
     outline(&mut img);
@@ -841,12 +1285,11 @@ pub fn render_creatures(content_root: &Path, region: &str, out_root: &Path) -> R
         front
             .save(out.join(format!("{}.front.png", motif.id)))
             .with_context(|| format!("writing {}", motif.id))?;
-        // Back view: the lower 2/3, zoomed (classic over-shoulder crop).
-        let back = imageops::resize(
-            &imageops::crop_imm(&front, 12, 32, 72, 56).to_image(),
-            96,
-            72,
-            imageops::FilterType::Nearest,
+        let back = creature_back(
+            motif.sigil_seed,
+            motif.types[0],
+            motif.types.get(1).copied(),
+            &motif.tags,
         );
         back.save(out.join(format!("{}.back.png", motif.id)))
             .with_context(|| format!("writing {} back", motif.id))?;

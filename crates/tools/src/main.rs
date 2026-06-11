@@ -8,6 +8,7 @@
 
 mod asset_tests;
 mod cries;
+mod heroes;
 mod importmap;
 mod melody;
 mod music;
@@ -15,6 +16,7 @@ mod render;
 mod sigils;
 mod sim;
 mod sprites;
+mod stars;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -172,6 +174,7 @@ fn run() -> Result<bool> {
             let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
             let chars = sprites::render_characters(&out.join("sprites/chars"))?;
             sprites::render_platform(&out.join("sprites/battle"))?;
+            heroes::render_heroes(&out.join("sprites/chars"))?;
             let mut creatures = 0;
             let regions_root = content.join("regions");
             let mut dirs: Vec<_> = std::fs::read_dir(&regions_root)?
@@ -189,8 +192,9 @@ fn run() -> Result<bool> {
                 creatures +=
                     sprites::render_creatures(&content, &region, &out.join("sprites/monsters"))?;
             }
+            let stars = stars::render_stars(&out.join("sprites/monsters"))?;
             println!(
-                "sprites: {tiles} tiles, {chars} character frames, {creatures} creatures → {}",
+                "sprites: {tiles} tiles, {chars} character frames, {creatures} creatures ({stars} hand-authored) → {}",
                 out.display()
             );
             Ok(true)
