@@ -115,19 +115,7 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
             } else {
                 hex(0x3f7fb5)
             };
-            fill(base, shade(base, 1.1), 40);
-            // wave strokes
-            for row in 0..4u32 {
-                let y = 4 + row * 8 + rng.below(3);
-                let x0 = rng.below(TILE / 2);
-                let light = shade(base, 1.25);
-                for dx in 0..(6 + rng.below(6)) {
-                    let x = (x0 + dx) % TILE;
-                    if y < TILE {
-                        img.put_pixel(x, y, light);
-                    }
-                }
-            }
+            water_surface(&mut img, base, rng, 0);
         }
         "floor" => {
             let base = PARCHMENT;
@@ -279,6 +267,33 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
             img.put_pixel(21, 19, GILT);
             img.put_pixel(20, 18, shade(GILT, 0.8));
         }
+        "door_open" => {
+            // the `door` tile with the leaf swung away: same parchment
+            // wall, ink frame and posts, but a warm lit interior
+            let wall = shade(PARCHMENT, 0.92);
+            fill(wall, shade(wall, 0.96), 16);
+            let glow = hex(0xf2d06b);
+            for y in 6..TILE {
+                for x in 8..24u32 {
+                    let edge = !(10..=21).contains(&x) || y < 9;
+                    let c = if edge {
+                        shade(glow, 0.74)
+                    } else if (x + y) % 7 == 0 {
+                        shade(glow, 1.1)
+                    } else {
+                        glow
+                    };
+                    img.put_pixel(x, y, c);
+                }
+            }
+            for y in 5..TILE {
+                img.put_pixel(7, y, INK);
+                img.put_pixel(24, y, INK);
+            }
+            for x in 7..25u32 {
+                img.put_pixel(x, 5, INK);
+            }
+        }
         "window" => {
             let wall = shade(PARCHMENT, 0.92);
             fill(wall, shade(wall, 0.96), 16);
@@ -364,6 +379,38 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
         _ => fill(hex(0x444444), hex(0x555555), 20),
     }
     img
+}
+
+/// Water painter shared by the tile and its shimmer frame: base fill,
+/// sparkle specks, then wave highlight strokes. `phase` slides the
+/// strokes sideways (alternating direction per row) — with the same
+/// seed, phase 0 is the classic tile and phase 3 is frame 2, so the
+/// two differ only in where the highlights sit.
+fn water_surface(img: &mut RgbaImage, base: Rgba<u8>, rng: &mut BattleRng, phase: u32) {
+    for y in 0..TILE {
+        for x in 0..TILE {
+            img.put_pixel(x, y, base);
+        }
+    }
+    let speck = shade(base, 1.1);
+    for _ in 0..40 {
+        let x = rng.below(TILE);
+        let y = rng.below(TILE);
+        img.put_pixel(x, y, speck);
+    }
+    // wave strokes
+    for row in 0..4u32 {
+        let y = 4 + row * 8 + rng.below(3);
+        let x0 = rng.below(TILE / 2);
+        let light = shade(base, 1.25);
+        let slide = if row % 2 == 0 { phase } else { TILE - phase };
+        for dx in 0..(6 + rng.below(6)) {
+            let x = (x0 + dx + slide) % TILE;
+            if y < TILE {
+                img.put_pixel(x, y, light);
+            }
+        }
+    }
 }
 
 // ----- characters --------------------------------------------------------
@@ -1367,6 +1414,152 @@ pub fn render_platform(out: &Path) -> Result<()> {
         .context("writing platform")
 }
 
+// ----- overworld fx (P18) -------------------------------------------------
+
+/// 16×16 "spotted!" bubble: a parchment speech bubble with a bold ink
+/// `!` and a tail toward the speaker, bottom-left. Sized to read at 1×
+/// over a 32px world.
+fn alert_bubble() -> RgbaImage {
+    let mut img = RgbaImage::new(16, 16);
+    let paper = shade(PARCHMENT, 1.08);
+    // bubble body, corners pulled in a pixel
+    for y in 1..=11u32 {
+        let (x0, x1) = if y == 1 || y == 11 { (3, 12) } else { (2, 13) };
+        for x in x0..=x1 {
+            img.put_pixel(x, y, paper);
+        }
+    }
+    // tail
+    for (x0, x1, y) in [(3u32, 6u32, 12u32), (2, 5, 13), (2, 3, 14)] {
+        for x in x0..=x1 {
+            img.put_pixel(x, y, paper);
+        }
+    }
+    // bold `!`: 2×4 bar, gap, 2×2 dot
+    for y in [3u32, 4, 5, 6, 8, 9] {
+        img.put_pixel(7, y, INK);
+        img.put_pixel(8, y, INK);
+    }
+    outline(&mut img);
+    img
+}
+
+/// 24×10 drop shadow: an ink ellipse, alpha ~90 at the center stepping
+/// down to nothing at the rim (concentric bands, no blur).
+fn drop_shadow() -> RgbaImage {
+    let (w, h) = (24u32, 10u32);
+    let mut img = RgbaImage::new(w, h);
+    let (cx, cy) = (f64::from(w - 1) / 2.0, f64::from(h - 1) / 2.0);
+    for y in 0..h {
+        for x in 0..w {
+            let dx = (f64::from(x) - cx) / (cx + 0.5);
+            let dy = (f64::from(y) - cy) / (cy + 0.5);
+            let d = dx * dx + dy * dy;
+            let alpha = if d > 1.0 {
+                0
+            } else if d < 0.2 {
+                90
+            } else if d < 0.45 {
+                64
+            } else if d < 0.72 {
+                38
+            } else {
+                16
+            };
+            if alpha > 0 {
+                img.put_pixel(x, y, Rgba([INK[0], INK[1], INK[2], alpha]));
+            }
+        }
+    }
+    img
+}
+
+/// 32×32 grass-rustle burst, frame 0..=2: leaf flecks scattering from
+/// foot level and fading. The same seed drives every frame, so each
+/// fleck flies a straight line; frame 2 drops half of them (sparse).
+fn rustle_frame(frame: u32) -> RgbaImage {
+    let mut img = RgbaImage::new(TILE, TILE);
+    let base = hex(0x5fa653);
+    let greens = [
+        shade(base, 0.7),
+        base,
+        shade(base, 1.15),
+        shade(hex(0x6a9a4e), 0.8),
+    ];
+    let alpha = [255u8, 200, 110][frame as usize];
+    let mut put = |x: i32, y: i32, mut c: Rgba<u8>| {
+        c[3] = alpha;
+        let t = TILE as i32;
+        if (0..t).contains(&x) && (0..t).contains(&y) {
+            img.put_pixel(x as u32, y as u32, c);
+        }
+    };
+    let mut rng = BattleRng::from_seed(0x0018_5071);
+    for i in 0..10u32 {
+        // draw every fleck's path on every frame — rng order must match
+        let angle = f64::from(rng.below(360)).to_radians();
+        let speed = 2.0 + f64::from(rng.below(20)) / 10.0;
+        let green = greens[rng.below(4) as usize];
+        if frame == 2 && i % 2 == 1 {
+            continue;
+        }
+        let r = 1.5 + speed * 1.4 * f64::from(frame);
+        let (s, c) = angle.sin_cos();
+        // squash vertically, drift upward as the burst opens
+        let x = (15.5 + c * r) as i32;
+        let y = (22.0 + s * r * 0.55 - f64::from(frame) * 1.5) as i32;
+        put(x, y, green);
+        if frame < 2 {
+            put(x + 1, y - 1, greens[(i as usize + 1) % 4]);
+        }
+    }
+    img
+}
+
+/// 320×180 radial vignette: transparent center, white alpha rising
+/// smoothly toward the edges (~110 in the corners). The presenter
+/// tints it, so the pixels stay white.
+fn vignette() -> RgbaImage {
+    let (w, h) = (320u32, 180u32);
+    let mut img = RgbaImage::new(w, h);
+    let (cx, cy) = (f64::from(w) / 2.0, f64::from(h) / 2.0);
+    for y in 0..h {
+        for x in 0..w {
+            let dx = (f64::from(x) + 0.5 - cx) / cx;
+            let dy = (f64::from(y) + 0.5 - cy) / cy;
+            let d = (dx * dx + dy * dy).sqrt(); // 0 center, √2 corner
+            let t = ((d - 0.35) / (std::f64::consts::SQRT_2 - 0.35)).clamp(0.0, 1.0);
+            let smooth = t * t * (3.0 - 2.0 * t);
+            let alpha = (smooth * 110.0) as u8;
+            if alpha > 0 {
+                img.put_pixel(x, y, Rgba([255, 255, 255, alpha]));
+            }
+        }
+    }
+    img
+}
+
+/// P18 overworld-feel kit: alert bubble, drop shadow, rustle burst,
+/// vignette. Returns the frame count for the `sprites` summary line.
+pub fn render_overworld_fx(out: &Path) -> Result<usize> {
+    std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
+    alert_bubble()
+        .save(out.join("alert.png"))
+        .context("writing alert")?;
+    drop_shadow()
+        .save(out.join("shadow.png"))
+        .context("writing shadow")?;
+    for frame in 0..3u32 {
+        rustle_frame(frame)
+            .save(out.join(format!("rustle.{frame}.png")))
+            .with_context(|| format!("writing rustle.{frame}"))?;
+    }
+    vignette()
+        .save(out.join("vignette.png"))
+        .context("writing vignette")?;
+    Ok(6)
+}
+
 pub fn render_tiles(out: &Path) -> Result<usize> {
     std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
     let kinds = [
@@ -1384,6 +1577,7 @@ pub fn render_tiles(out: &Path) -> Result<usize> {
         "roof_blue",
         "roof_green",
         "door",
+        "door_open",
         "window",
         "flowers",
         "fence",
@@ -1396,7 +1590,15 @@ pub fn render_tiles(out: &Path) -> Result<usize> {
             .save(out.join(format!("{kind}.png")))
             .with_context(|| format!("writing {kind}"))?;
     }
-    Ok(kinds.len())
+    // water frame 2: same seed and painter as `water`, highlights
+    // phase-shifted — alternating the two frames reads as shimmer.
+    let mut rng = BattleRng::from_seed(0x711e ^ ("water".len() as u64 * 7919));
+    let mut second = RgbaImage::new(TILE, TILE);
+    water_surface(&mut second, hex(0x3f7fb5), &mut rng, 3);
+    second
+        .save(out.join("water.1.png"))
+        .context("writing water.1")?;
+    Ok(kinds.len() + 1)
 }
 
 pub fn render_characters(out: &Path) -> Result<usize> {

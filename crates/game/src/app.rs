@@ -32,6 +32,9 @@ impl Plugin for UndersongPlugin {
             .insert_resource(SettingsOpen(false))
             .insert_resource(Wipe(None))
             .insert_resource(DialogueReveal::default())
+            .insert_resource(StepParity(false))
+            .insert_resource(Spotted(None))
+            .insert_resource(FxQueue::default())
             .add_systems(OnEnter(AppState::Boot), boot_load)
             .add_systems(
                 Update,
@@ -51,6 +54,18 @@ impl Plugin for UndersongPlugin {
                     .chain()
                     .run_if(in_state(AppState::Overworld)),
             )
+            .add_systems(
+                Update,
+                (
+                    spotted_tick,
+                    overworld_fx,
+                    water_shimmer,
+                    window_glow,
+                    weather_fx,
+                    flurry_drift,
+                )
+                    .run_if(in_state(AppState::Overworld)),
+            )
             .insert_resource(Toast::default())
             .insert_resource(CurrentMusic::default())
             .insert_resource(CreditsState::default())
@@ -63,6 +78,8 @@ impl Plugin for UndersongPlugin {
                     credits_watch,
                     screenshot_key,
                     boot_battle_rig,
+                    boot_map_rig,
+                    walk_demo_rig,
                     theater_demo_rig,
                     visual_replay,
                 ),
@@ -77,6 +94,8 @@ impl Plugin for UndersongPlugin {
                     cleanup_wipe,
                     despawn_tagged::<DialogueUi>,
                     despawn_tagged::<ToastUi>,
+                    despawn_tagged::<WeatherFx>,
+                    despawn_tagged::<SpottedBubble>,
                 ),
             )
             .add_systems(OnExit(AppState::Battle), resync_after_battle)
@@ -179,9 +198,68 @@ struct MenuRow(usize);
 #[derive(Component)]
 struct WipeBar;
 
+// ----- P18 overworld feel ----------------------------------------------
+
+/// Walk-cycle step parity: strides alternate per tile so the four-frame
+/// gait reads as a two-step (presenter-only).
+#[derive(Resource, Default)]
+struct StepParity(bool);
+
+/// Spotted! (P18): a trainer's line of sight engaged — the alert cue,
+/// the "!" bubble, and a beat of held input before the scene moves.
+/// (npc id, seconds remaining, cue+bubble fired).
+#[derive(Resource, Default)]
+struct Spotted(Option<(String, f32, bool)>);
+
+#[derive(Component)]
+struct SpottedBubble;
+
+/// One-shot world effects queued by the event fan-out (it has no
+/// Commands) and drained by `overworld_fx`.
+#[derive(Resource, Default)]
+struct FxQueue {
+    rustles: Vec<(u32, u32)>,
+    door: Option<(u32, u32)>,
+}
+
+/// Grass-rustle burst on a resonance patch (elapsed seconds).
+#[derive(Component)]
+struct RustleFx(f32);
+
+/// The lit-doorway flash on the arrival door (elapsed seconds; runs
+/// long enough to outlive the warp wipe).
+#[derive(Component)]
+struct DoorFx(f32);
+
+/// Animated water tile (two-frame shimmer).
+#[derive(Component)]
+struct WaterTile;
+
+/// A lit-window decor tile (brightens at night).
+#[derive(Component)]
+struct WindowTile;
+
+/// Weather overlay pieces (vignette, drifting specks).
+#[derive(Component)]
+struct WeatherFx;
+
+/// One drifting weather speck; the seed spreads them deterministically.
+#[derive(Component)]
+struct FlurrySpeck(u32);
+
 // ----- boot -----------------------------------------------------------
 
-fn boot_load(mut commands: Commands, mut next: ResMut<NextState<AppState>>) {
+/// Keeps small, frequently-swapped sprites resident — without this the
+/// first use of each walk pose / fx frame hits an async load and the
+/// sprite blinks out for a beat.
+#[derive(Resource)]
+struct PreloadedArt(#[expect(dead_code, reason = "held to pin the assets")] Vec<Handle<Image>>);
+
+fn boot_load(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    mut next: ResMut<NextState<AppState>>,
+) {
     let content = std::path::Path::new("content");
     let palette = data::load_palette(content).expect("palette.ron must load");
     let world = load_game_world(content, 0x00D0_5EED).expect("game world must load");
@@ -190,6 +268,34 @@ fn boot_load(mut commands: Commands, mut next: ResMut<NextState<AppState>>) {
     commands.spawn((Camera2d, Transform::from_scale(Vec3::new(zoom, zoom, 1.0))));
     commands.insert_resource(Theme { palette });
     commands.insert_resource(WorldRes(world));
+
+    let mut held = Vec::new();
+    for dir in ["down", "up", "left", "right"] {
+        for frame in 0..4 {
+            held.push(assets.load(art(&format!("sprites/chars/player.{dir}.{frame}.png"))));
+        }
+    }
+    for frame in 0..3 {
+        held.push(assets.load(art(&format!("sprites/fx/rustle.{frame}.png"))));
+    }
+    for ty in [
+        "feral", "ember", "tide", "bloom", "volt", "gale", "stone", "frost", "venom",
+        "phantom", "alloy", "resonant",
+    ] {
+        for frame in 0..4 {
+            held.push(assets.load(art(&format!("sprites/fx/{ty}.{frame}.png"))));
+        }
+    }
+    for rel in [
+        "sprites/fx/alert.png",
+        "sprites/fx/shadow.png",
+        "sprites/fx/vignette.png",
+        "sprites/tiles/water.1.png",
+        "sprites/tiles/door_open.png",
+    ] {
+        held.push(assets.load(art(rel)));
+    }
+    commands.insert_resource(PreloadedArt(held));
     next.set(AppState::Title);
 }
 
@@ -229,6 +335,19 @@ fn char_sprite(assets: &AssetServer, rel: &str) -> (Sprite, bevy::sprite::Anchor
 /// Transform for a bottom-anchored character on tile (x, y).
 fn char_pos(x: u32, y: u32, z: f32) -> Transform {
     Transform::from_xyz(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, z)
+}
+
+/// The soft ellipse under every actor (P18): a child of the character
+/// entity, riding just below it in z so it follows for free.
+fn shadow_child(assets: &AssetServer) -> (Sprite, Transform) {
+    (
+        Sprite {
+            image: assets.load(art("sprites/fx/shadow.png")),
+            custom_size: Some(Vec2::new(24.0, 10.0)),
+            ..default()
+        },
+        Transform::from_xyz(0.0, 3.0, -0.05),
+    )
 }
 
 fn quad(color: Color, size: f32) -> Sprite {
@@ -285,7 +404,14 @@ fn rebuild_map_if_needed(
                 } else {
                     ground_tile(ground)
                 };
-                commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 0.0)));
+                let mut tile = commands.spawn((
+                    MapTile,
+                    art_sprite(&assets, rel, TILE),
+                    tile_pos(x, y, 0.0),
+                ));
+                if ground == 3 {
+                    tile.insert(WaterTile); // two-frame shimmer (P18)
+                }
             }
             if map.is_patch(x, y) {
                 commands.spawn((
@@ -322,7 +448,11 @@ fn rebuild_map_if_needed(
                     16 => "sprites/tiles/lamp.png",
                     _ => "sprites/tiles/bush.png",
                 };
-                commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 1.0)));
+                let mut tile =
+                    commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 1.0)));
+                if decor == 13 {
+                    tile.insert(WindowTile); // glows at night (P18)
+                }
             }
             if let Some(&overhang) = map.overhang.get(index)
                 && overhang != 0
@@ -361,22 +491,26 @@ fn rebuild_map_if_needed(
                 Facing::Left => "left",
                 Facing::Right => "right",
             };
-            commands.spawn((
-                NpcSprite(npc.id.clone()),
-                char_sprite(&assets, &format!("sprites/chars/{key}.{dir}.0.png")),
-                char_pos(npc.at.0, npc.at.1, 2.0),
-            ));
+            commands
+                .spawn((
+                    NpcSprite(npc.id.clone()),
+                    char_sprite(&assets, &format!("sprites/chars/{key}.{dir}.0.png")),
+                    char_pos(npc.at.0, npc.at.1, 2.0),
+                ))
+                .with_child(shadow_child(&assets));
         }
     }
 
     // The player persists across maps; spawn once (with the facing
     // marker — P9: "am I looking at the NPC?" must answer itself).
     if player.is_empty() {
-        commands.spawn((
-            PlayerSprite,
-            char_sprite(&assets, "sprites/chars/player.down.0.png"),
-            char_pos(world.0.player.0, world.0.player.1, 2.0),
-        ));
+        commands
+            .spawn((
+                PlayerSprite,
+                char_sprite(&assets, "sprites/chars/player.down.0.png"),
+                char_pos(world.0.player.0, world.0.player.1, 2.0),
+            ))
+            .with_child(shadow_child(&assets));
         let mut marker_color = theme.color(&theme.palette.gilt);
         marker_color.set_alpha(0.45);
         commands.spawn((
@@ -419,9 +553,17 @@ fn player_input(
     mut player: Query<&mut Transform, With<PlayerSprite>>,
     mut toast: ResMut<Toast>,
     mut reveal: ResMut<DialogueReveal>,
+    mut spotted: ResMut<Spotted>,
+    mut fxq: ResMut<FxQueue>,
+    mut parity: ResMut<StepParity>,
 ) {
     // An open mart owns the keys (shop_ui routes them).
     if world.0.shop.is_some() {
+        return;
+    }
+    // Spotted! — the beat of pause: the world holds while the bubble
+    // hangs over the trainer's head (P18).
+    if spotted.0.is_some() {
         return;
     }
     // Interact / advance dialogue / answer choice.
@@ -448,6 +590,8 @@ fn player_input(
             &mut next,
             &mut player,
             &mut toast,
+            &mut spotted,
+            &mut fxq,
         );
         return;
     }
@@ -494,6 +638,8 @@ fn player_input(
             Vec2::new(to.0 as f32 * TILE + TILE / 2.0, to.1 as f32 * TILE),
             0.0,
         ));
+        // Strides alternate per tile (the four-frame gait, P18).
+        parity.0 = !parity.0;
     }
     handle_events(
         &events,
@@ -504,6 +650,8 @@ fn player_input(
         &mut next,
         &mut player,
         &mut toast,
+        &mut spotted,
+        &mut fxq,
     );
 }
 
@@ -517,6 +665,8 @@ fn handle_events(
     next: &mut ResMut<NextState<AppState>>,
     player: &mut Query<&mut Transform, With<PlayerSprite>>,
     toast: &mut ResMut<Toast>,
+    spotted: &mut ResMut<Spotted>,
+    fxq: &mut ResMut<FxQueue>,
 ) {
     // Any event batch that left a live battle session moves us to the
     // battle scene (wild rolls, LoS engagements, scripted fights).
@@ -543,12 +693,20 @@ fn handle_events(
                 }));
                 toast.timer = 0.0;
             }
+            WorldEvent::Engaged { npc } => {
+                // Spotted! — the bubble + beat of pause (P18); the
+                // spotted_tick system plays the cue and holds input.
+                spotted.0 = Some((npc.clone(), 0.9, false));
+            }
+            WorldEvent::Stepped { to } if world.0.map().is_patch(to.0, to.1) => {
+                fxq.rustles.push(*to);
+            }
             _ => {}
         }
     }
     for event in events {
         match event {
-            WorldEvent::Warped { .. } => {
+            WorldEvent::Warped { to, .. } => {
                 rendered.0 = None; // forces a rebuild
                 anim.0 = None;
                 wipe.0 = Some(0.0);
@@ -556,6 +714,25 @@ fn handle_events(
                     let (x, y) = world.0.player;
                     transform.translation =
                         Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+                }
+                // The arrival door swings lit for a beat (P18). Warps
+                // land one tile past the doorway, so the door art sits
+                // one step BEHIND the arrival facing (also checked on
+                // the tile itself for gates that land on it).
+                let map = world.0.map();
+                let (dx, dy) = world.0.facing.delta();
+                let behind = to
+                    .0
+                    .checked_add_signed(-dx)
+                    .zip(to.1.checked_add_signed(-dy));
+                for spot in [Some(*to), behind].into_iter().flatten() {
+                    if spot.0 < map.width
+                        && spot.1 < map.height
+                        && map.decor.get(map.index(spot.0, spot.1)) == Some(&12)
+                    {
+                        fxq.door = Some(spot);
+                        break;
+                    }
                 }
                 // Autosave on map change (doc 03 §4).
                 autosave(&world.0);
@@ -674,12 +851,15 @@ fn sync_npc_sprites(
     }
 }
 
-/// The player's frame: facing × walk phase (frame 1 during the first
-/// half of each slide — a two-beat gait).
+/// The player's frame: facing × walk phase × step parity. Four frames
+/// per direction (P18): the stride leg alternates per tile, with the
+/// stand pose between strides — the classic two-step cycle. Running
+/// (hold X) speeds the slide, so the cycle doubles with it for free.
 fn animate_player_frame(
     world: Res<WorldRes>,
     assets: Res<AssetServer>,
     anim: Res<PlayerAnim>,
+    parity: Res<StepParity>,
     mut player: Query<&mut Sprite, With<PlayerSprite>>,
 ) {
     let Ok(mut sprite) = player.single_mut() else {
@@ -691,11 +871,237 @@ fn animate_player_frame(
         Facing::Left => "left",
         Facing::Right => "right",
     };
-    let frame = match anim.0 {
-        Some((_, _, t)) if t < 0.5 => 1,
+    let frame = match (anim.0, parity.0) {
+        (Some((_, _, t)), true) if t < 0.5 => 1,
+        (Some((_, _, t)), false) if t < 0.5 => 3,
+        (Some(_), true) => 2,
         _ => 0,
     };
     sprite.image = assets.load(art(&format!("sprites/chars/player.{dir}.{frame}.png")));
+}
+
+// ----- P18 overworld feel systems ---------------------------------------
+
+/// Spotted! — plays the alert, pops the "!" bubble over the trainer's
+/// head, and counts the beat of pause (player_input holds meanwhile).
+fn spotted_tick(
+    mut commands: Commands,
+    time: Res<Time>,
+    world: Res<WorldRes>,
+    assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
+    mut spotted: ResMut<Spotted>,
+    bubbles: Query<Entity, With<SpottedBubble>>,
+) {
+    let Some((npc_id, remaining, fired)) = spotted.0.take() else {
+        return;
+    };
+    if !fired {
+        play_cue(&mut commands, &assets, &settings.0, "alert");
+        let at = world
+            .0
+            .npcs
+            .get(&world.0.current_map)
+            .and_then(|list| list.iter().find(|n| n.id == npc_id))
+            .map(|n| n.at);
+        if let Some((x, y)) = at {
+            commands.spawn((
+                SpottedBubble,
+                Sprite {
+                    image: assets.load(art("sprites/fx/alert.png")),
+                    custom_size: Some(Vec2::splat(16.0)),
+                    ..default()
+                },
+                Transform::from_xyz(
+                    x as f32 * TILE + TILE / 2.0,
+                    y as f32 * TILE + 54.0,
+                    4.0,
+                ),
+            ));
+        }
+    }
+    let remaining = remaining - time.delta_secs();
+    if remaining <= 0.0 {
+        for entity in &bubbles {
+            commands.entity(entity).despawn();
+        }
+    } else {
+        spotted.0 = Some((npc_id, remaining, true));
+    }
+}
+
+/// Drains the FxQueue (rustles, the arrival-door flash) and ticks the
+/// live one-shot effects.
+fn overworld_fx(
+    mut commands: Commands,
+    time: Res<Time>,
+    assets: Res<AssetServer>,
+    mut fxq: ResMut<FxQueue>,
+    mut rustles: Query<(Entity, &mut RustleFx, &mut Sprite), Without<DoorFx>>,
+    mut doors: Query<(Entity, &mut DoorFx), Without<RustleFx>>,
+) {
+    for (x, y) in fxq.rustles.drain(..) {
+        commands.spawn((
+            RustleFx(0.0),
+            art_sprite(&assets, "sprites/fx/rustle.0.png", TILE),
+            tile_pos(x, y, 1.6),
+        ));
+    }
+    if let Some((x, y)) = fxq.door.take() {
+        // Runs long enough to outlive the warp wipe.
+        commands.spawn((
+            DoorFx(0.0),
+            art_sprite(&assets, "sprites/tiles/door_open.png", TILE),
+            tile_pos(x, y, 1.1),
+        ));
+    }
+    let dt = time.delta_secs();
+    for (entity, mut fx, mut sprite) in &mut rustles {
+        fx.0 += dt;
+        let frame = ((fx.0 / 0.12) as usize).min(2);
+        sprite.image = assets.load(art(&format!("sprites/fx/rustle.{frame}.png")));
+        if fx.0 >= 0.36 {
+            commands.entity(entity).despawn();
+        }
+    }
+    for (entity, mut fx) in &mut doors {
+        fx.0 += dt;
+        if fx.0 >= 0.6 {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+/// Two-frame water shimmer: every water tile flips between the two
+/// generated frames on a slow clock.
+fn water_shimmer(
+    time: Res<Time>,
+    assets: Res<AssetServer>,
+    mut phase: Local<bool>,
+    mut tiles: Query<&mut Sprite, With<WaterTile>>,
+) {
+    let now = (time.elapsed_secs() % 1.4) < 0.7;
+    if now == *phase {
+        return;
+    }
+    *phase = now;
+    let rel = if now {
+        "sprites/tiles/water.1.png"
+    } else {
+        "sprites/tiles/water.png"
+    };
+    for mut sprite in &mut tiles {
+        sprite.image = assets.load(art(rel));
+    }
+}
+
+/// Window tiles brighten at night (the P18 night read: blue veil +
+/// warm windows).
+fn window_glow(world: Res<WorldRes>, mut tiles: Query<&mut Sprite, With<WindowTile>>) {
+    let glow = if world.0.is_night() {
+        Color::srgb(1.7, 1.5, 1.05)
+    } else {
+        Color::WHITE
+    };
+    for mut sprite in &mut tiles {
+        if sprite.color != glow {
+            sprite.color = glow;
+        }
+    }
+}
+
+/// Weather reads (P18): heatwave/dustchord get a tinted vignette,
+/// flurry/downpour get drifting specks. Presenter-only, per map zone.
+fn weather_fx(
+    mut commands: Commands,
+    world: Res<WorldRes>,
+    assets: Res<AssetServer>,
+    mut shown: Local<Option<(undersong_core::ids::MapId, bool)>>,
+    existing: Query<Entity, With<WeatherFx>>,
+) {
+    use undersong_core::moves::WeatherKind;
+    let weather = world.0.map().weather;
+    let key = Some((world.0.current_map.clone(), weather.is_some()));
+    if *shown == key {
+        return;
+    }
+    *shown = key;
+    for entity in &existing {
+        commands.entity(entity).despawn();
+    }
+    let Some(kind) = weather else { return };
+    match kind {
+        WeatherKind::Heatwave | WeatherKind::Dustchord => {
+            let tint = if kind == WeatherKind::Heatwave {
+                Color::srgba(1.0, 0.55, 0.25, 0.5) // warm vignette
+            } else {
+                Color::srgba(0.8, 0.7, 0.4, 0.45) // dust haze
+            };
+            let mut vignette = ImageNode::new(assets.load(art("sprites/fx/vignette.png")));
+            vignette.color = tint;
+            commands.spawn((
+                WeatherFx,
+                vignette,
+                Node {
+                    position_type: PositionType::Absolute,
+                    left: Val::Px(0.0),
+                    top: Val::Px(0.0),
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+            ));
+        }
+        WeatherKind::Flurry | WeatherKind::Downpour => {
+            let (color, size) = if kind == WeatherKind::Flurry {
+                (Color::srgba(1.0, 1.0, 1.0, 0.85), 3.0)
+            } else {
+                (Color::srgba(0.6, 0.7, 0.95, 0.7), 2.0)
+            };
+            for seed in 0..36u32 {
+                commands.spawn((
+                    WeatherFx,
+                    FlurrySpeck(seed),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(0.0),
+                        top: Val::Px(0.0),
+                        width: Val::Px(size),
+                        height: Val::Px(size),
+                        ..default()
+                    },
+                    BackgroundColor(color),
+                ));
+            }
+        }
+    }
+}
+
+/// Drifts the weather specks down-left, wrapping over the 480×270 UI
+/// canvas; flurry floats, downpour falls.
+fn flurry_drift(
+    time: Res<Time>,
+    world: Res<WorldRes>,
+    mut specks: Query<(&FlurrySpeck, &mut Node)>,
+) {
+    use undersong_core::moves::WeatherKind;
+    let falling = world.0.map().weather == Some(WeatherKind::Downpour);
+    let t = time.elapsed_secs();
+    let (vx, vy) = if falling { (28.0, 180.0) } else { (14.0, 26.0) };
+    for (speck, mut node) in &mut specks {
+        let seed = speck.0 as f32;
+        let x0 = (seed * 73.7) % 480.0;
+        let y0 = (seed * 131.3) % 270.0;
+        let sway = if falling {
+            0.0
+        } else {
+            ((t * 1.3 + seed) * 0.7).sin() * 9.0
+        };
+        let x = (x0 - t * vx + sway).rem_euclid(480.0);
+        let y = (y0 + t * vy).rem_euclid(270.0);
+        node.left = Val::Px(x);
+        node.top = Val::Px(y);
+    }
 }
 
 // ----- camera ----------------------------------------------------------
@@ -752,12 +1158,18 @@ fn dialogue_ui(
     settings: Res<SettingsRes>,
     world: Res<WorldRes>,
     theme: Option<Res<Theme>>,
+    spotted: Res<Spotted>,
     mut reveal: ResMut<DialogueReveal>,
     existing: Query<Entity, With<DialogueUi>>,
     mut text: Query<&mut Text, (With<DialogueText>, Without<NameTagText>)>,
     mut tag: Query<&mut Text, (With<NameTagText>, Without<DialogueText>)>,
 ) {
     let Some(theme) = theme else { return };
+    // The spotted beat precedes the trainer's opening line — the box
+    // waits for the bubble.
+    if spotted.0.is_some() {
+        return;
+    }
     match &world.0.dialogue {
         Some(dialogue) => {
             let (who, key) = dialogue
@@ -1325,6 +1737,215 @@ fn boot_battle_rig(
     }
 }
 
+/// Dev rig: UNDERSONG_BOOT_MAP=<map_id>[,night] teleports a fresh
+/// world onto that map (first walkable tile) — weather/night reads get
+/// screenshot evidence without a save there. Dev-only.
+fn boot_map_rig(
+    time: Res<Time>,
+    mut world: ResMut<WorldRes>,
+    mut rendered: ResMut<RenderedMap>,
+    mut next: ResMut<NextState<AppState>>,
+    mut done: Local<bool>,
+) {
+    if *done || time.elapsed_secs() < 1.5 {
+        return;
+    }
+    let Ok(spec) = std::env::var("UNDERSONG_BOOT_MAP") else {
+        return;
+    };
+    *done = true;
+    let (map_id, night) = match spec.split_once(',') {
+        Some((id, "night")) => (id.to_string(), true),
+        _ => (spec.clone(), false),
+    };
+    let id: undersong_core::ids::MapId = map_id.as_str().into();
+    if !world.0.maps.contains_key(&id) {
+        bevy::log::error!("boot map rig: unknown map {map_id}");
+        return;
+    }
+    world.0.current_map = id;
+    let map = world.0.map();
+    let mut spot = (1, 1);
+    'scan: for y in 1..map.height.saturating_sub(1) {
+        for x in 1..map.width.saturating_sub(1) {
+            if !map.is_solid(x, y) {
+                spot = (x, y);
+                break 'scan;
+            }
+        }
+    }
+    world.0.player = spot;
+    if night {
+        world.0.clock_ticks = 900; // inside the night third (doc 02 v1.6 #5)
+    }
+    rendered.0 = None;
+    next.set(AppState::Overworld);
+}
+
+/// Dev rig: UNDERSONG_BOOT_WALK="<map>:<x>,<y>:<udlr...>" teleports a
+/// staged party onto a map and walks the pattern, filming frames to
+/// docs/playtests/walk-<map>/ — the P18 spotted!/rustle/door evidence
+/// instrument. Holds during the spotted beat exactly like a player,
+/// advances dialogue, and exits a few beats after a battle opens.
+#[derive(Default)]
+struct WalkRigState {
+    started: bool,
+    step: usize,
+    since_act: f32,
+    since_shot: f32,
+    shots: u32,
+    battle_at: Option<f32>,
+}
+
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
+fn walk_demo_rig(
+    mut commands: Commands,
+    time: Res<Time>,
+    state: Res<State<AppState>>,
+    mut world: ResMut<WorldRes>,
+    mut next: ResMut<NextState<AppState>>,
+    mut rendered: ResMut<RenderedMap>,
+    mut anim: ResMut<PlayerAnim>,
+    mut wipe: ResMut<Wipe>,
+    mut toast: ResMut<Toast>,
+    mut spotted: ResMut<Spotted>,
+    mut fxq: ResMut<FxQueue>,
+    mut parity: ResMut<StepParity>,
+    mut player: Query<&mut Transform, With<PlayerSprite>>,
+    mut exit: MessageWriter<AppExit>,
+    mut rig: Local<WalkRigState>,
+) {
+    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+    let Ok(spec) = std::env::var("UNDERSONG_BOOT_WALK") else {
+        return;
+    };
+    if time.elapsed_secs() < 1.5 {
+        return;
+    }
+    let mut parts = spec.splitn(3, ':');
+    let (Some(map_id), Some(at), Some(pattern)) = (parts.next(), parts.next(), parts.next())
+    else {
+        return;
+    };
+    if !rig.started {
+        rig.started = true;
+        let dir = std::path::PathBuf::from("docs/playtests").join(format!("walk-{map_id}"));
+        std::fs::remove_dir_all(&dir).ok();
+        let mut rng = undersong_core::rng::BattleRng::from_seed(0x5A1C);
+        if let Some(registry) = &world.0.registry
+            && let Some(mut mote) = registry.wild_individual(&"embaritone".into(), 24, &mut rng)
+        {
+            mote.ot = "player".into();
+            world.0.party = vec![mote];
+        }
+        let id: undersong_core::ids::MapId = map_id.into();
+        if !world.0.maps.contains_key(&id) {
+            bevy::log::error!("walk rig: unknown map {map_id}");
+            exit.write(AppExit::error());
+            return;
+        }
+        world.0.current_map = id;
+        if let Some((x, y)) = at.split_once(',')
+            && let (Ok(x), Ok(y)) = (x.parse(), y.parse())
+        {
+            world.0.player = (x, y);
+        }
+        rendered.0 = None;
+        next.set(AppState::Overworld);
+        return;
+    }
+    // Film continuously.
+    rig.since_shot += time.delta_secs();
+    if rig.since_shot > 0.3 && rig.shots < 80 {
+        rig.since_shot = 0.0;
+        rig.shots += 1;
+        let dir = std::path::PathBuf::from("docs/playtests").join(format!("walk-{map_id}"));
+        std::fs::create_dir_all(&dir).ok();
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(
+                dir.join(format!("frame_{:03}.png", rig.shots)),
+            ));
+    }
+    // A battle opened: film its entry for a few beats, then exit.
+    if *state.get() == AppState::Battle || world.0.battle.is_some() {
+        let opened = *rig.battle_at.get_or_insert(time.elapsed_secs());
+        if time.elapsed_secs() - opened > 6.0 {
+            exit.write(AppExit::Success);
+        }
+        return;
+    }
+    // The spotted beat holds everything, exactly like player_input.
+    if spotted.0.is_some() {
+        return;
+    }
+    rig.since_act += time.delta_secs();
+    // Advance dialogue at a readable pace.
+    if world.0.dialogue.is_some() {
+        if rig.since_act > 0.8 {
+            rig.since_act = 0.0;
+            let events = world.0.apply(WorldInput::Interact);
+            handle_events(
+                &events,
+                &mut world,
+                &mut anim,
+                &mut rendered,
+                &mut wipe,
+                &mut next,
+                &mut player,
+                &mut toast,
+                &mut spotted,
+                &mut fxq,
+            );
+        }
+        return;
+    }
+    // Walk the pattern, one step at a stroll.
+    if rig.since_act > 0.35 && anim.0.is_none() {
+        rig.since_act = 0.0;
+        let Some(ch) = pattern.chars().nth(rig.step) else {
+            exit.write(AppExit::Success); // pattern done, battle never came
+            return;
+        };
+        rig.step += 1;
+        let dir = match ch {
+            'u' => Facing::Up,
+            'l' => Facing::Left,
+            'r' => Facing::Right,
+            _ => Facing::Down,
+        };
+        let from = world.0.player;
+        let events = world.0.apply(WorldInput::Step(dir));
+        let stepped = events
+            .iter()
+            .any(|e| matches!(e, WorldEvent::Stepped { .. }));
+        let warped = events
+            .iter()
+            .any(|e| matches!(e, WorldEvent::Warped { .. }));
+        if stepped && !warped {
+            let to = world.0.player;
+            anim.0 = Some((
+                Vec2::new(from.0 as f32 * TILE + TILE / 2.0, from.1 as f32 * TILE),
+                Vec2::new(to.0 as f32 * TILE + TILE / 2.0, to.1 as f32 * TILE),
+                0.0,
+            ));
+            parity.0 = !parity.0;
+        }
+        handle_events(
+            &events,
+            &mut world,
+            &mut anim,
+            &mut rendered,
+            &mut wipe,
+            &mut next,
+            &mut player,
+            &mut toast,
+            &mut spotted,
+            &mut fxq,
+        );
+    }
+}
+
 /// Dev rig: UNDERSONG_BOOT_THEATER={fight|catch|evolve} boots straight
 /// into a staged wild battle and autoplays it while filming frames to
 /// docs/playtests/theater-<mode>/ — the P17 battle-theater self-review
@@ -1462,6 +2083,8 @@ struct VisualReplay {
     index: usize,
     shots: u32,
     since_shot: f32,
+    /// Frame gate for UNDERSONG_REPLAY_SLOW (walk-speed overworld).
+    slow_gate: u32,
 }
 
 #[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
@@ -1475,12 +2098,17 @@ fn visual_replay(
     mut anim: ResMut<PlayerAnim>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
     mut theater: ResMut<crate::battle_ui::Theater>,
+    mut spotted: ResMut<Spotted>,
     mut rig: Local<VisualReplay>,
 ) {
     use bevy::render::view::screenshot::{Screenshot, save_to_disk};
     let Some(path) = std::env::var_os("UNDERSONG_VISUAL_REPLAY") else {
         return;
     };
+    // The spotted beat holds the replay too — films get the pause.
+    if spotted.0.is_some() {
+        return;
+    }
     if time.elapsed_secs() < 2.0 {
         return;
     }
@@ -1526,7 +2154,19 @@ fn visual_replay(
         next.set(AppState::Overworld); // the player's post-battle Z
     } else {
         // Pace: a small slice per frame keeps motion watchable.
-        let per_frame = if in_battle_scene { 1 } else { 4 };
+        // UNDERSONG_REPLAY_SLOW=1 drops the overworld to ~walking speed
+        // (one input every 8 frames) so steps, rustles, doors, and the
+        // spotted beat land on film.
+        let slow = std::env::var_os("UNDERSONG_REPLAY_SLOW").is_some();
+        rig.slow_gate = (rig.slow_gate + 1) % 8;
+        let hold = slow && !in_battle_scene && rig.slow_gate != 0;
+        let per_frame = if hold {
+            0
+        } else if in_battle_scene || slow {
+            1
+        } else {
+            4
+        };
         let end = (rig.index + per_frame).min(total);
         let battle_now = world.0.battle.is_some();
         for i in rig.index..end {
@@ -1552,6 +2192,10 @@ fn visual_replay(
                             Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
                     }
                 }
+                if let WorldEvent::Engaged { npc } = event {
+                    // Spotted! plays in films exactly like real play.
+                    spotted.0 = Some((npc.clone(), 0.9, false));
+                }
             }
             if battle_after && !battle_now {
                 next.set(AppState::Battle);
@@ -1561,10 +2205,16 @@ fn visual_replay(
             rig.index = i + 1;
         }
     }
-    // Frame series: one shot every ~2.5s, capped (keeps shooting a few
-    // beats after the run ends so the final scene lands on film).
+    // Frame series: one shot every ~2.5s (0.5s in slow mode — the
+    // overworld touches are sub-second), capped; keeps shooting a few
+    // beats after the run ends so the final scene lands on film.
+    let cadence = if std::env::var_os("UNDERSONG_REPLAY_SLOW").is_some() {
+        0.5
+    } else {
+        2.5
+    };
     rig.since_shot += time.delta_secs();
-    if rig.since_shot > 2.5 && rig.shots < 400 && (!finished || rig.shots < 3) {
+    if rig.since_shot > cadence && rig.shots < 400 && (!finished || rig.shots < 3) {
         rig.since_shot = 0.0;
         rig.shots += 1;
         let stem = path
@@ -1812,7 +2462,7 @@ fn night_tint(
     // Live-refresh: walking from night into a dark cave (and back)
     // retunes the alpha instead of keeping the spawn-time value.
     if wants && let Ok(mut color) = tints.single_mut() {
-        let current = Color::srgba(0.05, 0.07, 0.2, alpha);
+        let current = Color::srgba(0.04, 0.08, 0.30, alpha);
         if color.0 != current {
             color.0 = current;
         }
@@ -1828,7 +2478,7 @@ fn night_tint(
                 height: Val::Percent(100.0),
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.05, 0.07, 0.2, alpha)),
+            BackgroundColor(Color::srgba(0.04, 0.08, 0.30, alpha)),
             GlobalZIndex(5),
         ));
     } else if !wants {

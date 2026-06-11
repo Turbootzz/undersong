@@ -327,6 +327,67 @@ fn legend_c() -> HashMap<char, Rgba<u8>> {
     .collect()
 }
 
+/// The opposite side-stride (P18 walk v2): the leading leg swaps, so
+/// the four-beat cycle reads stride / stand / other-stride / stand.
+/// Upper body identical to A_SIDE_0; only the legs differ.
+const A_SIDE_2: &[&str] = &[
+    "................................",
+    "................................",
+    "...........ooooooo..............",
+    ".........oohhhhhhhoo............",
+    "........ohhhhhhhhhhho...........",
+    ".......ohhHhhhhhhhhhho..........",
+    ".......ohhhhhhhhhhhhho..........",
+    ".......ohhhhhhhhhohhho.........",
+    ".......ohhsssssssshhho..........",
+    ".......ohsssssssssshho..........",
+    ".......ossseewsssssho...........",
+    ".......ossseeessssso............",
+    "........ssssssssssso............",
+    "........osssssssso.............",
+    ".........osssssso..............",
+    "..........osssso................",
+    ".......oogggggggoo..............",
+    "......oggggggggggGo.............",
+    ".....oggggggggggggGo............",
+    ".....ogGggggggggggGo............",
+    "....oggggggggggggggo...........",
+    "....osgggggggggggGso............",
+    "....ossgggggggggGso.............",
+    ".....oo.ogggggggo..............",
+    "........oggggggGo...............",
+    "........oggggggGo...............",
+    "........ogGgggggo...............",
+    "........ogggggGgo...............",
+    ".........ogggggo................",
+    ".........oggGggo................",
+    "........oggooggo................",
+    ".......oggGo.oggo...............",
+    ".......obbo..obbo...............",
+    ".......obbo..obbo...............",
+    "......oobbo..obboo..............",
+    "......obbbo..obbbo..............",
+    ".......oo......oo...............",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+];
+
+/// The up-facing stride: A_UP_0's back view over A_DOWN_1's stride
+/// legs (the lower body is shared between the two facings).
+fn up_stride() -> Vec<String> {
+    A_UP_0
+        .iter()
+        .take(27)
+        .chain(A_DOWN_1.iter().skip(27))
+        .map(|row| (*row).to_string())
+        .collect()
+}
+
 fn mirror(grid: &[&str]) -> Vec<String> {
     grid.iter()
         .map(|row| {
@@ -341,6 +402,10 @@ fn mirror(grid: &[&str]) -> Vec<String> {
         .collect()
 }
 
+fn refs(rows: &[String]) -> Vec<&str> {
+    rows.iter().map(String::as_str).collect()
+}
+
 pub fn render_heroes(out: &Path) -> Result<usize> {
     std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
     let a = legend_b();
@@ -349,21 +414,37 @@ pub fn render_heroes(out: &Path) -> Result<usize> {
             .with_context(|| format!("writing {name}"))
     };
     // Variant B (teal wayfarer) is the live player set — the user's pick
-    // from the P13 variant sheet.
+    // from the P13 variant sheet. Four frames per direction (P18 walk
+    // v2): 0 stand, 1 stride, 2 stand, 3 the opposite stride — the
+    // renderer alternates strides per tile so the gait reads two-step.
+    let down3 = mirror(A_DOWN_1);
+    let up1 = up_stride();
+    let up1_refs = refs(&up1);
+    let up3 = {
+        let owned: Vec<&str> = refs(&up1);
+        mirror(&owned)
+    };
     save(&paint(A_DOWN_0, &a), "player.down.0")?;
     save(&paint(A_DOWN_1, &a), "player.down.1")?;
+    save(&paint(A_DOWN_0, &a), "player.down.2")?;
+    save(&paint(&refs(&down3), &a), "player.down.3")?;
     save(&paint(A_UP_0, &a), "player.up.0")?;
-    save(&paint(A_UP_0, &a), "player.up.1")?;
-    let left0 = paint(A_SIDE_0, &a);
-    let left1 = paint(A_SIDE_1, &a);
-    save(&left0, "player.left.0")?;
-    save(&left1, "player.left.1")?;
-    let m0: Vec<String> = mirror(A_SIDE_0);
-    let m1: Vec<String> = mirror(A_SIDE_1);
-    let m0refs: Vec<&str> = m0.iter().map(String::as_str).collect();
-    let m1refs: Vec<&str> = m1.iter().map(String::as_str).collect();
-    save(&paint(&m0refs, &a), "player.right.0")?;
-    save(&paint(&m1refs, &a), "player.right.1")?;
+    save(&paint(&up1_refs, &a), "player.up.1")?;
+    save(&paint(A_UP_0, &a), "player.up.2")?;
+    save(&paint(&refs(&up3), &a), "player.up.3")?;
+    save(&paint(A_SIDE_0, &a), "player.left.0")?;
+    save(&paint(A_SIDE_1, &a), "player.left.1")?;
+    save(&paint(A_SIDE_0, &a), "player.left.2")?;
+    save(&paint(A_SIDE_2, &a), "player.left.3")?;
+    for (grid, name) in [
+        (A_SIDE_0, "player.right.0"),
+        (A_SIDE_1, "player.right.1"),
+        (A_SIDE_0, "player.right.2"),
+        (A_SIDE_2, "player.right.3"),
+    ] {
+        let m = mirror(grid);
+        save(&paint(&refs(&m), &a), name)?;
+    }
 
     // The variant sheet: A/B/C down-idles, same silhouette, three
     // palettes+details — the user picks next playtest.
@@ -375,5 +456,5 @@ pub fn render_heroes(out: &Path) -> Result<usize> {
     ] {
         save(&paint(A_DOWN_0, &legend), &format!("variants/{name}"))?;
     }
-    Ok(11)
+    Ok(19)
 }

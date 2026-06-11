@@ -211,7 +211,8 @@ fn run() -> Result<bool> {
             let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
             let chars = sprites::render_characters(&out.join("sprites/chars"))?;
             sprites::render_platform(&out.join("sprites/battle"))?;
-            let fx = effects::render_effects(&out.join("sprites/fx"))?;
+            let fx = effects::render_effects(&out.join("sprites/fx"))?
+                + sprites::render_overworld_fx(&out.join("sprites/fx"))?;
             heroes::render_heroes(&out.join("sprites/chars"))?;
             let mut creatures = 0;
             let regions_root = content.join("regions");
