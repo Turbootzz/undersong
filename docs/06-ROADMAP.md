@@ -301,14 +301,14 @@ doors; replays green without re-recording.
 
 ## P15 — UI overhaul + the Score-dex
 
-- [ ] **Screens hub rebuilt as panels**: party rows with 16px creature
+- [x] **Screens hub rebuilt as panels**: party rows with 16px creature
       icons and HP bars; bag as a grid with item rows; boxes as a page
       grid; remaining tofu glyphs swept.
-- [ ] **The Score-dex**: a browsable dex (creature sprite + sigil, types,
+- [x] **The Score-dex**: a browsable dex (creature sprite + sigil, types,
       base stats, dex entry, cry playback, caught/seen state) replacing
       the bare measure-fill.
-- [ ] **Battle plates v2**: status chips, EXP bar on the ally plate.
-- [ ] **Phase review**; STATUS with screenshots.
+- [x] **Battle plates v2**: status chips, EXP bar on the ally plate.
+- [x] **Phase review**; STATUS with screenshots.
 
 **Gate P15:** the Party/Bag screenshot class of UI is gone; the dex is
 navigable to any caught species' page.
@@ -355,6 +355,22 @@ opening RON files; a harness run produces a reviewable frame series.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P15 complete (UI overhaul + the Score-dex)
+
+**Built:** the screens hub split into text + visual panes; Party rows
+with creature icons and live HP bars (real stat-formula max HP); the
+Score-dex — cursor list, detail card (sprite, types, stat bars for
+caught species, entry text), Z plays the cry, unheard species render
+as rests; battle ally plate gains the gilt EXP line and a status chip;
+last decorative glyphs swept.
+
+**Deviation:** bag/boxes keep their text grids (panel-grid versions
+parked — Party and Score were the playtest's pain points).
+
+**Next:** P16 — `git tag p16-start`; the Bun/TS/Tailwind/Vue wiki +
+the visual playtest harness.
+
 
 ### 2026-06-11 — P14 complete (world color & buildings)
 
