@@ -201,5 +201,5 @@ MapDef(
         (at: (9, 16), kind: Brush),
         (at: (9, 17), kind: Brush),
     ],
-    music: None,
+    music: Some("cantorel_bed"),
 )

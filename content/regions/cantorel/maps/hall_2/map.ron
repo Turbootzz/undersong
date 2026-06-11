@@ -105,5 +105,5 @@ MapDef(
     obstacles: [
         (at: (8, 6), kind: Brush),
     ],
-    music: None,
+    music: Some("town_arbor"),
 )

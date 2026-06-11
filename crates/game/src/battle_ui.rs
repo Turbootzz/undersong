@@ -15,6 +15,8 @@ impl Plugin for BattleUiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MessageQueue::default())
             .insert_resource(BattleCursor::default())
+            .insert_resource(FxState::default())
+            .add_systems(Update, apply_fx.run_if(in_state(AppState::Battle)))
             .add_systems(OnEnter(AppState::Battle), battle_enter)
             .add_systems(
                 Update,
@@ -22,12 +24,19 @@ impl Plugin for BattleUiPlugin {
                     .chain()
                     .run_if(in_state(AppState::Battle)),
             )
-            .add_systems(OnExit(AppState::Battle), despawn_tagged::<BattleUi>);
+            .add_systems(
+                OnExit(AppState::Battle),
+                (despawn_tagged::<BattleUi>, clear_battle_music),
+            );
     }
 }
 
 #[derive(Component)]
 pub struct BattleUi;
+
+fn clear_battle_music(mut music: ResMut<crate::app::CurrentMusic>) {
+    music.override_track = None;
+}
 
 #[derive(Component)]
 struct FoePlateText;
@@ -67,6 +76,18 @@ pub struct MessageQueue {
     pub popped_this_frame: bool,
 }
 
+/// Move-impact presentation: shake + hit-stop + flash (doc 06 P5
+/// polish pass; reduced-motion and anim-toggle aware).
+#[derive(Resource, Default)]
+pub struct FxState {
+    /// Remaining shake seconds (decays; amplitude follows it).
+    pub shake: f32,
+    /// Remaining flash seconds over the struck side (side, t).
+    pub flash: Option<(u8, f32)>,
+    /// Hit-stop: pump pause remaining.
+    pub hit_stop: f32,
+}
+
 #[derive(Resource, Default)]
 struct BattleCursor {
     /// 0 = root command row, 1 = move grid.
@@ -75,6 +96,35 @@ struct BattleCursor {
 }
 
 const COMMANDS: [&str; 4] = ["Fight", "Bell", "Tonic", "Slip Away"];
+
+pub fn queue_battle_events_fx(
+    queue: &mut MessageQueue,
+    world: &game::world::WorldState,
+    events: &[WorldEvent],
+    fx: Option<&mut FxState>,
+) {
+    if let Some(fx) = fx {
+        for event in events {
+            if let WorldEvent::Battle(stream) = event {
+                for battle_event in stream {
+                    if let battle::BattleEvent::DamageDealt {
+                        target,
+                        amount,
+                        crit,
+                        ..
+                    } = battle_event
+                        && *amount > 0
+                    {
+                        fx.shake = fx.shake.max(if *crit { 0.30 } else { 0.15 });
+                        fx.hit_stop = fx.hit_stop.max(if *crit { 0.18 } else { 0.10 });
+                        fx.flash = Some((*target, 0.18));
+                    }
+                }
+            }
+        }
+    }
+    queue_battle_events(queue, world, events);
+}
 
 pub fn queue_battle_events(
     queue: &mut MessageQueue,
@@ -226,9 +276,29 @@ fn battle_enter(
     world: Res<WorldRes>,
     assets: Res<AssetServer>,
     mut cursor: ResMut<BattleCursor>,
+    mut music: ResMut<crate::app::CurrentMusic>,
 ) {
     cursor.mode = 0;
     cursor.index = 0;
+    if let Some(session) = &world.0.battle {
+        // Battle theme by context (doc 04 §7): maestros + admins get
+        // the hall theme.
+        music.override_track = Some(match &session.context {
+            game::session::BattleContext::Wild { .. } => "battle_wild".to_string(),
+            game::session::BattleContext::Trainer { id } => {
+                let weighty = world.0.registry.as_ref().is_some_and(|r| {
+                    r.trainers
+                        .get(id)
+                        .is_some_and(|t| t.class == "Maestro" || t.class == "TacetAdmin")
+                });
+                if weighty {
+                    "battle_hall".to_string()
+                } else {
+                    "battle_trainer".to_string()
+                }
+            }
+        });
+    }
     let Some(session) = &world.0.battle else {
         return;
     };
@@ -473,6 +543,7 @@ fn battle_input(
     mut rows: Query<(&CommandRow, &mut BackgroundColor)>,
     mut command_texts: Query<(&ChildOf, &mut Text), Without<MessageText>>,
     mut message_text: Query<&mut Text, With<MessageText>>,
+    mut fx: ResMut<FxState>,
 ) {
     // While messages are pending, only pumping happens (handled above);
     // and a Z that just popped a message must not double-fire here.
@@ -640,7 +711,7 @@ fn battle_input(
         };
         if let Some(command) = command {
             let events = world.0.apply(WorldInput::Battle(command));
-            queue_battle_events(&mut queue, &world.0, &events);
+            queue_battle_events_fx(&mut queue, &world.0, &events, Some(&mut fx));
             cursor.mode = 0;
             cursor.index = 0;
         }
@@ -650,6 +721,69 @@ fn battle_input(
 /// Live plates: names, levels, HP bars (color by fraction per doc 05 §2).
 type HpBarQuery<'w, 's, T, U> =
     Query<'w, 's, (&'static mut Node, &'static mut BackgroundColor), (With<T>, Without<U>)>;
+
+fn apply_fx(
+    time: Res<Time>,
+    settings: Res<crate::app::SettingsRes>,
+    mut fx: ResMut<FxState>,
+    mut queue: ResMut<MessageQueue>,
+    mut root: Query<&mut Node, With<BattleUi>>,
+    mut foe_img: Query<&mut ImageNode, (With<FoeSprite>, Without<PlayerSpriteImg>)>,
+    mut player_img: Query<&mut ImageNode, (With<PlayerSpriteImg>, Without<FoeSprite>)>,
+) {
+    let dt = time.delta_secs();
+    // Hit-stop: hold the message pump briefly.
+    if fx.hit_stop > 0.0 {
+        fx.hit_stop -= dt;
+        queue.timer = queue.timer.min(0.0);
+    }
+    let allow_motion = settings.0.battle_animations && !settings.0.reduced_motion;
+    if fx.shake > 0.0 {
+        fx.shake -= dt;
+        if let Ok(mut node) = root.single_mut() {
+            let offset = if allow_motion && fx.shake > 0.0 {
+                // Deterministic-feeling jitter from the timer itself.
+                let phase = (fx.shake * 90.0).sin();
+                phase * fx.shake * 14.0
+            } else {
+                0.0
+            };
+            node.left = Val::Px(offset);
+        }
+    } else if let Ok(mut node) = root.single_mut()
+        && node.left != Val::Px(0.0)
+    {
+        node.left = Val::Px(0.0);
+    }
+    // Flash: tint the struck sprite toward white, then restore.
+    if let Some((side, remaining)) = fx.flash {
+        let remaining = remaining - dt;
+        let tint = if settings.0.battle_animations {
+            let level = 1.0 + (remaining.max(0.0) * 6.0);
+            Color::srgb(level, level, level)
+        } else {
+            Color::WHITE
+        };
+        if side == 1 {
+            if let Ok(mut image) = foe_img.single_mut() {
+                image.color = tint;
+            }
+        } else if let Ok(mut image) = player_img.single_mut() {
+            image.color = tint;
+        }
+        fx.flash = if remaining > 0.0 {
+            Some((side, remaining))
+        } else {
+            if let Ok(mut image) = foe_img.single_mut() {
+                image.color = Color::WHITE;
+            }
+            if let Ok(mut image) = player_img.single_mut() {
+                image.color = Color::WHITE;
+            }
+            None
+        };
+    }
+}
 
 #[expect(clippy::type_complexity, reason = "bevy query filters")]
 fn refresh_sprites(

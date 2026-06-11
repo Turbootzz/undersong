@@ -10,6 +10,7 @@ mod asset_tests;
 mod cries;
 mod importmap;
 mod melody;
+mod music;
 mod render;
 mod sigils;
 mod sim;
@@ -25,7 +26,8 @@ const USAGE: &str = "usage:
   tools simulate  [--battles <n>] [--pool <file>] [--level <n>] [--seed <n>] [--content <dir>]
   tools battle    --seed <n> [--pool <file>] [--level <n>] [--content <dir>]
   tools importmap --in <project.ldtk> --out <maps dir>
-  tools assets    --region <id> [--content <dir>] [--out <dir>]";
+  tools assets    --region <id> [--content <dir>] [--out <dir>]
+  tools music     [--out <dir>]";
 
 fn main() -> ExitCode {
     match run() {
@@ -153,6 +155,34 @@ fn run() -> Result<bool> {
             let content = PathBuf::from(value("--content", "content"));
             let out = PathBuf::from(value("--out", "assets"));
             generate_assets(&content, &region, &out)
+        }
+        Some("music") => {
+            let rest: Vec<String> = args.collect();
+            let out = rest
+                .iter()
+                .position(|a| a == "--out")
+                .and_then(|i| rest.get(i + 1))
+                .cloned()
+                .unwrap_or_else(|| "assets".to_string());
+            let out = PathBuf::from(out);
+            let tracks = out.join("music");
+            // (track id, seed, mood) — Quiet Coast intentionally absent.
+            use music::Mood;
+            for (id, seed, mood) in [
+                ("cantorel_bed", 0xCA_0001u64, Mood::Bed),
+                ("town_pausa", 0xCA_0002, Mood::Town),
+                ("town_prelude", 0xCA_0003, Mood::Town),
+                ("town_arbor", 0xCA_0004, Mood::Town),
+                ("town_calando", 0xCA_0005, Mood::Town),
+                ("battle_wild", 0xCA_0010, Mood::BattleWild),
+                ("battle_trainer", 0xCA_0011, Mood::BattleTrainer),
+                ("battle_hall", 0xCA_0012, Mood::BattleHall),
+            ] {
+                music::render_track(id, seed, mood, &tracks)?;
+            }
+            music::render_sfx(&out.join("sfx"))?;
+            println!("music: 8 tracks + 6 cues → {}", out.display());
+            Ok(true)
         }
         Some("importmap") => {
             let rest: Vec<String> = args.collect();

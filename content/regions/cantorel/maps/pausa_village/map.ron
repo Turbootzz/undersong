@@ -96,5 +96,5 @@ MapDef(
         (id: "villager_mez", at: (10, 6), facing: Down, sprite: "npc.villager", script: None, behavior: Wander(radius: 2), sight_range: 0),
         (id: "signpost_keeper", at: (15, 5), facing: Left, sprite: "npc.villager2", script: Some("pausa_sign.script.ron"), behavior: Static, sight_range: 0),
     ],
-    music: None,
+    music: Some("town_pausa"),
 )

@@ -48,6 +48,8 @@ impl Plugin for UndersongPlugin {
                     .run_if(in_state(AppState::Overworld)),
             )
             .insert_resource(Toast::default())
+            .insert_resource(CurrentMusic::default())
+            .add_systems(Update, music_director)
             .add_systems(
                 Update,
                 (toast_ui, night_tint).run_if(in_state(AppState::Overworld)),
@@ -905,6 +907,49 @@ fn resync_after_battle(
         let (x, y) = world.0.player;
         transform.translation = Vec3::new(x as f32 * TILE + 8.0, y as f32 * TILE + 8.0, 2.0);
     }
+}
+
+/// What should be playing right now; battle scenes override the map.
+#[derive(Resource, Default)]
+pub struct CurrentMusic {
+    pub playing: Option<String>,
+    /// Set by the battle scene; None = follow the map.
+    pub override_track: Option<String>,
+}
+
+#[derive(Component)]
+struct MusicPlayer;
+
+/// One looping track at a time: map track in the overworld, the battle
+/// scene's override elsewhere. Quiet Coast has None — dead air.
+fn music_director(
+    mut commands: Commands,
+    world: Res<WorldRes>,
+    settings: Res<SettingsRes>,
+    assets: Res<AssetServer>,
+    mut current: ResMut<CurrentMusic>,
+    players: Query<Entity, With<MusicPlayer>>,
+) {
+    let desired = current
+        .override_track
+        .clone()
+        .or_else(|| world.0.map().music.clone());
+    if current.playing == desired {
+        return;
+    }
+    for entity in &players {
+        commands.entity(entity).despawn();
+    }
+    if let Some(track) = &desired {
+        commands.spawn((
+            MusicPlayer,
+            AudioPlayer::new(assets.load(format!("music/{track}.wav"))),
+            PlaybackSettings::LOOP.with_volume(bevy::audio::Volume::Linear(
+                f32::from(settings.0.volume_music) / 100.0 * 0.8,
+            )),
+        ));
+    }
+    current.playing = desired;
 }
 
 #[derive(Resource, Default)]

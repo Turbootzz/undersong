@@ -113,5 +113,5 @@ MapDef(
         (id: "hall3_duo_b", at: (10, 9), facing: Left, sprite: "npc.trainer", script: Some("hall3_duo2.script.ron"), behavior: Static, sight_range: 2),
         (id: "maestro_bram", at: (7, 15), facing: Down, sprite: "npc.dario", script: Some("bram.script.ron"), behavior: Static, sight_range: 0),
     ],
-    music: None,
+    music: Some("town_calando"),
 )

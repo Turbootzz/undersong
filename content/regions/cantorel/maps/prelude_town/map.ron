@@ -94,5 +94,5 @@ MapDef(
     npcs: [
         (id: "townsfolk_ona", at: (8, 5), facing: Down, sprite: "npc.villager", script: Some("prelude_talk.script.ron"), behavior: Wander(radius: 2), sight_range: 0),
     ],
-    music: None,
+    music: Some("town_prelude"),
 )

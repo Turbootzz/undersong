@@ -150,5 +150,5 @@ MapDef(
         patch_rate_pct: 12,
         slots: [("cinderle", 14, 17, 20), ("ampurr", 14, 17, 20), ("staccatto", 15, 18, 10), ("voltern", 15, 18, 10), ("clockerel", 15, 18, 10), ("dunelay", 14, 17, 10), ("brasshorn", 15, 18, 5), ("frostrel", 14, 17, 5), ("forgeling", 16, 18, 4), ("vesperbat", 15, 18, 4), ("pyrelodie", 17, 19, 1), ("tidempo", 17, 19, 1)],
     )),
-    music: None,
+    music: Some("cantorel_bed"),
 )

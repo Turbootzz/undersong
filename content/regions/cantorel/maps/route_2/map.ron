@@ -106,5 +106,5 @@ MapDef(
         patch_rate_pct: 12,
         slots: [("vesperbat", 9, 12, 20), ("dirgeist", 9, 12, 20), ("mossoon", 8, 11, 10), ("fogato", 10, 12, 10), ("mutewing", 10, 13, 10), ("hummble", 9, 12, 10), ("glissicle", 9, 11, 5), ("lullaby", 11, 13, 5), ("shrubato", 8, 11, 4), ("petalune", 9, 12, 4), ("requiemoth", 12, 13, 1), ("crescendola", 12, 13, 1)],
     )),
-    music: None,
+    music: Some("cantorel_bed"),
 )

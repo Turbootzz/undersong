@@ -80,6 +80,12 @@ fn main() -> AppExit {
     App::new()
         .add_plugins(
             DefaultPlugins
+                .set(bevy::asset::AssetPlugin {
+                    // Run from the workspace root in dev; the shipping
+                    // layout is settled in P7 (doc 06).
+                    file_path: "../../assets".into(),
+                    ..default()
+                })
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Undersong".into(),

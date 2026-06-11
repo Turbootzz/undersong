@@ -57,5 +57,5 @@ MapDef(
     npcs: [
         (id: "reed", at: (4, 4), facing: Down, sprite: "npc.reed", script: Some("reed_intro.script.ron"), behavior: Static, sight_range: 0),
     ],
-    music: None,
+    music: Some("town_pausa"),
 )

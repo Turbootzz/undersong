@@ -116,5 +116,5 @@ MapDef(
         (id: "echo_keeper_pausa", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_1.script.ron"), behavior: Static, sight_range: 0),
         (id: "keyshift_buff", at: (20, 6), facing: Down, sprite: "npc.villager", script: Some("keyshift_tutorial.script.ron"), behavior: Static, sight_range: 0),
     ],
-    music: None,
+    music: Some("town_calando"),
 )

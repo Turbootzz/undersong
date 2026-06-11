@@ -107,5 +107,5 @@ MapDef(
         (id: "arbor_elder", at: (7, 6), facing: Down, sprite: "npc.villager", script: Some("arbor_elder.script.ron"), behavior: Static, sight_range: 0),
         (id: "echo_keeper_1", at: (13, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_2.script.ron"), behavior: Static, sight_range: 0),
     ],
-    music: None,
+    music: Some("town_arbor"),
 )
