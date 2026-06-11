@@ -1358,8 +1358,14 @@ fn theater_demo_rig(
     }
     if !rig.started {
         rig.started = true;
+        // A fresh film: stale frames from a previous run must not
+        // interleave with this one's.
+        let dir = std::path::PathBuf::from("docs/playtests").join(format!("theater-{mode}"));
+        std::fs::remove_dir_all(&dir).ok();
         let mut rng = undersong_core::rng::BattleRng::from_seed(0x7EA7E2);
         let Some(registry) = &world.0.registry else {
+            bevy::log::error!("theater rig: no registry loaded");
+            exit.write(AppExit::error());
             return;
         };
         let (ally, ally_level, foe, foe_level) = match mode.as_str() {
@@ -1386,13 +1392,16 @@ fn theater_demo_rig(
         world.0.start_wild_battle(foe.into(), foe_level);
         if world.0.battle.is_some() {
             next.set(AppState::Battle);
+        } else {
+            bevy::log::error!("theater rig: battle failed to start");
+            exit.write(AppExit::error());
         }
         return;
     }
     // Film: a frame every ~0.6s while the show runs (the impact strips
     // run 0.48s — a slower cadence never catches them).
     rig.since_shot += time.delta_secs();
-    if rig.since_shot > 0.6 && rig.shots < 160 {
+    if rig.since_shot > 0.6 && rig.shots < 240 {
         rig.since_shot = 0.0;
         rig.shots += 1;
         let dir = std::path::PathBuf::from("docs/playtests").join(format!("theater-{mode}"));
@@ -1400,7 +1409,7 @@ fn theater_demo_rig(
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(
-                dir.join(format!("frame_{:02}.png", rig.shots)),
+                dir.join(format!("frame_{:03}.png", rig.shots)),
             ));
     }
     // Autopilot: act only between theater beats, exactly like a player.
@@ -1525,10 +1534,12 @@ fn visual_replay(
             let input = rig.inputs.as_ref().expect("loaded")[i].clone();
             let events = world.0.apply(input);
             let battle_after = world.0.battle.is_some();
-            // Mid-battle events drive the theater; the starting batch is
-            // skipped (battle_enter resets the theater and seeds the
-            // entry choreography, mirroring real play).
-            if battle_now {
+            // Battle-scene events drive the theater — including the
+            // post-battle prompt answers (learn lines, the evolution
+            // scene). Only the starting batch is skipped (battle_enter
+            // resets the theater and seeds the entry choreography,
+            // mirroring real play).
+            if battle_now || in_battle_scene {
                 crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
             }
             for event in &events {
@@ -1553,7 +1564,7 @@ fn visual_replay(
     // Frame series: one shot every ~2.5s, capped (keeps shooting a few
     // beats after the run ends so the final scene lands on film).
     rig.since_shot += time.delta_secs();
-    if rig.since_shot > 2.5 && rig.shots < 40 && (!finished || rig.shots < 3) {
+    if rig.since_shot > 2.5 && rig.shots < 400 && (!finished || rig.shots < 3) {
         rig.since_shot = 0.0;
         rig.shots += 1;
         let stem = path
@@ -1565,7 +1576,7 @@ fn visual_replay(
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(
-                dir.join(format!("frame_{:02}.png", rig.shots)),
+                dir.join(format!("frame_{:03}.png", rig.shots)),
             ));
     }
 }

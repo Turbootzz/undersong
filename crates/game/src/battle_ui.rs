@@ -51,6 +51,12 @@ impl Plugin for BattleUiPlugin {
 #[derive(Component)]
 pub struct BattleUi;
 
+/// The one full-screen container (the shake target). The FxSprite and
+/// the evolution overlay are also BattleUi-tagged top-level entities,
+/// so apply_fx must not identify the root by BattleUi alone.
+#[derive(Component)]
+struct BattleRoot;
+
 fn clear_battle_music(mut music: ResMut<crate::app::CurrentMusic>) {
     music.override_track = None;
 }
@@ -238,8 +244,17 @@ impl DisplayedHp {
         self.sides[usize::from(side)] = Some((hp, hp, max));
     }
 
+    fn set_max(&mut self, side: u8, to: f32) {
+        if let Some((_, _, max)) = &mut self.sides[usize::from(side)] {
+            *max = to;
+        }
+    }
+
     fn set_label(&mut self, side: u8, species: &SpeciesId, level: u8) {
-        self.labels[usize::from(side)] = Some(format!("{species}  L{level}"));
+        let label = format!("{species}  L{level}");
+        if self.labels[usize::from(side)].as_ref() != Some(&label) {
+            self.labels[usize::from(side)] = Some(label);
+        }
     }
 }
 
@@ -274,15 +289,95 @@ pub fn stage_battle_events(
 ) {
     let name = |species: &undersong_core::ids::SpeciesId| world.text(&format!("motif.{species}"));
     let move_name = |move_id: &undersong_core::ids::MoveId| world.text(&format!("move.{move_id}"));
-    // The type of the move whose hits are currently translating.
+
+    // Pass 1 — reconcile unmodeled HP changes (bag heals are eventless:
+    // the foe's same-turn hit must not stage against pre-heal HP). Walk
+    // the batch's narrated deltas back from live end-state to what the
+    // batch starts from; if the sim disagrees, drain there first.
+    // Switches/faints make the ledger opaque — skip those sides (the
+    // idle catch-all sync still self-heals any drift).
+    if let Some(session) = &world.battle {
+        let live_end = [
+            f32::from(session.state.sides[0].active_mote().hp),
+            f32::from(session.state.sides[1].active_mote().hp),
+        ];
+        let mut delta = [0.0f32; 2];
+        let mut opaque = [false; 2];
+        for event in events {
+            let WorldEvent::Battle(stream) = event else {
+                continue;
+            };
+            for battle_event in stream {
+                use battle::BattleEvent as E;
+                match battle_event {
+                    E::DamageDealt {
+                        target,
+                        target_slot: 0,
+                        amount,
+                        ..
+                    } => delta[usize::from(*target)] -= f32::from(*amount),
+                    E::StatusTicked { target, damage, .. } => {
+                        delta[usize::from(*target)] -= f32::from(*damage);
+                    }
+                    E::HurtItselfInConfusion { side, damage } => {
+                        delta[usize::from(*side)] -= f32::from(*damage);
+                    }
+                    E::Recoiled {
+                        side,
+                        slot: 0,
+                        amount,
+                    } => delta[usize::from(*side)] -= f32::from(*amount),
+                    E::WeatherChip { target, amount } => {
+                        delta[usize::from(*target)] -= f32::from(*amount);
+                    }
+                    E::Healed {
+                        target,
+                        slot: 0,
+                        amount,
+                    } => delta[usize::from(*target)] += f32::from(*amount),
+                    E::Drained { from, amount } => {
+                        delta[usize::from(1 - *from)] += f32::from(*amount);
+                    }
+                    E::SeededDrain { from, amount } => {
+                        delta[usize::from(*from)] -= f32::from(*amount);
+                        delta[usize::from(1 - *from)] += f32::from(*amount);
+                    }
+                    E::SwitchedIn { side, .. } => opaque[usize::from(*side)] = true,
+                    E::Fainted { target, .. } => opaque[usize::from(*target)] = true,
+                    _ => {}
+                }
+            }
+        }
+        for side in 0..2u8 {
+            let i = usize::from(side);
+            if !opaque[i] {
+                let start = (live_end[i] - delta[i]).clamp(0.0, theater.sim[i].1);
+                if (start - theater.sim[i].0).abs() > 0.5 {
+                    theater.sim[i].0 = start;
+                    theater.push_anim(Anim::HpSet { side, to: start });
+                }
+            }
+        }
+    }
+
+    // Pass 2 — translate, in event order. Only position 0 is staged
+    // (the windowed presenter renders one sprite/plate per side; the
+    // doubles stage remains the deferred P5 deviation) — other slots
+    // keep their narration lines but drive no animation. The Shift
+    // offer is held to the tail so it reads after the KO it answers.
     let mut current_ty: Option<Type> = None;
+    let mut shift_offered = false;
     for event in events {
         match event {
             WorldEvent::Battle(stream) => {
                 for battle_event in stream {
                     use battle::BattleEvent as E;
                     match battle_event {
-                        E::MoveUsed { side, move_id, .. } => {
+                        E::MoveUsed {
+                            side,
+                            slot,
+                            move_id,
+                        } => {
                             current_ty = world
                                 .registry
                                 .as_ref()
@@ -293,7 +388,9 @@ pub fn stage_battle_events(
                                 if *side == 0 { "you" } else { "foe" },
                                 move_name(move_id)
                             ));
-                            theater.push_anim(Anim::Lunge { side: *side });
+                            if *slot == 0 {
+                                theater.push_anim(Anim::Lunge { side: *side });
+                            }
                         }
                         E::LastResortUsed { side } => {
                             current_ty = Some(Type::Resonant);
@@ -305,20 +402,25 @@ pub fn stage_battle_events(
                         }
                         E::DamageDealt {
                             target,
+                            target_slot,
                             amount,
                             crit,
                             effectiveness,
-                            ..
                         } => {
-                            let sim = &mut theater.sim[usize::from(*target)];
-                            sim.0 = (sim.0 - f32::from(*amount)).max(0.0);
-                            let hp_to = sim.0;
-                            theater.push_anim(Anim::Impact {
-                                target: *target,
-                                ty: current_ty.unwrap_or(Type::Feral),
-                                crit: *crit,
-                                hp_to,
-                            });
+                            // Blanked hits (Eff::Zero, amount 0) get the
+                            // line only — no flash for a move that did
+                            // nothing (P5 contract).
+                            if *target_slot == 0 && *amount > 0 {
+                                let sim = &mut theater.sim[usize::from(*target)];
+                                sim.0 = (sim.0 - f32::from(*amount)).max(0.0);
+                                let hp_to = sim.0;
+                                theater.push_anim(Anim::Impact {
+                                    target: *target,
+                                    ty: current_ty.unwrap_or(Type::Feral),
+                                    crit: *crit,
+                                    hp_to,
+                                });
+                            }
                             let mut line = format!(
                                 "{} takes {amount}",
                                 if *target == 0 { "your mote" } else { "the foe" }
@@ -363,7 +465,11 @@ pub fn stage_battle_events(
                             let to = sim.0;
                             theater.push_anim(Anim::HpSet { side: *side, to });
                         }
-                        E::Recoiled { side, amount, .. } => {
+                        E::Recoiled {
+                            side,
+                            slot: 0,
+                            amount,
+                        } => {
                             let sim = &mut theater.sim[usize::from(*side)];
                             sim.0 = (sim.0 - f32::from(*amount)).max(0.0);
                             let to = sim.0;
@@ -375,15 +481,46 @@ pub fn stage_battle_events(
                             let to = sim.0;
                             theater.push_anim(Anim::HpSet { side: *target, to });
                         }
-                        E::Healed { target, amount, .. } => {
+                        E::Healed {
+                            target,
+                            slot: 0,
+                            amount,
+                        } => {
                             let sim = &mut theater.sim[usize::from(*target)];
                             sim.0 = (sim.0 + f32::from(*amount)).min(sim.1);
                             let to = sim.0;
                             theater.push_anim(Anim::HpSet { side: *target, to });
                         }
-                        E::Fainted { target, .. } => {
-                            theater.sim[usize::from(*target)].0 = 0.0;
-                            theater.push_anim(Anim::Faint { side: *target });
+                        E::Drained { from, amount } => {
+                            let sim = &mut theater.sim[usize::from(1 - *from)];
+                            sim.0 = (sim.0 + f32::from(*amount)).min(sim.1);
+                            let to = sim.0;
+                            theater.push_anim(Anim::HpSet {
+                                side: 1 - *from,
+                                to,
+                            });
+                        }
+                        E::SeededDrain { from, amount } => {
+                            let sim = &mut theater.sim[usize::from(*from)];
+                            sim.0 = (sim.0 - f32::from(*amount)).max(0.0);
+                            let drained_to = sim.0;
+                            theater.push_anim(Anim::HpSet {
+                                side: *from,
+                                to: drained_to,
+                            });
+                            let sim = &mut theater.sim[usize::from(1 - *from)];
+                            sim.0 = (sim.0 + f32::from(*amount)).min(sim.1);
+                            let healed_to = sim.0;
+                            theater.push_anim(Anim::HpSet {
+                                side: 1 - *from,
+                                to: healed_to,
+                            });
+                        }
+                        E::Fainted { target, slot, .. } => {
+                            if *slot == 0 {
+                                theater.sim[usize::from(*target)].0 = 0.0;
+                                theater.push_anim(Anim::Faint { side: *target });
+                            }
                             theater.push_line(format!(
                                 "{} faints!",
                                 if *target == 0 { "your mote" } else { "the foe" }
@@ -425,29 +562,45 @@ pub fn stage_battle_events(
                                 if *side == 0 { "your" } else { "the foe's" }
                             ));
                         }
-                        E::SwitchedIn { side, species, .. } => {
-                            // Displayed HP snaps to the incoming mote.
-                            let (hp, max, level) = world
-                                .battle
-                                .as_ref()
-                                .and_then(|s| {
-                                    s.state.sides[usize::from(*side)]
-                                        .party
-                                        .iter()
-                                        .find(|m| &m.species == species && !m.is_fainted())
-                                        .map(|m| {
+                        E::SwitchedIn {
+                            side,
+                            slot,
+                            species,
+                        } => {
+                            if *slot == 0 {
+                                // Resolve the incoming mote through the
+                                // engine's stable slot → party mapping
+                                // (a species search can hit a benched
+                                // duplicate). Session gone (the batch
+                                // ended the battle): keep the sim's
+                                // view and the old label.
+                                let (hp, max, level) = world
+                                    .battle
+                                    .as_ref()
+                                    .and_then(|s| {
+                                        let battle_side = &s.state.sides[usize::from(*side)];
+                                        let index = battle_side
+                                            .positions
+                                            .get(usize::from(*slot))
+                                            .map(|p| usize::from(p.party_index))?;
+                                        battle_side.party.get(index).map(|m| {
                                             (f32::from(m.hp), f32::from(m.max_hp()), m.level)
                                         })
-                                })
-                                .unwrap_or((1.0, 1.0, 1));
-                            theater.sim[usize::from(*side)] = (hp, max);
-                            theater.push_anim(Anim::SwitchIn {
-                                side: *side,
-                                species: species.clone(),
-                                hp,
-                                max,
-                                level,
-                            });
+                                    })
+                                    .unwrap_or((
+                                        theater.sim[usize::from(*side)].0,
+                                        theater.sim[usize::from(*side)].1,
+                                        0,
+                                    ));
+                                theater.sim[usize::from(*side)] = (hp, max);
+                                theater.push_anim(Anim::SwitchIn {
+                                    side: *side,
+                                    species: species.clone(),
+                                    hp,
+                                    max,
+                                    level,
+                                });
+                            }
                             theater.push_line(format!(
                                 "{} {} takes the stage",
                                 if *side == 0 { "your" } else { "foe" },
@@ -500,11 +653,13 @@ pub fn stage_battle_events(
                 theater.push_line(world.text(reason_key));
             }
             WorldEvent::ShiftOffered => {
-                theater
-                    .push_line("send in another mote? (arrows pick / Z send / X keep)".into());
+                shift_offered = true;
             }
             _ => {}
         }
+    }
+    if shift_offered {
+        theater.push_line("send in another mote? (arrows pick / Z send / X keep)".into());
     }
 }
 
@@ -601,6 +756,7 @@ fn battle_enter(
     commands
         .spawn((
             BattleUi,
+            BattleRoot,
             Node {
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
@@ -919,7 +1075,14 @@ fn theater_tick(
         if done
             && let Some(anim) = theater.active.take()
         {
-            finish_anim(&anim, &region, &mut commands, &assets, &mut disp, &mut stage);
+            finish_anim(
+                &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut stage,
+            );
+        }
+        // A Z/X landing on an animation frame (including its last) must
+        // not leak into battle_input as a menu confirm or prompt answer.
+        if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::KeyX) {
+            theater.popped_this_frame = true;
         }
         return;
     }
@@ -927,9 +1090,13 @@ fn theater_tick(
     // 2) Typewriter reveal of the current line.
     if theater.shown < theater.chars {
         let speed = f32::from(settings.0.text_speed);
-        if speed <= 0.0 || keys.just_pressed(KeyCode::KeyZ) {
+        if keys.just_pressed(KeyCode::KeyZ) {
             theater.shown = theater.chars;
             theater.popped_this_frame = true;
+        } else if speed <= 0.0 || !animate {
+            // Instant text: speed 0, or battle animations toggled off
+            // (the P9 speedrun contract).
+            theater.shown = theater.chars;
         } else {
             theater.reveal_acc += speed * dt;
             let step = theater.reveal_acc.floor() as usize;
@@ -951,21 +1118,30 @@ fn theater_tick(
 
     // 3) Fully revealed: dwell, then advance to the next item.
     if theater.items.is_empty() {
-        // Idle: displayed HP retargets live state so drift self-heals
-        // (heals from the bag, drains the stream never narrated…).
+        // Idle: the theater's view and the session agree again —
+        // retarget displayed HP to live state so drift self-heals, and
+        // refresh max/label (mid-battle level-ups raise both).
         if let Some(session) = &world.0.battle {
-            for side in 0..2 {
-                let mote = session.state.sides[side].active_mote();
-                disp.set_target(u8::try_from(side).unwrap_or(0), f32::from(mote.hp));
+            for side in 0..2u8 {
+                let mote = session.state.sides[usize::from(side)].active_mote();
+                disp.set_target(side, f32::from(mote.hp));
+                disp.set_max(side, f32::from(mote.max_hp()));
+                disp.set_label(side, &mote.species, mote.level);
+                theater.sim[usize::from(side)] =
+                    (f32::from(mote.hp), f32::from(mote.max_hp()));
             }
         }
         return;
     }
     theater.dwell += dt;
-    let pace = match settings.0.battle_pace {
-        0 => 1.1,
-        1 => 0.7,
-        _ => 0.4,
+    let pace = if !animate {
+        0.05 // animations off: near-instant pacing (P9)
+    } else {
+        match settings.0.battle_pace {
+            0 => 1.1,
+            1 => 0.7,
+            _ => 0.4,
+        }
     };
     let advance = theater.dwell >= pace
         || keys.just_pressed(KeyCode::KeyZ)
@@ -995,12 +1171,17 @@ fn theater_tick(
                     &mut fx, &mut disp, &mut stage,
                 );
                 if done {
-                    finish_anim(&anim, &region, &mut commands, &assets, &mut disp, &mut stage);
+                    finish_anim(
+                        &anim, &region, &mut commands, &assets, &settings.0, &mut disp,
+                        &mut stage,
+                    );
                 } else {
                     theater.active = Some(anim);
                 }
             } else {
-                finish_anim(&anim, &region, &mut commands, &assets, &mut disp, &mut stage);
+                finish_anim(
+                    &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut stage,
+                );
             }
         }
         None => {}
@@ -1158,7 +1339,9 @@ fn tick_anim(
         } => {
             if fire(1, &mut anim.fired) {
                 disp.snap(*side, *hp, *max);
-                disp.set_label(*side, species, *level);
+                if *level > 0 {
+                    disp.set_label(*side, species, *level);
+                }
                 let path = if *side == 1 {
                     format!("sprites/monsters/{region}/{species}.front.png")
                 } else {
@@ -1210,7 +1393,8 @@ fn tick_anim(
             let gilt = Color::srgb(2.0, 1.7, 0.7);
             if let Ok((mut node, mut image, _)) = stage.p0().single_mut() {
                 if t < 0.5 {
-                    let p = ease(t / 0.5);
+                    // reduced_motion: snap to the point, no shrink ease.
+                    let p = if reduced { 1.0 } else { ease(t / 0.5) };
                     let size = SPRITE_SIZE - (SPRITE_SIZE - 10.0) * p;
                     node.width = Val::Px(size);
                     node.height = Val::Px(size);
@@ -1223,11 +1407,13 @@ fn tick_anim(
                     if fire(2 << wobble_index, &mut anim.fired) {
                         crate::app::play_cue(commands, assets, settings, "wobble");
                     }
-                    let size = 10.0 + 4.0 * bump(wp);
+                    // reduced_motion: the point holds still; the wobble
+                    // cues alone carry the count.
+                    let size = if reduced { 10.0 } else { 10.0 + 4.0 * bump(wp) };
+                    let jiggle = if reduced { 0.0 } else { 3.0 * bump(wp * 2.0) };
                     node.width = Val::Px(size);
                     node.height = Val::Px(size);
-                    node.right =
-                        Val::Px(FOE_RIGHT + (SPRITE_SIZE - size) / 2.0 + 3.0 * bump(wp * 2.0));
+                    node.right = Val::Px(FOE_RIGHT + (SPRITE_SIZE - size) / 2.0 + jiggle);
                     node.top = Val::Px(FOE_TOP + (SPRITE_SIZE - size) / 2.0);
                     image.color = gilt;
                 } else if *caught {
@@ -1241,7 +1427,7 @@ fn tick_anim(
                     if fire(1 << 16, &mut anim.fired) {
                         crate::app::play_cue(commands, assets, settings, "breakout");
                     }
-                    let p = ease((t - wobble_end) / 0.3);
+                    let p = if reduced { 1.0 } else { ease((t - wobble_end) / 0.3) };
                     let size = 10.0 + (SPRITE_SIZE - 10.0) * p;
                     node.width = Val::Px(size);
                     node.height = Val::Px(size);
@@ -1288,31 +1474,46 @@ fn tick_anim(
             }
             if let Ok((mut image, _)) = stage.p5().single_mut() {
                 if t < 0.7 {
-                    let p = ease(t / 0.7);
-                    let level = 1.0 + 6.0 * p;
+                    // reduced_motion: no whiten ramp — the scene plays
+                    // as a calm dissolve, not a strobe.
+                    let level = if reduced {
+                        1.0
+                    } else {
+                        1.0 + 6.0 * ease(t / 0.7)
+                    };
                     image.color = Color::srgb(level, level, level);
                 } else if t < 3.1 {
-                    // Accelerating alternation: count flips by walking
-                    // the shrinking-period schedule.
-                    let mut flip_t = 0.7_f32;
-                    let mut period = 0.55_f32;
-                    let mut flips = 0u32;
-                    while flip_t + period < t {
-                        flip_t += period;
-                        period = (period * 0.82).max(0.10);
-                        flips += 1;
+                    if reduced {
+                        // One quiet swap to the new form; no flashing.
+                        if fire(1 << 8, &mut anim.fired) {
+                            image.image = assets.load(game::art::art(&format!(
+                                "sprites/monsters/{region}/{into}.front.png"
+                            )));
+                        }
+                        image.color = Color::WHITE;
+                    } else {
+                        // Accelerating alternation: count flips by
+                        // walking the shrinking-period schedule.
+                        let mut flip_t = 0.7_f32;
+                        let mut period = 0.55_f32;
+                        let mut flips = 0u32;
+                        while flip_t + period < t {
+                            flip_t += period;
+                            period = (period * 0.82).max(0.10);
+                            flips += 1;
+                        }
+                        let show_into = flips % 2 == 1;
+                        let bit = if show_into { 1 << 8 } else { 1 << 9 };
+                        let other = if show_into { 1 << 9 } else { 1 << 8 };
+                        if anim.fired & bit == 0 {
+                            anim.fired = (anim.fired | bit) & !other;
+                            let which = if show_into { into } else { from };
+                            image.image = assets.load(game::art::art(&format!(
+                                "sprites/monsters/{region}/{which}.front.png"
+                            )));
+                        }
+                        image.color = Color::srgb(7.0, 7.0, 7.0);
                     }
-                    let show_into = flips % 2 == 1;
-                    let bit = if show_into { 1 << 8 } else { 1 << 9 };
-                    let other = if show_into { 1 << 9 } else { 1 << 8 };
-                    if anim.fired & bit == 0 {
-                        anim.fired = (anim.fired | bit) & !other;
-                        let which = if show_into { into } else { from };
-                        image.image = assets.load(game::art::art(&format!(
-                            "sprites/monsters/{region}/{which}.front.png"
-                        )));
-                    }
-                    image.color = Color::srgb(7.0, 7.0, 7.0);
                 } else {
                     if fire(1 << 16, &mut anim.fired) {
                         image.image = assets.load(game::art::art(&format!(
@@ -1321,8 +1522,11 @@ fn tick_anim(
                         play_cry(commands, assets, settings, region, into);
                         crate::app::play_cue(commands, assets, settings, "confirm");
                     }
-                    let p = ease((t - 3.1) / 0.3);
-                    let level = 7.0 - 6.0 * p;
+                    let level = if reduced {
+                        1.0
+                    } else {
+                        7.0 - 6.0 * ease((t - 3.1) / 0.3)
+                    };
                     image.color = Color::srgb(level, level, level);
                 }
             }
@@ -1333,16 +1537,22 @@ fn tick_anim(
 
 /// Applies an animation's end state — the skip path, the
 /// animations-off path, and the natural-finish cleanup all land here.
+/// Cues/cries the ticking never fired (instant and reduced-motion
+/// paths) still sound: the audio is part of the scene, not the motion.
 fn finish_anim(
     anim: &ActiveAnim,
     region: &str,
     commands: &mut Commands,
     assets: &AssetServer,
+    settings: &save::Settings,
     disp: &mut DisplayedHp,
     stage: &mut StageQueries,
 ) {
     match &anim.kind {
-        Anim::Entry { .. } => {
+        Anim::Entry { foe } => {
+            if anim.fired & 1 == 0 {
+                play_cry(commands, assets, settings, region, foe);
+            }
             if let Ok((mut node, _, _)) = stage.p0().single_mut() {
                 node.right = Val::Px(FOE_RIGHT);
                 node.top = Val::Px(FOE_TOP);
@@ -1377,6 +1587,9 @@ fn finish_anim(
             disp.set_target(*side, *to);
         }
         Anim::Faint { side } => {
+            if anim.fired & 1 == 0 {
+                crate::app::play_cue(commands, assets, settings, "faint");
+            }
             disp.set_target(*side, 0.0);
             // The sprite stays at alpha 0 until a SwitchIn restores it.
             if *side == 1 {
@@ -1396,8 +1609,13 @@ fn finish_anim(
             max,
             level,
         } => {
+            if anim.fired & 2 == 0 {
+                play_cry(commands, assets, settings, region, species);
+            }
             disp.snap(*side, *hp, *max);
-            disp.set_label(*side, species, *level);
+            if *level > 0 {
+                disp.set_label(*side, species, *level);
+            }
             let path = if *side == 1 {
                 format!("sprites/monsters/{region}/{species}.front.png")
             } else {
@@ -1425,6 +1643,14 @@ fn finish_anim(
             }
         }
         Anim::Capture { caught, .. } => {
+            if anim.fired & (1 << 16) == 0 {
+                crate::app::play_cue(
+                    commands,
+                    assets,
+                    settings,
+                    if *caught { "settle" } else { "breakout" },
+                );
+            }
             if let Ok((mut node, mut image, _)) = stage.p0().single_mut() {
                 node.width = Val::Px(SPRITE_SIZE);
                 node.height = Val::Px(SPRITE_SIZE);
@@ -1438,11 +1664,14 @@ fn finish_anim(
                 };
             }
         }
-        Anim::Evolve { .. } => {
+        Anim::Evolve { into, .. } => {
+            if anim.fired & (1 << 16) == 0 {
+                play_cry(commands, assets, settings, region, into);
+                crate::app::play_cue(commands, assets, settings, "confirm");
+            }
             if let Some(entity) = anim.spawned {
                 commands.entity(entity).despawn();
             }
-            let _ = assets;
         }
     }
 }
@@ -1523,8 +1752,23 @@ fn battle_input(
         return;
     }
 
-    // Prompts take priority: learn / evolution answered with Z/X.
-    if !world.0.pending_learn_queue.is_empty() {
+    // Prompts take priority: learn / evolution answered with Z/X. The
+    // visible message is forced to the prompt actually being answered —
+    // when several prompts stage in one batch, the last-typed line may
+    // belong to a later one.
+    if let Some((party_index, move_id)) = world.0.pending_learn_queue.first().cloned() {
+        if let Some(mote) = world.0.party.get(party_index)
+            && let Ok(mut message) = message_text.single_mut()
+        {
+            let line = format!(
+                "{} wants to learn {} (Z: replace first move / X: skip)",
+                world.0.text(&format!("motif.{}", mote.species)),
+                world.0.text(&format!("move.{move_id}"))
+            );
+            if message.0 != line {
+                message.0 = line;
+            }
+        }
         if keys.just_pressed(KeyCode::KeyZ) {
             let events = world.0.apply(WorldInput::Learn { replace: Some(0) });
             stage_battle_events(&mut theater, &world.0, &events);
@@ -1534,7 +1778,19 @@ fn battle_input(
         }
         return;
     }
-    if !world.0.pending_evolutions.is_empty() {
+    if let Some((party_index, into)) = world.0.pending_evolutions.first().cloned() {
+        if let Some(mote) = world.0.party.get(party_index)
+            && let Ok(mut message) = message_text.single_mut()
+        {
+            let line = format!(
+                "{}'s phrase is shifting toward {}... (Z: let it / X: hold it back)",
+                world.0.text(&format!("motif.{}", mote.species)),
+                world.0.text(&format!("motif.{into}"))
+            );
+            if message.0 != line {
+                message.0 = line;
+            }
+        }
         if keys.just_pressed(KeyCode::KeyZ) {
             let events = world.0.apply(WorldInput::Evolve { accept: true });
             stage_battle_events(&mut theater, &world.0, &events);
@@ -1647,7 +1903,7 @@ fn apply_fx(
     time: Res<Time>,
     settings: Res<crate::app::SettingsRes>,
     mut fx: ResMut<FxState>,
-    mut root: Query<&mut Node, With<BattleUi>>,
+    mut root: Query<&mut Node, With<BattleRoot>>,
     mut foe_img: Query<&mut ImageNode, (With<FoeSprite>, Without<PlayerSpriteImg>)>,
     mut player_img: Query<&mut ImageNode, (With<PlayerSpriteImg>, Without<FoeSprite>)>,
 ) {
@@ -1775,66 +2031,40 @@ fn refresh_panels(
     theme: Res<Theme>,
     world: Res<WorldRes>,
     disp: Res<DisplayedHp>,
+    theater: Res<Theater>,
     mut foe_text: Query<&mut Text, (With<FoePlateText>, Without<PlayerPlateText>)>,
     mut player_text: Query<&mut Text, (With<PlayerPlateText>, Without<FoePlateText>)>,
     mut foe_bar: HpBarQuery<FoeHpBar, PlayerHpBar>,
     mut player_bar: HpBarQuery<PlayerHpBar, FoeHpBar>,
     mut exp_bar: ExpBarQuery,
 ) {
-    let Some(session) = &world.0.battle else {
-        // The session is gone (the battle just ended) but the theater
-        // may still be playing the final drain: paint from DisplayedHp
-        // so the killing blow lands on the bar too.
-        let paint_from_disp =
-            |side: usize, text: &mut Text, bar: (&mut Node, &mut BackgroundColor)| {
-                let (Some((cur, _, max)), Some(label)) =
-                    (disp.sides[side], &disp.labels[side])
-                else {
-                    return;
-                };
-                let fraction = (cur / max.max(1.0)).clamp(0.0, 1.0);
-                text.0 = format!("{label}  {}/{}", cur.round() as u16, max.round() as u16);
-                bar.0.width = Val::Percent(fraction * 100.0);
-                bar.1.0 = if fraction > 0.5 {
-                    theme.color(&theme.palette.hp_high)
-                } else if fraction > 0.2 {
-                    theme.color(&theme.palette.hp_mid)
-                } else {
-                    theme.color(&theme.palette.hp_low)
-                };
-            };
-        if let (Ok(mut text), Ok((mut node, mut color))) =
-            (foe_text.single_mut(), foe_bar.single_mut())
-        {
-            paint_from_disp(1, &mut text, (&mut node, &mut color));
+    // The plates paint from DisplayedHp + its labels — the THEATER's
+    // view of the stage. Live session state augments it (status chip,
+    // exp) only when the theater is idle: mid-replay the session is
+    // already a turn ahead (the next foe's name/level/status must not
+    // flash onto the dying mote's plate), and after the battle ends the
+    // session is gone but the killing blow still has to land on the bar.
+    let idle = theater.idle();
+    let session = world.0.battle.as_ref();
+    let status_chip = |side: usize| -> String {
+        if !idle {
+            return String::new();
         }
-        if let (Ok(mut text), Ok((mut node, mut color))) =
-            (player_text.single_mut(), player_bar.single_mut())
-        {
-            paint_from_disp(0, &mut text, (&mut node, &mut color));
-        }
-        return;
+        session
+            .and_then(|s| s.state.sides[side].active_mote().status)
+            .map(|status| format!("  [{status:?}]"))
+            .unwrap_or_default()
     };
-    let paint = |mote: &battle::BattleMote,
-                 shown: Option<(f32, f32, f32)>,
-                 text: &mut Text,
-                 bar: (&mut Node, &mut BackgroundColor),
-                 theme: &Theme| {
-        let status = match mote.status {
-            Some(status) => format!("  [{status:?}]"),
-            None => String::new(),
+    let paint = |side: usize, text: &mut Text, bar: (&mut Node, &mut BackgroundColor)| {
+        let (Some((cur, _, max)), Some(label)) = (disp.sides[side], &disp.labels[side]) else {
+            return;
         };
-        // The bar and the number follow the displayed (draining) HP.
-        let (cur, max) = shown
-            .map(|(cur, _, max)| (cur, max))
-            .unwrap_or((f32::from(mote.hp), f32::from(mote.max_hp())));
         let fraction = (cur / max.max(1.0)).clamp(0.0, 1.0);
         text.0 = format!(
-            "{}  L{}  {}/{}{status}",
-            mote.species,
-            mote.level,
+            "{label}  {}/{}{}",
             cur.round() as u16,
-            mote.max_hp()
+            max.round() as u16,
+            status_chip(side)
         );
         bar.0.width = Val::Percent(fraction * 100.0);
         bar.1.0 = if fraction > 0.5 {
@@ -1847,27 +2077,21 @@ fn refresh_panels(
     };
     if let (Ok(mut text), Ok((mut node, mut color))) = (foe_text.single_mut(), foe_bar.single_mut())
     {
-        paint(
-            session.state.sides[1].active_mote(),
-            disp.sides[1],
-            &mut text,
-            (&mut node, &mut color),
-            &theme,
-        );
+        paint(1, &mut text, (&mut node, &mut color));
     }
     if let (Ok(mut text), Ok((mut node, mut color))) =
         (player_text.single_mut(), player_bar.single_mut())
     {
+        paint(0, &mut text, (&mut node, &mut color));
+    }
+    if let (Some(session), Ok(mut exp_node)) = (session, exp_bar.single_mut()) {
         let mote = session.state.sides[0].active_mote();
-        paint(mote, disp.sides[0], &mut text, (&mut node, &mut color), &theme);
-        if let Ok(mut exp_node) = exp_bar.single_mut() {
-            let floor = mote.growth.total_exp(mote.level);
-            let ceil = mote
-                .growth
-                .total_exp(mote.level.saturating_add(1))
-                .max(floor + 1);
-            let fraction = (mote.exp.saturating_sub(floor)) as f32 / (ceil - floor) as f32;
-            exp_node.width = Val::Percent(fraction.clamp(0.0, 1.0) * 100.0);
-        }
+        let floor = mote.growth.total_exp(mote.level);
+        let ceil = mote
+            .growth
+            .total_exp(mote.level.saturating_add(1))
+            .max(floor + 1);
+        let fraction = (mote.exp.saturating_sub(floor)) as f32 / (ceil - floor) as f32;
+        exp_node.width = Val::Percent(fraction.clamp(0.0, 1.0) * 100.0);
     }
 }

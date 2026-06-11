@@ -38,8 +38,14 @@ case "$mode" in
     ;;
   replay)
     file="${1:?replay ron}"
-    max="${2:-90}"
-    shift; shift 2>/dev/null || true
+    shift
+    # The optional max_secs must be numeric — an env KEY=VAL in that
+    # position belongs to the run, not the clock.
+    max=90
+    if [ "${1:-}" ] && [ -z "${1//[0-9]/}" ]; then
+      max="$1"
+      shift
+    fi
     stem="$(basename "$file" .ron)"
     dir="docs/playtests/$stem"
     rm -rf "$dir"
