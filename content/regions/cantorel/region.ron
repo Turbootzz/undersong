@@ -3,7 +3,7 @@
 RegionDef(
     id: "cantorel",
     name_key: "region.cantorel",
-    dex: ["fanfyre", "embaritone", "maestroar", "rippeggio", "tidalegro", "cellorca", "solfawn", "vinebrato", "sonatler", "tremole", "rattacca", "pipling", "soarprano", "burrbass", "buzzoon", "timpanite", "zapresto", "glissicle", "dirgeist", "carilloy"],
+    dex: ["fanfyre", "embaritone", "maestroar", "rippeggio", "tidalegro", "cellorca", "solfawn", "vinebrato", "sonatler", "tremole", "rattacca", "pipling", "soarprano", "burrbass", "buzzoon", "timpanite", "zapresto", "glissicle", "dirgeist", "carilloy", "thornata", "mossoon", "lichenore", "petalune", "bloomara", "shrubato", "galliard", "brookoda", "torrentet", "hummble"],
     starters: ["fanfyre", "rippeggio", "solfawn"],
     entry_map: "pausa_village",
     entry_spawn: (8, 4),

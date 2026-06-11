@@ -1,0 +1,16 @@
+// Galliard — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "galliard", name_key: "motif.galliard", types: [Gale],
+    base_stats: (hp: 55, atk: 66, def: 48, spa: 50, spd: 46, spe: 85),
+    catch_rate: 150, base_exp_yield: 90,
+    ev_yield: {spe: 1},
+    growth_curve: Fast,
+    learnset: [(1, "zephyr_pluck"), (1, "quick_step"), (9, "wing_beat"), (15, "gale_riff"), (21, "downbeat"), (27, "quick_march"), (35, "tempest_coda")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 78515463702358, sigil_seed: 78515463702358,
+    dex: (height_dm: 9, weight_hg: 258, entry_key: "dex.galliard"),
+)

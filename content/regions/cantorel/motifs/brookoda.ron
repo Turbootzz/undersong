@@ -1,0 +1,16 @@
+// Brookoda — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "brookoda", name_key: "motif.brookoda", types: [Tide],
+    base_stats: (hp: 54, atk: 44, def: 50, spa: 58, spd: 60, spe: 48),
+    catch_rate: 190, base_exp_yield: 60,
+    ev_yield: {spd: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "tackle"), (7, "dampen"), (13, "frost_lull"), (19, "undertow"), (26, "da_capo")],
+    abilities: ["damper"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.water", "performer.ferry"],
+    tm_set: [],
+    evolution: Some((method: Level(19), target: "torrentet")),
+    cry_seed: 278351086393080, sigil_seed: 278351086393080,
+    dex: (height_dm: 6, weight_hg: 177, entry_key: "dex.brookoda"),
+)

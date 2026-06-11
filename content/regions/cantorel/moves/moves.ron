@@ -236,5 +236,10 @@ MoveSet(
             priority: 0, target: Foe,
             flags: (contact: true),
         ),
+        (
+            id: "zephyr_pluck", name_key: "move.zephyr_pluck", type: Gale,
+            category: Physical, power: 45, accuracy: 100, pp: 30,
+            priority: 0, target: Foe,
+        ),
     ],
 )

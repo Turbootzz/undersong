@@ -1,0 +1,16 @@
+// Bloomara — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "bloomara", name_key: "motif.bloomara", types: [Bloom, Gale],
+    base_stats: (hp: 62, atk: 52, def: 58, spa: 92, spd: 76, spe: 75),
+    catch_rate: 80, base_exp_yield: 158,
+    ev_yield: {spa: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "bud_strum"), (1, "zephyr_pluck"), (8, "dampen"), (13, "gale_riff"), (19, "leaf_pick"), (24, "tempest_coda"), (31, "briar_bow"), (38, "resonate")],
+    abilities: ["floating"],
+    hidden_ability: Some("amplify"),
+    tags: ["habitat.forest", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 10753695101232, sigil_seed: 151013275042843,
+    dex: (height_dm: 10, weight_hg: 270, entry_key: "dex.bloomara"),
+)

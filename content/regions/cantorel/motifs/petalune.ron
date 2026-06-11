@@ -1,0 +1,16 @@
+// Petalune — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "petalune", name_key: "motif.petalune", types: [Bloom, Gale],
+    base_stats: (hp: 48, atk: 40, def: 44, spa: 66, spd: 56, spe: 66),
+    catch_rate: 190, base_exp_yield: 62,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "bud_strum"), (1, "zephyr_pluck"), (8, "dampen"), (13, "gale_riff"), (19, "leaf_pick"), (25, "hollow_hum")],
+    abilities: ["floating"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.forest", "performer.clear"],
+    tm_set: [],
+    evolution: Some((method: Level(20), target: "bloomara")),
+    cry_seed: 10753695101232, sigil_seed: 10753695101232,
+    dex: (height_dm: 6, weight_hg: 192, entry_key: "dex.petalune"),
+)

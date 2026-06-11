@@ -1,0 +1,16 @@
+// Torrentet — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "torrentet", name_key: "motif.torrentet", types: [Tide],
+    base_stats: (hp: 70, atk: 58, def: 66, spa: 84, spd: 80, spe: 62),
+    catch_rate: 85, base_exp_yield: 155,
+    ev_yield: {spa: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "ripple"), (1, "tackle"), (7, "dampen"), (13, "frost_lull"), (19, "undertow"), (25, "breaker_beat"), (32, "riptide_finale"), (40, "resonate")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.water", "performer.ferry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 278351086393080, sigil_seed: 42770964390977,
+    dex: (height_dm: 8, weight_hg: 247, entry_key: "dex.torrentet"),
+)

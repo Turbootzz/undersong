@@ -1,0 +1,16 @@
+// Lichenore — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "lichenore", name_key: "motif.lichenore", types: [Bloom, Stone],
+    base_stats: (hp: 75, atk: 58, def: 92, spa: 60, spd: 88, spe: 47),
+    catch_rate: 90, base_exp_yield: 152,
+    ev_yield: {spd: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "bud_strum"), (6, "dampen"), (12, "leaf_pick"), (18, "root_chord"), (24, "pebble_beat"), (30, "stone_toll"), (38, "boulder_coda"), (44, "fermata_guard")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.forest"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 130487846867372, sigil_seed: 209915762293481,
+    dex: (height_dm: 8, weight_hg: 271, entry_key: "dex.lichenore"),
+)

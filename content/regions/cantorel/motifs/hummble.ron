@@ -1,0 +1,16 @@
+// Hummble — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "hummble", name_key: "motif.hummble", types: [Resonant, Gale],
+    base_stats: (hp: 52, atk: 46, def: 48, spa: 62, spd: 58, spe: 74),
+    catch_rate: 160, base_exp_yield: 88,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "overtone"), (1, "zephyr_pluck"), (8, "dampen"), (14, "gale_riff"), (20, "sostenuto"), (34, "resonate")],
+    abilities: ["amplify"],
+    hidden_ability: Some("tuning_fork"),
+    tags: ["habitat.field", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 48671275605841, sigil_seed: 48671275605841,
+    dex: (height_dm: 7, weight_hg: 196, entry_key: "dex.hummble"),
+)

@@ -1,0 +1,16 @@
+// Shrubato — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "shrubato", name_key: "motif.shrubato", types: [Feral, Bloom],
+    base_stats: (hp: 58, atk: 64, def: 52, spa: 38, spd: 44, spe: 58),
+    catch_rate: 180, base_exp_yield: 64,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "bud_strum"), (7, "quick_step"), (12, "leaf_pick"), (17, "downbeat"), (23, "quick_march"), (29, "bramble_reel")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("thorn_coat"),
+    tags: ["habitat.forest"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 54058580833071, sigil_seed: 54058580833071,
+    dex: (height_dm: 9, weight_hg: 228, entry_key: "dex.shrubato"),
+)

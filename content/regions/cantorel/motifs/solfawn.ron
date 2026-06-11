@@ -5,7 +5,7 @@ Motif(
     catch_rate: 45, base_exp_yield: 62,
     ev_yield: {atk: 1},
     growth_curve: MediumSlow,
-    learnset: [(1, "bud_strum"), (1, "tackle"), (6, "quick_step"), (10, "dampen"), (13, "leaf_pick"), (19, "root_chord"), (25, "frost_lull"), (33, "briar_bow")],
+    learnset: [(1, "bud_strum"), (1, "tackle"), (6, "quick_step"), (10, "dampen"), (13, "leaf_pick"), (19, "root_chord"), (25, "frost_lull"), (28, "stone_toll"), (33, "briar_bow")],
     abilities: ["crescendo_bloom"],
     hidden_ability: Some("thorn_coat"),
     tags: ["performer.clear", "habitat.forest"],

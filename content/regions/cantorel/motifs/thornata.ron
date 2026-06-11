@@ -1,0 +1,16 @@
+// Thornata — P5 batch A (Arbor Vale / routes 2–3)
+Motif(
+    id: "thornata", name_key: "motif.thornata", types: [Bloom, Venom],
+    base_stats: (hp: 70, atk: 82, def: 74, spa: 60, spd: 68, spe: 86),
+    catch_rate: 75, base_exp_yield: 150,
+    ev_yield: {atk: 2},
+    growth_curve: MediumFast,
+    learnset: [(1, "bud_strum"), (1, "venom_trill"), (7, "dampen"), (11, "leaf_pick"), (16, "root_chord"), (22, "toxic_toccata"), (28, "crescendo"), (34, "briar_bow"), (40, "venom_cadenza")],
+    abilities: ["thorn_coat"],
+    hidden_ability: Some("keysmith"),
+    tags: ["habitat.forest"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 67921036576167, sigil_seed: 67921036576167,
+    dex: (height_dm: 10, weight_hg: 267, entry_key: "dex.thornata"),
+)
