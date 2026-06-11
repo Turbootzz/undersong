@@ -54,3 +54,12 @@ jobs:
 
       - name: Validate content
         run: cargo run -p tools --locked -- validate
+
+  pack-purity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gate P8 — the Skalden pack touches only content/ + assets/
+        run: scripts/check-pack-purity.sh skalden-pack-start-v2 skalden-pack-end

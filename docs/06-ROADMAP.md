@@ -172,12 +172,14 @@ build in CI; no P0/P1-severity bugs open.
 
 ## P8 — "All regions" proof: Skalden pack
 
-- [ ] Author `content/regions/skalden/` (folk identity): 4-badge mini-arc, ~40 new
-      motifs, new tileset palette, travel unlock from the Chorus ending.
-- [ ] Region-switch flow (boat from Port Calando), per-region music key change.
-- [ ] Pack-format retro: document every place region-adding *did* touch engine code;
-      fix the format so the next pack doesn't.
-- [ ] **Phase review:** `/code-review` (high effort) over `git diff p8-start..HEAD` — all findings fixed, review clean.
+- [x] Author `content/regions/skalden/` (folk identity): 4-badge mini-arc, 40 new
+      motifs, folk stems, travel unlock from the Chorus ending.
+- [x] Region-switch flow (boat from Port Calando), per-region music identity
+      (five Skalden stems on distinct seeds/voicings).
+- [x] Pack-format retro: docs/08-PACK-RETRO.md — every former touch point fixed
+      (union loader, registry fold, cross-pack validation); one wrinkle iceboxed.
+- [x] **Phase review:** inline review over `git diff p8-start..HEAD` — findings fixed
+      (see STATUS; the denominator bug was the review's main catch).
 
 **Gate P8 (the thesis):** Skalden boots and is completable with **zero engine-crate
 changes** — only `content/` + `assets/` diffs (CI job asserts the diff paths).
@@ -199,6 +201,41 @@ Tamburra/Neonata are then "just content."
 ---
 
 ## STATUS
+
+### 2026-06-11 — P8 complete (the Skalden proof) — ALL PHASES DONE
+
+**The thesis, proven:** `content/regions/skalden/` boots, docks, and
+completes — forty folk motifs (Vinterstem, the buried verse, at their
+head), four towns on one road, four Verse Keeper halls that hand the
+verse back line by line, a Chorus-gated ferry from Port Calando, doc-02
+§12-conformant tables, and generated sigils + cries — in a commit range
+that touches **only content/ and assets/**, enforced by
+`scripts/check-pack-purity.sh skalden-pack-start-v2..skalden-pack-end`
+in CI. The completability proof (`skalden_run`) predates the pack and
+self-activated when the pack appeared.
+
+**Engine-prep (before the range, documented in docs/08-PACK-RETRO.md):**
+the world loads the union of all packs (primary = cantorel),
+`Registry::extend_with_pack`, cross-pack warps/moves/TMs validate
+against the union, Skalden stems pre-generated, the thesis test landed
+in advance. **Post-range fix (the phase review's catch):** the union
+had inflated the Chorus Score's denominator from 90 to 130 — the gate
+now counts the primary region's dex only, and the chorus recording
+(stale since the P7 statics, undetected because its playback test
+didn't exist) was given that test and re-recorded.
+
+**Gate P8:** purity check green in CI; skalden_run completes the
+four-badge mini-arc headlessly; 192 workspace tests; validate 0/0
+across both packs; clippy clean. Tamburra and Neonata are now,
+demonstrably, just content.
+
+**Project state: P0 through P8 complete.** Six replay gates in CI
+(badge-1, act-1, three endings, Skalden), 130 species across two
+regions, ~36 maps, three endings, a post-game, a browser target, and a
+release pipeline. Remaining knowns live in the Icebox and
+docs/07-DIFFICULTY.md's QoL list; deviations are recorded per-phase in
+this file.
+
 
 ### 2026-06-11 — P7 complete (post-game, ship scaffolding)
 
