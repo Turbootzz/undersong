@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall7_carver", class: "HallSenior", name_key: "npc.hall7_carver",
+    ai_tier: 2, payout_base: 48,
+    party: [(species: "glacialto", level: 41), (species: "permafrond", level: 41)],
+    defeat_flag: "trainer.hall7_carver.defeated",
+    intro_key: "hall7.carver.intro", defeat_key: "hall7.carver.defeat",
+)

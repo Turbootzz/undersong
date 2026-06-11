@@ -1,0 +1,8 @@
+[
+    If(flag: "story.quartet.4.defeated", then: [], else: [End]),
+    Say(who: "narrator", key: "stage.1"),
+    Say(who: "narrator", key: "stage.2"),
+    SetFlag(flag: "story.descent"),
+    Warp(map: "the_vault", x: 5, y: 1),
+    End,
+]

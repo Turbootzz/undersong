@@ -1,0 +1,10 @@
+[
+    If(flag: "story.quartet.4.defeated",
+       then: [Say(who: "quartet_4", key: "quartet.4.after"), End],
+       else: []),
+    If(flag: "story.quartet.3.defeated", then: [], else: [Say(who: "quartet_4", key: "quartet.wait"), End]),
+    Say(who: "quartet_4", key: "quartet.4.intro"),
+    Say(who: "quartet_4", key: "quartet.4.carry"),
+    StartBattle(trainer: "quartet_sere"),
+    End,
+]

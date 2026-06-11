@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall6_mason", class: "HallSenior", name_key: "npc.hall6_mason",
+    ai_tier: 2, payout_base: 42,
+    party: [(species: "lichenore", level: 36), (species: "dunelay", level: 36)],
+    defeat_flag: "trainer.hall6_mason.defeated",
+    intro_key: "hall6.mason.intro", defeat_key: "hall6.mason.defeat",
+)

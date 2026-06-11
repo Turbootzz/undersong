@@ -1,0 +1,7 @@
+Trainer(
+    id: "vault_guard_2", class: "HonorGuard", name_key: "npc.vault_guard_2",
+    ai_tier: 3, payout_base: 130,
+    party: [(species: "avalanche", level: 57), (species: "dynamaestro", level: 58), (species: "graviole", level: 57)],
+    defeat_flag: "trainer.vault_guard_2.defeated",
+    intro_key: "vault.g2.intro", defeat_key: "vault.g2.defeat",
+)

@@ -405,6 +405,23 @@ impl WorldState {
             // Battle/shop/prompt vocabulary outside its mode: no-op.
             _ => {}
         }
+        // Chorus gate (doc 01 §6): Score ≥ 60% transcribed + all eight
+        // Anchor Echoes. Reed tracks it; the Vault branch reads it.
+        if !self.vars.flags.contains("chorus.ready") {
+            let echoes = (1..=8u8).all(|n| self.vars.flags.contains(&format!("anchor_echo.{n}")));
+            if echoes && let Some(registry) = &self.registry {
+                let dex_total = registry.species.len().max(1);
+                let caught = registry
+                    .species
+                    .keys()
+                    .filter(|s| self.vars.flags.contains(&format!("dex.caught.{s}")))
+                    .count();
+                if caught * 100 >= dex_total * 60 {
+                    self.vars.flags.insert("chorus.ready".into());
+                }
+            }
+        }
+
         // Badge friendship hook (doc 02 v1.5 #5): +1 to the whole party
         // per badge earned while in it.
         let badges = (1..=8u8)

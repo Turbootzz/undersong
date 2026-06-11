@@ -1,0 +1,14 @@
+// Hall 7 Maestro Ilva (Frost; loyalist; the hardest pre-league fight —
+// "the one merciful thing she can do is make them lose").
+Trainer(
+    id: "maestro_ilva", class: "Maestro", name_key: "npc.ilva",
+    ai_tier: 3, payout_base: 130,
+    party: [
+        (species: "shiverine", level: 43),
+        (species: "glacialto", level: 44),
+        (species: "avalanche", level: 44),
+        (species: "requiemoth", level: 46, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.7.cleared",
+    intro_key: "hall7.ilva.intro", defeat_key: "hall7.ilva.defeat",
+)

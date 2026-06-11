@@ -292,8 +292,9 @@ fn validate(options: &Options) -> Result<bool> {
                 .to_string();
             let pack = data::load_region(&options.content, &region)
                 .with_context(|| format!("loading region `{region}`"))?;
-            findings.extend(data::validate_region(&pack, &content, &items));
             let mut script_keys: Vec<String> = Vec::new();
+            let mut script_warps: Vec<(undersong_core::ids::MapId, undersong_core::ids::MapId)> =
+                Vec::new();
 
             // Region scripts parse, too.
             for map_id in pack.maps.keys() {
@@ -324,10 +325,18 @@ fn validate(options: &Options) -> Result<bool> {
                                 &mut script_keys,
                                 &mut findings,
                             );
+                            collect_script_warps(&cmds, map_id, &mut script_warps);
                         }
                     }
                 }
             }
+
+            findings.extend(data::validate_region(
+                &pack,
+                &content,
+                &items,
+                &script_warps,
+            ));
 
             // Doc 04 §3 rules 1 & 8: all referenced strings resolve.
             let core_strings = data::load_core_strings(&options.content)
@@ -355,6 +364,29 @@ fn validate(options: &Options) -> Result<bool> {
 }
 
 /// Recursive Choice/If sanity for script content (doc 03 §5).
+/// Collects script-driven warp edges for the reachability rule.
+fn collect_script_warps(
+    cmds: &[script::Cmd],
+    from: &undersong_core::ids::MapId,
+    warps: &mut Vec<(undersong_core::ids::MapId, undersong_core::ids::MapId)>,
+) {
+    for cmd in cmds {
+        match cmd {
+            script::Cmd::Warp { map, .. } => warps.push((from.clone(), map.clone())),
+            script::Cmd::Choice { branches, .. } => {
+                for (_, branch) in branches {
+                    collect_script_warps(branch, from, warps);
+                }
+            }
+            script::Cmd::If { then, r#else, .. } => {
+                collect_script_warps(then, from, warps);
+                collect_script_warps(r#else, from, warps);
+            }
+            _ => {}
+        }
+    }
+}
+
 /// Walks a script collecting string keys and validating side-effect
 /// references (species/trainers/items/maps) against the pack.
 fn collect_script_refs(

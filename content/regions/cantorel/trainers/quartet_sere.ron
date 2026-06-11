@@ -1,0 +1,7 @@
+Trainer(
+    id: "quartet_sere", class: "Quartet", name_key: "npc.quartet_sere",
+    ai_tier: 3, payout_base: 160,
+    party: [(species: "velvetide", level: 55), (species: "sirenetta", level: 55), (species: "requiemoth", level: 56), (species: "intervallia", level: 58)],
+    defeat_flag: "story.quartet.4.defeated",
+    intro_key: "quartet.4.intro", defeat_key: "quartet.4.defeat",
+)

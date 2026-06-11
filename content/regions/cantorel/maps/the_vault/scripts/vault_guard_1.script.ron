@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.vault_guard_1.defeated",
+       then: [End],
+       else: []),
+    Say(who: "vault_guard_1", key: "vault.g1.intro"),
+    StartBattle(trainer: "vault_guard_1"),
+    End,
+]

@@ -1,0 +1,6 @@
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "frost_archivist", key: "frost.talk.recontext")],
+       else: [Say(who: "frost_archivist", key: "frost.talk")]),
+    End,
+]

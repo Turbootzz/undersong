@@ -1,0 +1,13 @@
+// The semifinal: Cade, carrying beat 14 into every turn of it.
+Trainer(
+    id: "quartet_cade_vs_fanfyre", class: "Quartet", name_key: "npc.cade",
+    ai_tier: 3, payout_base: 150,
+    party: [
+        (species: "galliard", level: 52),
+        (species: "voltacelle", level: 53),
+        (species: "largotide", level: 53),
+        (species: "cellorca", level: 55, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "story.quartet.2.defeated",
+    intro_key: "quartet.2.intro", defeat_key: "quartet.2.defeat",
+)

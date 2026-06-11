@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt5_linesman.defeated",
+       then: [Say(who: "rt5_linesman", key: "rt5.linesman.after"), End],
+       else: []),
+    Say(who: "rt5_linesman", key: "rt5.linesman.intro"),
+    StartBattle(trainer: "rt5_linesman"),
+    End,
+]

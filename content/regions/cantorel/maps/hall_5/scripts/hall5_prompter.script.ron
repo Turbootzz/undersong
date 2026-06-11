@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.hall5_prompter.defeated",
+       then: [Say(who: "hall5_prompter", key: "hall5.prompter.after"), End],
+       else: []),
+    Say(who: "hall5_prompter", key: "hall5.prompter.intro"),
+    StartBattle(trainer: "hall5_prompter"),
+    End,
+]

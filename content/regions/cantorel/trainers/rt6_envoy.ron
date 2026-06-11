@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt6_envoy", class: "Envoy", name_key: "npc.rt6_envoy",
+    ai_tier: 2, payout_base: 46,
+    party: [(species: "nullavoce", level: 43)],
+    defeat_flag: "trainer.rt6_envoy.defeated",
+    intro_key: "rt6.envoy.intro", defeat_key: "rt6.envoy.defeat",
+)

@@ -1,0 +1,13 @@
+// Hall 8: Provost Calder himself (Alloy; knows everything).
+Trainer(
+    id: "maestro_calder", class: "Maestro", name_key: "npc.calder",
+    ai_tier: 3, payout_base: 160,
+    party: [
+        (species: "clockerel", level: 47),
+        (species: "orchestrios", level: 48),
+        (species: "nullavoce", level: 48),
+        (species: "dynamaestro", level: 50, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.8.cleared",
+    intro_key: "hall8.calder.intro", defeat_key: "hall8.calder.defeat",
+)

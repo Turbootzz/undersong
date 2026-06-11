@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt5b_lampman", class: "Lampman", name_key: "npc.rt5b_lampman",
+    ai_tier: 2, payout_base: 32,
+    party: [(species: "willowisp", level: 28)],
+    defeat_flag: "trainer.rt5b_lampman.defeated",
+    intro_key: "rt5b.lampman.intro", defeat_key: "rt5b.lampman.defeat",
+)

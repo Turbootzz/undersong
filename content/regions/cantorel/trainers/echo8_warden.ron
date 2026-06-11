@@ -1,0 +1,7 @@
+Trainer(
+    id: "echo8_warden", class: "EchoWarden", name_key: "npc.echo_warden",
+    ai_tier: 3, payout_base: 60,
+    party: [(species: "orchestrios", level: 52)],
+    defeat_flag: "trainer.echo8_warden.defeated",
+    intro_key: "echo8.ask", defeat_key: "echo8.grant",
+)

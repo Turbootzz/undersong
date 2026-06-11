@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall7_skater", class: "HallAide", name_key: "npc.hall7_skater",
+    ai_tier: 2, payout_base: 46,
+    party: [(species: "shiverine", level: 40), (species: "glissicle", level: 40)],
+    defeat_flag: "trainer.hall7_skater.defeated",
+    intro_key: "hall7.skater.intro", defeat_key: "hall7.skater.defeat",
+)

@@ -1,0 +1,50 @@
+// The bottom: Aria in the held chord. The thesis question, answered.
+[
+    If(flag: "ending.chosen", then: [End], else: []),
+    Say(who: "narrator", key: "aria.1"),
+    Say(who: "narrator", key: "aria.2"),
+    Say(who: "vesper", key: "aria.vesper"),
+    If(flag: "chorus.ready",
+       then: [
+            Choice(key: "finale.choice3", branches: [
+                ("finale.opt.chorus", [
+                    SetFlag(flag: "ending.chorus"),
+                    Say(who: "narrator", key: "chorus.1"),
+                    Say(who: "narrator", key: "chorus.2"),
+                    Say(who: "narrator", key: "chorus.3"),
+                    Say(who: "narrator", key: "chorus.credits"),
+                    SetFlag(flag: "credits.chorus"),
+                ]),
+                ("finale.opt.dacapo", [
+                    SetFlag(flag: "ending.dacapo"),
+                    Say(who: "narrator", key: "dacapo.1"),
+                    Say(who: "narrator", key: "dacapo.2"),
+                    SetFlag(flag: "credits.dacapo"),
+                ]),
+                ("finale.opt.tacet", [
+                    SetFlag(flag: "ending.tacet"),
+                    Say(who: "narrator", key: "tacet.1"),
+                    Say(who: "narrator", key: "tacet.2"),
+                    SetFlag(flag: "credits.tacet"),
+                ]),
+            ]),
+       ],
+       else: [
+            Choice(key: "finale.choice2", branches: [
+                ("finale.opt.dacapo", [
+                    SetFlag(flag: "ending.dacapo"),
+                    Say(who: "narrator", key: "dacapo.1"),
+                    Say(who: "narrator", key: "dacapo.2"),
+                    SetFlag(flag: "credits.dacapo"),
+                ]),
+                ("finale.opt.tacet", [
+                    SetFlag(flag: "ending.tacet"),
+                    Say(who: "narrator", key: "tacet.1"),
+                    Say(who: "narrator", key: "tacet.2"),
+                    SetFlag(flag: "credits.tacet"),
+                ]),
+            ]),
+       ]),
+    SetFlag(flag: "ending.chosen"),
+    End,
+]

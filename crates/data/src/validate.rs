@@ -580,6 +580,7 @@ pub fn validate_region(
     pack: &crate::region::RegionPack,
     core: &CoreContent,
     items: &crate::region::ItemSet,
+    script_warps: &[(undersong_core::ids::MapId, undersong_core::ids::MapId)],
 ) -> Vec<Finding> {
     use std::collections::VecDeque;
 
@@ -785,6 +786,13 @@ pub fn validate_region(
                         {
                             queue.push_back(target.clone());
                         }
+                    }
+                }
+                // Script-driven warps count as edges too (the Vault is
+                // reached through the Soloist stage script).
+                for (from, to) in script_warps {
+                    if *from == map_id && !reached.contains(to) {
+                        queue.push_back(to.clone());
                     }
                 }
             }

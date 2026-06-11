@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall5_prompter", class: "HallSenior", name_key: "npc.hall5_prompter",
+    ai_tier: 2, payout_base: 40,
+    party: [(species: "fogato", level: 33), (species: "mutewing", level: 33)],
+    defeat_flag: "trainer.hall5_prompter.defeated",
+    intro_key: "hall5.prompter.intro", defeat_key: "hall5.prompter.defeat",
+)

@@ -1,0 +1,12 @@
+// TACET admin Hush (beat 8): the cover that wasn't.
+Trainer(
+    id: "admin_hush", class: "TacetAdmin", name_key: "npc.hush",
+    ai_tier: 3, payout_base: 90, double_battle: true,
+    party: [
+        (species: "mutewing", level: 34),
+        (species: "vespernox", level: 36),
+        (species: "lullaby", level: 34),
+    ],
+    defeat_flag: "trainer.admin_hush.defeated",
+    intro_key: "anchor.1", defeat_key: "anchor.2",
+)

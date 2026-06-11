@@ -1,0 +1,13 @@
+// Hall 4 Maestro Rhea (doc 01 §4: Volt, industrial, mid-fight weather).
+Trainer(
+    id: "maestro_rhea", class: "Maestro", name_key: "npc.rhea",
+    ai_tier: 3, payout_base: 90,
+    party: [
+        (species: "staccatto", level: 28),
+        (species: "voltern", level: 28),
+        (species: "dynamaestro", level: 31, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.4.cleared",
+    reward_items: [("tm01", 1)],
+    intro_key: "hall4.rhea.intro", defeat_key: "hall4.rhea.defeat",
+)

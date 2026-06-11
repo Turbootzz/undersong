@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt5b_bogger", class: "Bogger", name_key: "npc.rt5b_bogger",
+    ai_tier: 2, payout_base: 32,
+    party: [(species: "croakorus", level: 27), (species: "mirefall", level: 27)],
+    defeat_flag: "trainer.rt5b_bogger.defeated",
+    intro_key: "rt5b.bogger.intro", defeat_key: "rt5b.bogger.defeat",
+)

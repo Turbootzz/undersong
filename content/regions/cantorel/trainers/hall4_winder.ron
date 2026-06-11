@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall4_winder", class: "HallAide", name_key: "npc.hall4_winder",
+    ai_tier: 2, payout_base: 34,
+    party: [(species: "dynamotif", level: 28), (species: "staccatto", level: 28)],
+    defeat_flag: "trainer.hall4_winder.defeated",
+    intro_key: "hall4.winder.intro", defeat_key: "hall4.winder.defeat",
+)

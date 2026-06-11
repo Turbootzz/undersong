@@ -1,0 +1,10 @@
+// Beat 12 deferred to the descent: the meeting, not a battle.
+[
+    If(flag: "story.vesper.met", then: [End], else: []),
+    Say(who: "vesper", key: "vesper.1"),
+    Say(who: "vesper", key: "vesper.2"),
+    Say(who: "vesper", key: "vesper.3"),
+    Say(who: "vesper", key: "vesper.4"),
+    SetFlag(flag: "story.vesper.met"),
+    End,
+]

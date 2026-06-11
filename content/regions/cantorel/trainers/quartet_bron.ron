@@ -1,0 +1,7 @@
+Trainer(
+    id: "quartet_bron", class: "Quartet", name_key: "npc.quartet_bron",
+    ai_tier: 3, payout_base: 150,
+    party: [(species: "gravoross", level: 54), (species: "emberlith", level: 54), (species: "ferrobass", level: 55), (species: "terracant", level: 55)],
+    defeat_flag: "story.quartet.3.defeated",
+    intro_key: "quartet.3.intro", defeat_key: "quartet.3.defeat",
+)

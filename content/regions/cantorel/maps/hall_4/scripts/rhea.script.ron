@@ -1,0 +1,15 @@
+[
+    If(flag: "hall.4.cleared",
+       then: [Say(who: "rhea", key: "hall4.rhea.after"), End],
+       else: []),
+    Say(who: "rhea", key: "hall4.rhea.intro"),
+    StartBattle(trainer: "maestro_rhea"),
+    If(flag: "hall.4.cleared",
+       then: [
+            Say(who: "rhea", key: "hall4.rhea.badge"),
+            SetFlag(flag: "badge.4"),
+            SetFlag(flag: "performance.ferry_song"), Say(who: "rhea", key: "hall4.rhea.gift"),
+       ],
+       else: []),
+    End,
+]

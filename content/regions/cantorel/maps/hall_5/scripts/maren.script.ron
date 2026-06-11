@@ -1,0 +1,18 @@
+[
+    If(flag: "hall.5.cleared",
+       then: [Say(who: "maren", key: "hall5.maren.after"), End],
+       else: []),
+    Say(who: "maren", key: "hall5.maren.intro"),
+    StartBattle(trainer: "maestro_maren"),
+    If(flag: "hall.5.cleared",
+       then: [
+            Say(who: "maren", key: "hall5.maren.badge"),
+            SetFlag(flag: "badge.5"),
+            SetFlag(flag: "performance.lift_motif"),
+            Say(who: "maren", key: "hall5.maren.letter1"),
+            Say(who: "maren", key: "hall5.maren.letter2"),
+            SetFlag(flag: "story.maren.letter"),
+       ],
+       else: []),
+    End,
+]

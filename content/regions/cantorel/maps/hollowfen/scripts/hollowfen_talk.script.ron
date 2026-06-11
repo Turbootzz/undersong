@@ -1,0 +1,6 @@
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "fen_elder", key: "fen.talk.recontext")],
+       else: [Say(who: "fen_elder", key: "fen.talk")]),
+    End,
+]

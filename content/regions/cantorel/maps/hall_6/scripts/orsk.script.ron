@@ -1,0 +1,15 @@
+[
+    If(flag: "hall.6.cleared",
+       then: [Say(who: "orsk", key: "hall6.orsk.after"), End],
+       else: []),
+    Say(who: "orsk", key: "hall6.orsk.intro"),
+    StartBattle(trainer: "maestro_orsk"),
+    If(flag: "hall.6.cleared",
+       then: [
+            Say(who: "orsk", key: "hall6.orsk.badge"),
+            SetFlag(flag: "badge.6"),
+            SetFlag(flag: "performance.skybridge_aria"), Say(who: "orsk", key: "hall6.orsk.gift"),
+       ],
+       else: []),
+    End,
+]

@@ -1,0 +1,9 @@
+[
+    If(flag: "story.door.seen", then: [End], else: []),
+    If(flag: "badge.4", then: [], else: [End]),
+    Say(who: "narrator", key: "door.1"),
+    Say(who: "narrator", key: "door.2"),
+    Say(who: "narrator", key: "door.3"),
+    SetFlag(flag: "story.door.seen"),
+    End,
+]

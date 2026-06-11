@@ -1,0 +1,11 @@
+Trainer(
+    id: "vault_hush", class: "TacetAdmin", name_key: "npc.hush",
+    ai_tier: 3, payout_base: 140, double_battle: true,
+    party: [
+        (species: "vespernox", level: 57),
+        (species: "nullavoce", level: 57),
+        (species: "mutewing", level: 56),
+    ],
+    defeat_flag: "trainer.vault_hush.defeated",
+    intro_key: "vault.hush.intro", defeat_key: "vault.hush.after",
+)

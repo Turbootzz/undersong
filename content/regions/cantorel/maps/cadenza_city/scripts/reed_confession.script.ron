@@ -1,0 +1,30 @@
+[
+    If(flag: "story.reed.confessed",
+       then: [
+            If(flag: "chorus.ready",
+               then: [Say(who: "reed", key: "reed.chorus_ready")],
+               else: [Say(who: "reed", key: "reed.chorus_track")]),
+            End,
+       ],
+       else: []),
+    If(flag: "story.roster.read", then: [], else: [Say(who: "reed", key: "reed.small_talk"), End]),
+    Say(who: "reed", key: "confess.1"),
+    Say(who: "reed", key: "confess.2"),
+    Say(who: "reed", key: "confess.3"),
+    Choice(key: "confess.choice", branches: [
+        ("confess.opt.anger", [
+            SetFlag(flag: "story.reed.response.anger"),
+            Say(who: "reed", key: "confess.r.anger"),
+        ]),
+        ("confess.opt.mercy", [
+            SetFlag(flag: "story.reed.response.mercy"),
+            Say(who: "reed", key: "confess.r.mercy"),
+        ]),
+        ("confess.opt.silence", [
+            SetFlag(flag: "story.reed.response.silence"),
+            Say(who: "reed", key: "confess.r.silence"),
+        ]),
+    ]),
+    SetFlag(flag: "story.reed.confessed"),
+    End,
+]

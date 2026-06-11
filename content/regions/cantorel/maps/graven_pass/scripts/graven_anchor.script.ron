@@ -1,0 +1,17 @@
+[
+    If(flag: "story.roster.read", then: [End], else: []),
+    If(flag: "badge.5", then: [], else: [End]),
+    Say(who: "hush", key: "anchor.1"),
+    StartBattle(trainer: "admin_hush"),
+    If(flag: "trainer.admin_hush.defeated",
+       then: [
+            Say(who: "hush", key: "anchor.2"),
+            Say(who: "hush", key: "anchor.3"),
+            Say(who: "narrator", key: "roster.1"),
+            Say(who: "narrator", key: "roster.2"),
+            Say(who: "narrator", key: "roster.3"),
+            SetFlag(flag: "story.roster.read"),
+       ],
+       else: []),
+    End,
+]

@@ -1,0 +1,6 @@
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "volt_worker", key: "volt.talk.recontext")],
+       else: [Say(who: "volt_worker", key: "volt.talk")]),
+    End,
+]

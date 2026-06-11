@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt5_foreman", class: "Foreman", name_key: "npc.rt5_foreman",
+    ai_tier: 2, payout_base: 30,
+    party: [(species: "pistonna", level: 25)],
+    defeat_flag: "trainer.rt5_foreman.defeated",
+    intro_key: "rt5.foreman.intro", defeat_key: "rt5.foreman.defeat",
+)

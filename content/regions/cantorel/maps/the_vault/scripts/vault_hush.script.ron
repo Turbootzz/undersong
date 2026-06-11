@@ -1,0 +1,11 @@
+[
+    If(flag: "trainer.vault_hush.defeated",
+       then: [End],
+       else: []),
+    Say(who: "hush", key: "vault.hush.intro"),
+    StartBattle(trainer: "vault_hush"),
+    If(flag: "trainer.vault_hush.defeated",
+       then: [Say(who: "hush", key: "vault.hush.after")],
+       else: []),
+    End,
+]

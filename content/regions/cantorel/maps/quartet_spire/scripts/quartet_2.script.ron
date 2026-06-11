@@ -1,0 +1,15 @@
+// The semifinal: Cade. (Beat 14's plea hangs over every turn of it.)
+[
+    If(flag: "story.quartet.2.defeated",
+       then: [Say(who: "cade", key: "quartet.2.after"), End],
+       else: []),
+    If(flag: "story.quartet.1.defeated", then: [], else: [Say(who: "cade", key: "quartet.wait"), End]),
+    Say(who: "cade", key: "quartet.2.intro"),
+    Say(who: "cade", key: "quartet.2.carry"),
+    If(flag: "starter.fanfyre",
+       then: [StartBattle(trainer: "quartet_cade_vs_fanfyre")],
+       else: [If(flag: "starter.rippeggio",
+                 then: [StartBattle(trainer: "quartet_cade_vs_rippeggio")],
+                 else: [StartBattle(trainer: "quartet_cade_vs_solfawn")])]),
+    End,
+]

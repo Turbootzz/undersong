@@ -1,0 +1,7 @@
+Trainer(
+    id: "quartet_helia", class: "Quartet", name_key: "npc.quartet_helia",
+    ai_tier: 3, payout_base: 150,
+    party: [(species: "bloomara", level: 52), (species: "madrigale", level: 52), (species: "sonatler", level: 54), (species: "maestrina", level: 53)],
+    defeat_flag: "story.quartet.1.defeated",
+    intro_key: "quartet.1.intro", defeat_key: "quartet.1.defeat",
+)

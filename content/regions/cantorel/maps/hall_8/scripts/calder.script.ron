@@ -1,0 +1,15 @@
+[
+    If(flag: "hall.8.cleared",
+       then: [Say(who: "calder", key: "hall8.calder.after"), End],
+       else: []),
+    Say(who: "calder", key: "hall8.calder.intro"),
+    StartBattle(trainer: "maestro_calder"),
+    If(flag: "hall.8.cleared",
+       then: [
+            Say(who: "calder", key: "hall8.calder.badge"),
+            SetFlag(flag: "badge.8"),
+            Say(who: "calder", key: "hall8.calder.equation"), Say(who: "calder", key: "hall8.calder.equation2"),
+       ],
+       else: []),
+    End,
+]

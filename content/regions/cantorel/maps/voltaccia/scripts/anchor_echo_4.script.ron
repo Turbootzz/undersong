@@ -1,0 +1,14 @@
+[
+    If(flag: "anchor_echo.4", then: [Say(who: "echo_keeper_4", key: "echo4.done"), End], else: []),
+    If(flag: "badge.4", then: [], else: [Say(who: "echo_keeper_4", key: "echo4.locked"), End]),
+    Say(who: "echo_keeper_4", key: "echo4.ask"),
+    Say(who: "echo_keeper_4", key: "echo4.story"),
+    StartBattle(trainer: "echo4_warden"),
+    If(flag: "trainer.echo4_warden.defeated",
+       then: [
+            SetFlag(flag: "anchor_echo.4"),
+            Say(who: "echo_keeper_4", key: "echo4.grant"),
+       ],
+       else: []),
+    End,
+]

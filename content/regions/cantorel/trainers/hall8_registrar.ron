@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall8_registrar", class: "HallSenior", name_key: "npc.hall8_registrar",
+    ai_tier: 3, payout_base: 52,
+    party: [(species: "clockerel", level: 45), (species: "staccatto", level: 45), (species: "brasshorn", level: 46)],
+    defeat_flag: "trainer.hall8_registrar.defeated",
+    intro_key: "hall8.registrar.intro", defeat_key: "hall8.registrar.defeat",
+)

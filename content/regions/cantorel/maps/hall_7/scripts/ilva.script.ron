@@ -1,0 +1,16 @@
+[
+    If(flag: "hall.7.cleared",
+       then: [Say(who: "ilva", key: "hall7.ilva.after"), End],
+       else: []),
+    Say(who: "ilva", key: "hall7.ilva.intro"),
+    Say(who: "ilva", key: "hall7.ilva.intro2"),
+    StartBattle(trainer: "maestro_ilva"),
+    If(flag: "hall.7.cleared",
+       then: [
+            Say(who: "ilva", key: "hall7.ilva.badge"),
+            SetFlag(flag: "badge.7"),
+            Say(who: "ilva", key: "hall7.ilva.mercy"),
+       ],
+       else: []),
+    End,
+]

@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt5_linesman", class: "Linesman", name_key: "npc.rt5_linesman",
+    ai_tier: 2, payout_base: 30,
+    party: [(species: "voltern", level: 24), (species: "ratchetta", level: 24)],
+    defeat_flag: "trainer.rt5_linesman.defeated",
+    intro_key: "rt5.linesman.intro", defeat_key: "rt5.linesman.defeat",
+)

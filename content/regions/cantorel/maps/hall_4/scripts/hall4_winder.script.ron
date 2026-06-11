@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.hall4_winder.defeated",
+       then: [Say(who: "hall4_winder", key: "hall4.winder.after"), End],
+       else: []),
+    Say(who: "hall4_winder", key: "hall4.winder.intro"),
+    StartBattle(trainer: "hall4_winder"),
+    End,
+]

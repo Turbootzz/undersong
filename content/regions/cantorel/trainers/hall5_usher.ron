@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall5_usher", class: "HallAide", name_key: "npc.hall5_usher",
+    ai_tier: 2, payout_base: 38,
+    party: [(species: "vesperbat", level: 32), (species: "lullaby", level: 32)],
+    defeat_flag: "trainer.hall5_usher.defeated",
+    intro_key: "hall5.usher.intro", defeat_key: "hall5.usher.defeat",
+)

@@ -1,0 +1,13 @@
+// Hall 6 Maestro Orsk (Stone; the HP-stall test).
+Trainer(
+    id: "maestro_orsk", class: "Maestro", name_key: "npc.orsk",
+    ai_tier: 3, payout_base: 110,
+    party: [
+        (species: "lichenore", level: 37),
+        (species: "maridian", level: 37),
+        (species: "gravoross", level: 40, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.6.cleared",
+    reward_items: [("tm05", 1)],
+    intro_key: "hall6.orsk.intro", defeat_key: "hall6.orsk.defeat",
+)

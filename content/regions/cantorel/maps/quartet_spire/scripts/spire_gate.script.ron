@@ -1,0 +1,6 @@
+[
+    If(flag: "badge.8", then: [End], else: []),
+    Say(who: "narrator", key: "spire.locked"),
+    Warp(map: "cadenza_city", x: 23, y: 9),
+    End,
+]

@@ -1,0 +1,7 @@
+Trainer(
+    id: "vault_guard_1", class: "HonorGuard", name_key: "npc.vault_guard_1",
+    ai_tier: 3, payout_base: 120,
+    party: [(species: "orchestrios", level: 56), (species: "brasshorn", level: 56)],
+    defeat_flag: "trainer.vault_guard_1.defeated",
+    intro_key: "vault.g1.intro", defeat_key: "vault.g1.defeat",
+)

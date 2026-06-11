@@ -1,0 +1,10 @@
+[
+    If(flag: "story.cade.plea", then: [Say(who: "cade", key: "plea.after"), End], else: []),
+    If(flag: "badge.8", then: [], else: [Say(who: "cade", key: "plea.early"), End]),
+    Say(who: "cade", key: "plea.1"),
+    Say(who: "cade", key: "plea.2"),
+    Say(who: "cade", key: "plea.3"),
+    SetFlag(flag: "story.cade.plea"),
+    SetFlag(flag: "story.cade.knows"),
+    End,
+]

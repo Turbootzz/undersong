@@ -1,0 +1,13 @@
+// Hall 5 Maestro Maren (Phantom; quietly feeding Vesper intel).
+Trainer(
+    id: "maestro_maren", class: "Maestro", name_key: "npc.maren",
+    ai_tier: 3, payout_base: 100,
+    party: [
+        (species: "fogato", level: 33),
+        (species: "lullaby", level: 33),
+        (species: "requiemoth", level: 36, held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.5.cleared",
+    reward_items: [("tm03", 1)],
+    intro_key: "hall5.maren.intro", defeat_key: "hall5.maren.defeat",
+)

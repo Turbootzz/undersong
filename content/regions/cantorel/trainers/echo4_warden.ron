@@ -1,0 +1,7 @@
+Trainer(
+    id: "echo4_warden", class: "EchoWarden", name_key: "npc.echo_warden",
+    ai_tier: 3, payout_base: 60,
+    party: [(species: "dynamaestro", level: 32)],
+    defeat_flag: "trainer.echo4_warden.defeated",
+    intro_key: "echo4.ask", defeat_key: "echo4.grant",
+)

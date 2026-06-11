@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall4_coiler", class: "HallSenior", name_key: "npc.hall4_coiler",
+    ai_tier: 2, payout_base: 36,
+    party: [(species: "smogturne", level: 29), (species: "ampurr", level: 29)],
+    defeat_flag: "trainer.hall4_coiler.defeated",
+    intro_key: "hall4.coiler.intro", defeat_key: "hall4.coiler.defeat",
+)
