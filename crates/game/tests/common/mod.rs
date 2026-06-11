@@ -208,8 +208,12 @@ impl Driver {
             self.step(dir);
             if self.world.player == before && self.world.current_map == map {
                 stuck += 1;
+                // Wandering NPCs are transient blocks: let them move.
+                for _ in 0..4 {
+                    self.input(Input::Tick);
+                }
                 assert!(
-                    stuck < 3,
+                    stuck < 8,
                     "go_y stuck at {:?} heading {y} in {}",
                     before,
                     self.world.current_map
@@ -229,8 +233,11 @@ impl Driver {
             self.step(dir);
             if self.world.player == before && self.world.current_map == map {
                 stuck += 1;
+                for _ in 0..4 {
+                    self.input(Input::Tick);
+                }
                 assert!(
-                    stuck < 3,
+                    stuck < 8,
                     "go_x stuck at {:?} heading {x} in {}",
                     before,
                     self.world.current_map
@@ -303,6 +310,39 @@ impl Driver {
             }
             self.input(Input::Interact);
         }
+    }
+
+    /// Era retry loop: run `attempt` until `flag` is set, invoking
+    /// `recover` after each failed try (whiteouts re-heal; defeat flags
+    /// only set on wins, so re-engaging is always legal).
+    pub fn until_flag(
+        &mut self,
+        flag: &str,
+        tries: u32,
+        mut attempt: impl FnMut(&mut Driver),
+        mut recover: impl FnMut(&mut Driver),
+    ) {
+        for attempt_no in 0..tries {
+            if self.world.vars.flags.contains(flag) {
+                return;
+            }
+            if attempt_no > 0 {
+                recover(self);
+            }
+            attempt(self);
+            self.drain();
+        }
+        assert!(
+            self.world.vars.flags.contains(flag),
+            "until_flag({flag}) exhausted {tries} tries: map {} at {:?} party {:?}",
+            self.world.current_map,
+            self.world.player,
+            self.world
+                .party
+                .iter()
+                .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+                .collect::<Vec<_>>(),
+        );
     }
 
     pub fn has_flag(&self, flag: &str) -> bool {

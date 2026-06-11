@@ -204,11 +204,34 @@ fn run_act1() -> Driver {
         }
     }
     assert_eq!(driver.world.current_map.as_str(), "route_2");
+    // Rest at Mom's doorstep before the gauntlet — the grind drains PP
+    // and Last-Resort recoil loses winnable fights.
+    driver.go_y(6);
+    driver.go_x(1);
+    driver.go_x(0); // hop the west gate back → pausa (1,6)
+    if driver.world.current_map.as_str() == "pausa_village" {
+        driver.go_x(13);
+        driver.go_y(8); // home_rest doorstep heals party + PP
+        driver.go_y(6);
+        driver.go_x(0); // back west → route_2 (1,6)
+    }
+    assert_eq!(driver.world.current_map.as_str(), "route_2");
     driver.go_y(7);
     driver.go_x(10); // pass behind the gardener on y7
     driver.go_y(6); // step into his sight line at (10,6)
     driver.drain();
-    assert!(driver.has_flag("trainer.rt2_gardener.defeated"));
+    assert!(
+        driver.has_flag("trainer.rt2_gardener.defeated"),
+        "gardener: map {} at {:?} party {:?}",
+        driver.world.current_map,
+        driver.world.player,
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>(),
+    );
     driver.go_x(12); // TACET shipment row (y5..8)
     driver.drain();
     assert!(
@@ -325,37 +348,72 @@ fn run_act1() -> Driver {
     driver.input(Input::BoxWithdraw {
         box_index: u32::try_from(driver.world.boxes.len() - 1).unwrap_or(0),
     });
-    driver.go_x(6);
-    driver.go_y(20); // drover (y6), chorister (y15), rival2 row (y20)
-    driver.drain();
-    assert!(
-        driver.has_flag("story.rival2.defeated"),
-        "rival2: map {} at {:?} party {:?}",
-        driver.world.current_map,
-        driver.world.player,
-        driver
-            .world
-            .party
-            .iter()
-            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
-            .collect::<Vec<_>>(),
+
+    // Recovery: from wherever a loss dumped us, rest+restock in Arbor
+    // and stand back on route_3.
+    fn back_to_route3(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "arbor_vale" => {
+                    d.go_x(13);
+                    d.go_y(9);
+                    d.go_x(10); // rest heals
+                    d.open_shop_at(5, 9);
+                    d.buy("potion_m", 2);
+                    d.close_shop();
+                    d.go_y(8);
+                    d.go_x(13);
+                    d.go_y(14);
+                    d.go_x(12);
+                    d.go_y(15); // → route_3
+                }
+                "prelude_town" => {
+                    d.go_x(10);
+                    d.go_y(0);
+                    d.go_y(0);
+                    d.go_y(6);
+                    d.go_x(0); // → route_2 (long way home)
+                    d.go_y(6);
+                    d.go_x(29); // → arbor
+                }
+                "route_3" => {
+                    d.go_x(6);
+                    return;
+                }
+                _ => return,
+            }
+        }
+    }
+
+    driver.until_flag(
+        "trainer.rt3_chorister.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_3" {
+                d.go_x(6);
+                d.go_y(15); // drover (y6) engages en route; stop level
+                if !d.has_flag("trainer.rt3_chorister.defeated") {
+                    // Sight engages once only — re-challenges are direct.
+                    d.go_x(8);
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route3,
     );
-    // Bank the gauntlet payouts: back to Arbor for rest + potions.
-    driver.go_y(0); // south gate → arbor (11,14)
-    assert_eq!(driver.world.current_map.as_str(), "arbor_vale");
-    driver.go_x(13);
-    driver.go_y(9);
-    driver.go_x(10); // rest doorstep heals
-    driver.open_shop_at(5, 9);
-    driver.buy("potion_m", 3);
-    driver.buy("potion_s", 4);
-    driver.close_shop();
-    driver.go_y(8);
-    driver.go_x(13);
-    driver.go_y(14);
-    driver.go_x(12);
-    driver.go_y(15); // → route_3 (6,1)
-    driver.go_x(6);
+    driver.until_flag(
+        "story.rival2.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_3" {
+                d.go_x(6);
+                d.go_y(20); // the rival row
+            }
+        },
+        back_to_route3,
+    );
+    back_to_route3(&mut driver);
     driver.go_y(25); // → route_4 (6,1)
     assert_eq!(driver.world.current_map.as_str(), "route_4");
 
@@ -418,38 +476,94 @@ fn run_act1() -> Driver {
             d.go_x(10);
         }
     });
-    for _ in 0..3 {
-        match driver.world.current_map.as_str() {
-            "arbor_vale" => {
-                driver.go_x(13);
-                driver.go_y(14);
-                driver.go_x(12);
-                driver.go_y(15);
-                driver.go_x(6);
-                driver.go_y(25);
+    // Recovery for the route_4 gauntlet: rest+restock in Arbor, walk
+    // back north (rival/chorister rows are inert once beaten).
+    fn back_to_route4(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "arbor_vale" => {
+                    d.go_x(13);
+                    d.go_y(9);
+                    d.go_x(10); // rest heals
+                    d.open_shop_at(5, 9);
+                    d.buy("potion_m", 2);
+                    d.buy("potion_s", 2);
+                    d.close_shop();
+                    d.go_y(8);
+                    d.go_x(13);
+                    d.go_y(14);
+                    d.go_x(12);
+                    d.go_y(15); // → route_3
+                    d.go_x(6);
+                    d.go_y(25); // → route_4
+                }
+                "prelude_town" => {
+                    d.go_x(10);
+                    d.go_y(0);
+                    d.go_y(0);
+                    d.go_y(6);
+                    d.go_x(0);
+                    d.go_y(6);
+                    d.go_x(29); // → arbor
+                }
+                "route_3" => {
+                    d.go_x(6);
+                    d.go_y(25);
+                }
+                "route_4" => {
+                    d.go_x(6);
+                    return;
+                }
+                _ => return,
             }
-            _ => break,
         }
     }
+
+    back_to_route4(&mut driver);
     assert_eq!(driver.world.current_map.as_str(), "route_4");
-    driver.go_x(6);
-    driver.go_y(10);
-    driver.go_y(14);
-    driver.go_y(18); // tacet yard row (doubles)
-    driver.drain();
-    assert!(
-        driver.has_flag("story.tacet.yard"),
-        "yard: map {} at {:?} party {:?} potions {:?} money {}",
-        driver.world.current_map,
-        driver.world.player,
-        driver
-            .world
-            .party
-            .iter()
-            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
-            .collect::<Vec<_>>(),
-        driver.world.bag.get(&"potion_m".into()),
-        driver.world.money,
+    driver.until_flag(
+        "trainer.rt4_stoker.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(8); // stoker sight (5..7,8)
+                if !d.has_flag("trainer.rt4_stoker.defeated") {
+                    d.go_x(5);
+                    d.face(Left);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route4,
+    );
+    driver.until_flag(
+        "trainer.rt4_signaler.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(12); // signaler sight (6..8,12)
+                if !d.has_flag("trainer.rt4_signaler.defeated") {
+                    d.go_x(8);
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route4,
+    );
+    driver.until_flag(
+        "story.tacet.yard",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(18); // the yard row refires until won
+                d.drain();
+            }
+        },
+        back_to_route4,
     );
     driver.go_y(21); // → port_calando (11,1)
     assert_eq!(driver.world.current_map.as_str(), "port_calando");
