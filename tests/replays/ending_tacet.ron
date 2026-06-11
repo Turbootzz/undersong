@@ -1,5 +1,5 @@
 // P6 gate replay — recorded by act3_run.rs (UPDATE_REPLAYS=1).
-// 81392 inputs; do not hand-edit.
+// 81395 inputs; do not hand-edit.
 (
     seed: 11301292,
     world: Game,
@@ -88866,8 +88866,11 @@
         Step(Right),
         Step(Right),
         Step(Right),
+        Interact,
         Step(Right),
+        Interact,
         Step(Right),
+        Interact,
         Step(Right),
         Step(Right),
         Step(Right),
@@ -89149,7 +89152,7 @@
             "credits.tacet",
             "story.vesper.met",
         ],
-        min_dialogue_lines: 199,
+        min_dialogue_lines: 202,
         warped: true,
         party_levels: Some([
             47,
