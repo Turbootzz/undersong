@@ -262,6 +262,85 @@ music v2 stems replace v1; replays still green (presenter-only).
 **Gate P12:** a stranger could download/play from the artifacts alone; v0.2.0 tag
 builds all release artifacts in CI.
 
+## P13 — Art v2: characters & creatures (second playtest)
+
+Source: the 2026-06-11 second playtest. Decisions: hero = "surprise me"
+(variants screenshotted, user picks); monsters = generator v2 PLUS
+hand-authored stars (starter lines + legendaries).
+
+- [ ] **Creature grammar v2**: true drawn back views (the cropped-front
+      fake was the "my monster looks weird" bug), three-tone shading with
+      dither, per-seed feature kits (ears/horns/crests/fins/tail shapes),
+      stronger silhouette variety, eye styles. All 130 regenerate.
+- [ ] **Hand-authored stars**: the three starter lines + the four
+      legendaries (+ Vinterstem) as deliberate pixel art (char-grid
+      format in `tools`, front + back), overriding the generator for
+      those ids.
+- [ ] **Anime-proportioned characters**: hand-authored 32×44 player
+      (4 dir × 2 frames, bottom-anchored so heads overflow the tile) and
+      the NPC archetype set; three hero design variants screenshotted to
+      `docs/playtests/` for the user's pick.
+- [ ] **Phase review**; STATUS with before/after screenshots.
+
+**Gate P13:** back views are real drawings; stars are hand-authored;
+characters read anime-proportioned at battle of 1280×720; replays
+untouched.
+
+## P14 — World color & buildings
+
+- [ ] **Building anatomy**: roof tiles (per-town palettes), visible door
+      tiles on the warp tiles, windows; the mapgen building helper paints
+      them as decor (zero logic diffs — replays safe).
+- [ ] **Color pass**: saturated grass/water ramps, flower/fence/lamp
+      decor sprinkles in towns, water shore edges, region color identity
+      (doc 05 update).
+- [ ] **Phase review**; STATUS with screenshots.
+
+**Gate P14:** towns no longer read "light brown everywhere"; houses have
+doors; replays green without re-recording.
+
+## P15 — UI overhaul + the Score-dex
+
+- [ ] **Screens hub rebuilt as panels**: party rows with 16px creature
+      icons and HP bars; bag as a grid with item rows; boxes as a page
+      grid; remaining tofu glyphs swept.
+- [ ] **The Score-dex**: a browsable dex (creature sprite + sigil, types,
+      base stats, dex entry, cry playback, caught/seen state) replacing
+      the bare measure-fill.
+- [ ] **Battle plates v2**: status chips, EXP bar on the ally plate.
+- [ ] **Phase review**; STATUS with screenshots.
+
+**Gate P15:** the Party/Bag screenshot class of UI is gone; the dex is
+navigable to any caught species' page.
+
+## P16 — The Companion Wiki (Vue) + the visual playtest harness
+
+Decisions: repo-only under `wiki/`, **Bun + TypeScript + TailwindCSS +
+Vue 3 (Vite)**; the user hosts it himself later. Spoiler toggle hides
+story beats, endings, legendaries, late-game locations.
+
+- [ ] **`tools wiki`**: exports `wiki/src/data/*.json` straight from
+      `content/` (species, moves, type chart, learnsets, evolutions,
+      encounter tables per map, trainers) — content stays the single
+      source of truth; the export runs in CI to catch drift.
+- [ ] **The site**: species browser with sprites/sigils, per-species
+      pages, type-chart matrix, move list, locations; spoiler toggle;
+      Tailwind styling; `bun run build` produces a static dist the user
+      can host anywhere.
+- [ ] **Visual playtest harness**: the windowed app replays a recorded
+      input file (`UNDERSONG_VISUAL_REPLAY=<file>`) while capturing a
+      timed screenshot series to `docs/playtests/<run>/` — the agent's
+      eyes for every future phase.
+- [ ] **Phase review**; STATUS.
+
+**Gate P16:** `bun run build` succeeds from a fresh clone (bun present);
+the wiki answers "what beats what" and "where do I find X" without
+opening RON files; a harness run produces a reviewable frame series.
+
+### Parked from this playtest (explicitly later, user's call)
+- Battle move animations beyond flash/shake; more music variety;
+  more story content. Logged here so they aren't lost.
+
 ## Icebox (parked, deliberate)
 
 - Breeding/eggs; held-item move interactions beyond the launch framework
