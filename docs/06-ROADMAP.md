@@ -386,23 +386,23 @@ paragraph: what reads well, what still feels stiff) is in STATUS;
 
 ## P18 — Overworld feel
 
-- [ ] **Spotted!**: when a trainer's line-of-sight engages, the world
+- [x] **Spotted!**: when a trainer's line-of-sight engages, the world
       already emits the engagement — the presenter must add: a cue
       (new "alert" sfx, two sharp rising notes), an ink "!" bubble
       popping above the trainer's head for ~0.6s, and a beat of pause
       before the battle wipe. The bubble is a generated 16×16 sprite.
-- [ ] **Walk animation v2**: 4-frame player gait (two new frames per
+- [x] **Walk animation v2**: 4-frame player gait (two new frames per
       direction in `heroes.rs` — contact/passing poses), 2-frame NPC
       bob retained; fix frame timing so the cycle reads at walk speed
       and doubles correctly when running (hold-X).
-- [ ] **World touches**: grass rustle particle on patch steps; door
+- [x] **World touches**: grass rustle particle on patch steps; door
       tiles "open" (swap to a lit doorway sprite) for ~0.2s on warp;
       a soft drop-shadow ellipse under every actor; map-edge water
       shimmer (animate the existing water tile via 2 frames).
-- [ ] **Night & weather reads**: night tint slightly blue-shifted with
+- [x] **Night & weather reads**: night tint slightly blue-shifted with
       window glows brightened; heatwave = faint warm vignette; flurry =
       drifting white specks (a particle overlay, presenter-only).
-- [ ] **Self-review + phase review**; STATUS with film notes.
+- [x] **Self-review + phase review**; STATUS with film notes.
 
 **Gate P18:** harness film shows spotted-bubble + pause + wipe in a
 trainer engagement, the 4-frame walk, and door/rustle touches; replays
@@ -479,6 +479,59 @@ a harness film; recontext pairs counted in STATUS; validate 0/0.
 ---
 
 ## STATUS
+
+### 2026-06-12 — P18 complete (overworld feel)
+
+**Built:** Spotted! — a sighted trainer pops an ink "!" bubble with a
+two-note alert and a held beat before the challenge (the world's
+Engaged event finally has a presenter). Walk v2: four frames per
+direction, strides alternating per tile around the stand pose; up
+finally animates (its second frame was a duplicate); mirror_in_place
+keeps the body still while the legs swap. World touches: grass-patch
+rustle bursts, arrival doorways flashing lit through the warp wipe's
+tail, drop-shadow ellipses under every actor, two-frame water
+shimmer. Night deepens blue while windows glow; heatwave/dustchord
+maps wear a warm/dusty vignette; flurry/downpour drift specks.
+Player poses and fx preload at boot (first-use async loads used to
+blink sprites out). New instruments: UNDERSONG_BOOT_MAP (teleport
+screenshots), UNDERSONG_BOOT_WALK (scripted walking films),
+UNDERSONG_REPLAY_SLOW (walking-pace replay films with real gait/fx).
+
+**Gate P18:** films in docs/playtests/ — walk-spotted (frame 8: the
+"!" over Tuner Brio's head, the held beat, then the challenge typing
+and the wipe into battle), walk-grass (stride close-ups + rustle
+flecks on the patch), walk-pausa_village (the wipe, then the lit
+doorway on arrival, fading next frame); p18/heatwave.png,
+p18/flurry.png, p18/night.png (night verified by pixel math: mean
+brightness −18% with blue lifted; windows glowing). 195 tests;
+replays untouched; validate 0/0; clippy clean.
+
+**Phase review:** 6-lens adversarial workflow (31 agents) over
+`p18-start..HEAD`: 25 raw → 24 confirmed (~11 distinct), 1 refuted.
+All fixed (6c8c3ba): the critical replay deadlock (Spotted surviving
+a same-batch engagement+battle, gating input forever), weather
+overlays never respawning after menu/battle, the canvas-mirror stride
+lurch, slow films bypassing the gait/fx plumbing, phantom warp
+rustles, weather over the dialogue box, the door flash re-rolling
+its wall speckle, and the rig nits.
+
+**Playfeel review (honest):** The spotted beat is the era's grammar
+verbatim — bubble, held breath, challenge — and route 1 suddenly
+feels inhabited; the gait reads as a real two-step in close-ups; the
+shadows ground every actor (figures stop floating); flurry over
+Frostine is the prettiest still the game has produced. Gripes: the
+facing-marker dot photobombs at small scale and reads as a stray
+effect — fade it or redesign in P19; the night veil is too polite
+(−18% reads as "dim afternoon", the era went darker — push the ramp
+in P19's palette pass); rustle flecks are nearly subliminal against
+the busy patch texture (double the flecks); the 3px flurry specks
+vanish over light ground. Films still carry no audio — the alert cue
+and blip pitch are a windowed-listen verification.
+
+**Next:** P19 — `git tag p19-start`; beauty pass 2 (pixel font, tile
+variety, palette audit vs indie references, monster personality v3,
+UI skin v3).
+
 
 ### 2026-06-11 — P17 complete (battle theater)
 
