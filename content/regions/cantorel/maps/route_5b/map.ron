@@ -75,9 +75,9 @@ MapDef(
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ],
     triggers: [
-        (at: (0, 6), kind: Warp(map: "voltaccia", to: (11, 14), facing: Left)),
+        (at: (0, 6), kind: Warp(map: "voltaccia", to: (22, 6), facing: Left)),
         (at: (25, 6), kind: Warp(map: "hollowfen", to: (1, 6), facing: Right)),
-        (at: (0, 7), kind: Warp(map: "voltaccia", to: (11, 14), facing: Left)),
+        (at: (0, 7), kind: Warp(map: "voltaccia", to: (22, 7), facing: Left)),
         (at: (25, 7), kind: Warp(map: "hollowfen", to: (1, 7), facing: Right)),
     ],
     npcs: [

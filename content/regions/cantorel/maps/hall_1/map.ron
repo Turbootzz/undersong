@@ -102,5 +102,6 @@ MapDef(
         (id: "hall_senior", at: (8, 7), facing: Left, sprite: "npc.trainer", script: Some("hall_senior.script.ron"), behavior: Static, sight_range: 2),
         (id: "dario", at: (6, 13), facing: Down, sprite: "npc.dario", script: Some("dario.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("town_prelude"),
 )

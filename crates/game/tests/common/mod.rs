@@ -677,7 +677,7 @@ impl Driver {
                 if here == "cadenza_city" && !northbound {
                     self.go_y(11);
                     self.go_x(12);
-                    self.go_y(17);
+                    self.go_y(0); // south gate (P9 geography)
                 } else if here == "route_6" {
                     self.go_x(6);
                     if northbound {
@@ -714,7 +714,7 @@ impl Driver {
         match (self.world.current_map.as_str(), north) {
             ("pausa_village", true) => {
                 self.go_y(6);
-                self.go_x(0);
+                self.go_x(15); // east gate (P9 geography fix)
             }
             ("route_2", true) => {
                 // Weave: gardener owns (9,6), courier owns (20,7).
@@ -795,8 +795,8 @@ impl Driver {
                 self.go_x(12);
                 self.go_y(9);
                 self.go_x(9);
-                self.go_x(12);
-                self.go_y(15);
+                self.go_y(7);
+                self.go_x(23); // east gate (P9 geography)
             }
             ("voltaccia", false) => {
                 self.go_x(12);
@@ -1077,7 +1077,7 @@ pub fn run_act1() -> Driver {
 
     // ---- Route 2 → Arbor Vale (beat 3 shipment, hall 2) -------------------
     driver.go_y(6);
-    driver.go_x(0); // west gate → route_2 (1,6)
+    driver.go_x(15); // east gate → route_2 (1,6) (P9: route_2 lies east)
     assert_eq!(driver.world.current_map.as_str(), "route_2");
 
     // Grind to 17 on the west field FIRST — the shipment grunts and
@@ -1091,12 +1091,12 @@ pub fn run_act1() -> Driver {
             d.go_y(0); // → route_1 (6,28)
             d.go_y(0); // south → pausa (9,12)
             d.go_y(6);
-            d.go_x(0); // west gate → route_2 (1,6)
+            d.go_x(15); // east gate → route_2 (1,6)
             d.go_x(6);
             d.go_y(3);
         } else if d.world.current_map.as_str() == "pausa_village" {
             d.go_y(6);
-            d.go_x(0);
+            d.go_x(15);
             d.go_x(6);
             d.go_y(3);
         } else if d.world.current_map.as_str() == "route_2"
@@ -1115,11 +1115,11 @@ pub fn run_act1() -> Driver {
                 driver.go_y(0);
                 driver.go_y(0);
                 driver.go_y(6);
-                driver.go_x(0);
+                driver.go_x(15);
             }
             "pausa_village" => {
                 driver.go_y(6);
-                driver.go_x(0);
+                driver.go_x(15);
             }
             _ => break,
         }
@@ -1134,7 +1134,7 @@ pub fn run_act1() -> Driver {
         driver.go_x(13);
         driver.go_y(8); // home_rest doorstep heals party + PP
         driver.go_y(6);
-        driver.go_x(0); // back west → route_2 (1,6)
+        driver.go_x(15); // back east-gate → route_2 (1,6)
     }
     assert_eq!(driver.world.current_map.as_str(), "route_2");
     driver.go_y(7);
@@ -1293,7 +1293,7 @@ pub fn run_act1() -> Driver {
                     d.go_y(0);
                     d.go_y(0);
                     d.go_y(6);
-                    d.go_x(0); // → route_2 (long way home)
+                    d.go_x(15); // → route_2 (long way home)
                     d.go_y(6);
                     d.go_x(29); // → arbor
                 }
@@ -1480,7 +1480,7 @@ pub fn run_act1() -> Driver {
                     d.go_y(0);
                     d.go_y(0);
                     d.go_y(6);
-                    d.go_x(0);
+                    d.go_x(15);
                     d.go_y(6);
                     d.go_x(29); // → arbor
                 }

@@ -109,8 +109,9 @@ DialoguePlugin (script crate runner), AudioPlugin, SavePlugin, DebugPlugin`.
 
 ### Conventions
 - Grid movement: discrete tile steps; a `Moving { from, to, t }` component
-  interpolates render position; logic reads only tile coords. Input buffered one
-  step (era-authentic feel).
+  interpolates render position; logic reads only tile coords. No input buffer:
+  a held key continues the walk the frame the slide lands; a tap shorter than
+  one slide moves exactly one tile (P9 ruling — the buffer double-stepped).
 - Camera: integer-scaled virtual resolution **480×270**, nearest-neighbor, letterbox.
 - Tilemap: **hand-rolled** (one mesh per layer chunk, 3 layers: ground/decor/overhang
   + collision grid + trigger grid). A Pokémon-like doesn't need a tilemap dependency,

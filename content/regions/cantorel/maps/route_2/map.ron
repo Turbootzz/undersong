@@ -89,9 +89,9 @@ MapDef(
         (at: (12, 6), kind: Script(path: "tacet_shipment.script.ron")),
         (at: (12, 7), kind: Script(path: "tacet_shipment.script.ron")),
         (at: (12, 8), kind: Script(path: "tacet_shipment.script.ron")),
-        (at: (0, 6), kind: Warp(map: "pausa_village", to: (1, 6), facing: Left)),
+        (at: (0, 6), kind: Warp(map: "pausa_village", to: (14, 6), facing: Left)),
         (at: (29, 6), kind: Warp(map: "arbor_vale", to: (1, 7), facing: Right)),
-        (at: (0, 7), kind: Warp(map: "pausa_village", to: (1, 7), facing: Left)),
+        (at: (0, 7), kind: Warp(map: "pausa_village", to: (14, 7), facing: Left)),
         (at: (29, 7), kind: Warp(map: "arbor_vale", to: (1, 8), facing: Right)),
     ],
     npcs: [

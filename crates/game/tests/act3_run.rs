@@ -215,8 +215,8 @@ fn run_to_finale(chorus_prep: bool) -> Driver {
                 "voltaccia" => {
                     d.go_y(9);
                     d.go_x(9); // rest
-                    d.go_x(12); // free lane east of the rest stop
-                    d.go_y(15); // north gate → route_5b
+                    d.go_y(7);
+                    d.go_x(23); // east gate → route_5b (P9 geography)
                 }
                 "route_5b" => {
                     d.go_y(7);
@@ -852,7 +852,7 @@ fn run_chorus_prep(driver: &mut Driver) {
     // Route 6 sweep, then Frostine: echo 7.
     driver.go_y(11);
     driver.go_x(12);
-    driver.go_y(17); // → route_6 (6,18)
+    driver.go_y(0); // south gate → route_6 (6,18) (P9 geography)
     driver.go_x(6);
     driver.go_y(7);
     // The Virtuoso takes all comers, every day, for stake money — the
@@ -878,7 +878,7 @@ fn run_chorus_prep(driver: &mut Driver) {
             driver.go_x(9); // rest: hp + pp
             driver.go_y(11);
             driver.go_x(12);
-            driver.go_y(17); // → route_6
+            driver.go_y(0); // south gate → route_6
             driver.go_x(6);
             driver.go_y(7);
         }
@@ -1168,8 +1168,8 @@ fn run_chorus_prep(driver: &mut Driver) {
             "voltaccia" => {
                 driver.go_y(9);
                 driver.go_x(9);
-                driver.go_x(12);
-                driver.go_y(15);
+                driver.go_y(7);
+                driver.go_x(23); // east gate (P9 geography)
             }
             "route_5b" => {
                 driver.go_y(7);

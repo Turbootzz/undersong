@@ -18,6 +18,7 @@ class M:
         s.music = None
         s.weather = None
         s.dark = False
+        s.indoor = False
         s.obstacles = []
         # border walls
         for x in range(w):
@@ -84,6 +85,8 @@ class M:
             parts.append(f"    weather: Some({s.weather}),\n")
         if getattr(s, 'dark', False):
             parts.append("    dark: true,\n")
+        if getattr(s, 'indoor', False):
+            parts.append("    indoor: true,\n")
         parts.append(f"    music: {('Some(\"' + s.music + '\")') if getattr(s, 'music', None) else 'None'},\n)\n")
         open(os.path.join(d, 'map.ron'), 'w').write("".join(parts))
 
@@ -105,11 +108,12 @@ for x in (9, 10):
     p.door(x, 13, 'route_1', (6 + (x-9), 1), 'Up')
 # west exit to route 2 (act 1)
 for y in (6, 7):
-    p.door(0, y, 'route_2', (1, y), 'Left')
+    p.door(15, y, 'route_2', (1, y), 'Right')
 p.emit(root)
 
 # ---------- pausa_lab 9x7 ----------
 lab = M('pausa_lab', 9, 7, ground_fill=4)
+lab.indoor = True
 lab.rect(1, 5, 7, 5, 'ground', 4, solid=1)            # back bench row
 lab.coll[5][4] = 0                                     # gap behind Reed
 lab.music = 'town_pausa'
@@ -174,6 +178,7 @@ t.emit(root)
 
 # ---------- hall_1 12x16 ----------
 h = M('hall_1', 12, 16, ground_fill=4)
+h.indoor = True
 h.rect(2, 3, 9, 12, 'ground', 2)
 # the puzzle: two solid pillar rows force an S-path
 h.rect(2, 6, 7, 6, 'ground', 4, solid=1)
@@ -213,7 +218,7 @@ r2.npc('rt2_courier', 20, 7, 'Left', 'npc.trainer', 'rt2_courier.script.ron', si
 for y in (5, 6, 7, 8):
     r2.script_trigger(12, y, 'tacet_shipment.script.ron')
 for y in (6, 7):
-    r2.door(0, y, 'pausa_village', (1, 6 + (y-6)), 'Left')
+    r2.door(0, y, 'pausa_village', (14, 6 + (y-6)), 'Left')
     r2.door(29, y, 'arbor_vale', (1, 7 + (y-6)), 'Right')
 r2.emit(root)
 
@@ -237,6 +242,7 @@ av.emit(root)
 
 # ---------- hall_2 (Mirelle, bloom; vine maze) 12x16 ----------
 h2 = M('hall_2', 12, 16, ground_fill=4)
+h2.indoor = True
 h2.rect(2, 3, 9, 12, 'ground', 2)
 h2.rect(2, 6, 6, 6, 'ground', 4, solid=1)
 h2.rect(5, 9, 9, 9, 'ground', 4, solid=1)
@@ -345,6 +351,7 @@ pc.emit(root)
 
 # ---------- hall_3 (doubles hall; Lull encounter after) 14x18 ----------
 h3 = M('hall_3', 14, 18, ground_fill=4)
+h3.indoor = True
 h3.rect(2, 3, 11, 14, 'ground', 2)
 h3.rect(2, 7, 8, 7, 'ground', 4, solid=1)
 h3.rect(5, 11, 11, 11, 'ground', 4, solid=1)
@@ -392,8 +399,8 @@ vt.weather = 'Heatwave'                          # industrial heat zone
 vt.music = 'town_calando'
 vt.npc('echo_keeper_4', 5, 5, 'Down', 'npc.villager', 'anchor_echo_4.script.ron')
 vt.npc('volt_worker', 13, 6, 'Down', 'npc.villager', 'voltaccia_talk.script.ron')
-for x in (11, 12):
-    vt.door(x, 15, 'route_5b', (1, 6 + (x-11)), 'Right')
+for y in (6, 7):
+    vt.door(23, y, 'route_5b', (1, y), 'Right')
 vt.rect(11, 1, 12, 1, 'ground', 2)  # path gap to the south doors
 for x in (11, 12):
     vt.door(x, 0, 'route_5', (6 + (x-11), 22), 'Down')
@@ -401,6 +408,7 @@ vt.emit(root)
 
 # ---------- hall_4 (Rhea, volt; basement door beat 6) 12x18 ----------
 h4 = M('hall_4', 12, 18, ground_fill=4)
+h4.indoor = True
 h4.rect(2, 3, 9, 14, 'ground', 2)
 h4.rect(2, 6, 7, 6, 'ground', 4, solid=1)
 h4.rect(4, 10, 9, 10, 'ground', 4, solid=1)
@@ -428,7 +436,7 @@ r5b.music = 'cantorel_bed'
 r5b.npc('rt5b_bogger', 6, 6, 'Right', 'npc.trainer', 'rt5b_bogger.script.ron', sight=3)
 r5b.npc('rt5b_lampman', 18, 7, 'Left', 'npc.trainer', 'rt5b_lampman.script.ron', sight=3)
 for y in (6, 7):
-    r5b.door(0, y, 'voltaccia', (11, 14), 'Left')
+    r5b.door(0, y, 'voltaccia', (22, y), 'Left')
     r5b.door(25, y, 'hollowfen', (1, 6 + (y-6)), 'Right')
 r5b.emit(root)
 
@@ -452,6 +460,7 @@ hf.emit(root)
 
 # ---------- hall_5 (Maren, phantom; the letter, beat 7) 12x16 ----------
 h5 = M('hall_5', 12, 16, ground_fill=4)
+h5.indoor = True
 h5.rect(2, 3, 9, 12, 'ground', 2)
 h5.rect(4, 6, 9, 6, 'ground', 4, solid=1)
 h5.rect(2, 9, 7, 9, 'ground', 4, solid=1)
@@ -490,6 +499,7 @@ gp.emit(root)
 
 # ---------- hall_6 (Orsk, stone; HP-stall) 12x14 ----------
 h6 = M('hall_6', 12, 14, ground_fill=4)
+h6.indoor = True
 h6.rect(2, 3, 9, 11, 'ground', 2)
 h6.rect(2, 7, 6, 7, 'ground', 4, solid=1)
 h6.music = 'cantorel_bed'
@@ -518,6 +528,7 @@ fr.emit(root)
 
 # ---------- hall_7 (Ilva, frost; hardest pre-league) 12x16 ----------
 h7 = M('hall_7', 12, 16, ground_fill=4)
+h7.indoor = True
 h7.rect(2, 3, 9, 13, 'ground', 2)
 h7.rect(2, 6, 7, 6, 'ground', 4, solid=1)
 h7.rect(4, 10, 9, 10, 'ground', 4, solid=1)
@@ -544,7 +555,7 @@ r6.npc('rt6_virtuoso', 4, 8, 'Right', 'npc.trainer', 'rt6_virtuoso.script.ron', 
 r6.npc('rt6_envoy', 9, 13, 'Left', 'npc.trainer', 'rt6_envoy.script.ron', sight=3)
 for x in (6, 7):
     r6.door(x, 0, 'frostine', (11 + (x-6), 12), 'Down')
-    r6.door(x, 19, 'cadenza_city', (12 + (x-6), 1), 'Up')
+    r6.door(x, 19, 'cadenza_city', (12 + (x-6), 2), 'Up')
 r6.emit(root)
 
 # ---------- cadenza_city (hall 8, capital) 26x18 ----------
@@ -560,8 +571,9 @@ cz.music = 'town_calando'
 cz.npc('echo_keeper_8', 5, 5, 'Down', 'npc.villager', 'anchor_echo_8.script.ron')
 cz.npc('reed_capital', 13, 7, 'Down', 'npc.reed', 'reed_confession.script.ron')
 cz.npc('cade_capital', 17, 6, 'Down', 'npc.villager2', 'cade_plea.script.ron')
+cz.rect(12, 1, 13, 1, 'ground', 2)  # path gap to the south doors
 for x in (12, 13):
-    cz.door(x, 17, 'route_6', (6 + (x-12), 18), 'Up')
+    cz.door(x, 0, 'route_6', (6 + (x-12), 18), 'Down')
 # the spire (Quartet) opens with badge 8
 for x in (24, 24):
     pass
@@ -573,6 +585,7 @@ cz.emit(root)
 
 # ---------- hall_8 (Calder, alloy) 12x16 ----------
 h8 = M('hall_8', 12, 16, ground_fill=4)
+h8.indoor = True
 h8.rect(2, 3, 9, 13, 'ground', 2)
 h8.rect(2, 6, 7, 6, 'ground', 4, solid=1)
 h8.rect(4, 10, 9, 10, 'ground', 4, solid=1)
@@ -584,6 +597,7 @@ h8.emit(root)
 
 # ---------- quartet_spire (4 ascending fights) 10x30 ----------
 qs = M('quartet_spire', 10, 30, ground_fill=4)
+qs.indoor = True
 qs.rect(3, 1, 6, 28, 'ground', 2)
 qs.music = 'battle_hall'
 for x in (3, 4, 5, 6):
@@ -601,6 +615,7 @@ qs.emit(root)
 
 # ---------- the_vault (descent; dead air; endings) 10x34 ----------
 vault = M('the_vault', 10, 34, ground_fill=4)
+vault.indoor = True
 vault.rect(3, 1, 6, 32, 'ground', 2)
 vault.dark = True
 vault.music = None                               # the thinning music
@@ -618,6 +633,7 @@ print("acts 2-3 maps emitted")
 
 # ---------- encore_hall (P7 battle tower) 10x12 ----------
 eh = M('encore_hall', 10, 12, ground_fill=4)
+eh.indoor = True
 eh.rect(2, 2, 7, 9, 'ground', 2)
 eh.music = 'battle_hall'
 eh.npc('encore_marshal', 4, 8, 'Down', 'npc.dario', 'encore_marshal.script.ron')
@@ -686,6 +702,7 @@ sk_town('kraghorn', 4, 'town_varde', west='fenwick_hollow',
 
 for n in range(1, 5):
     h = M(f'skald_hall_{n}', 12, 12, ground_fill=4)
+    h.indoor = True
     h.rect(2, 2, 9, 10, 'ground', 2)
     h.music = 'battle_skalden_hall'
     h.npc(f'skald_maestro_{n}', 6, 10, 'Down', 'npc.dario', f'skald_maestro_{n}.script.ron')

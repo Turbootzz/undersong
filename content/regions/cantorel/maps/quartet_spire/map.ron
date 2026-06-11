@@ -180,5 +180,6 @@ MapDef(
         (id: "quartet_3", at: (4, 18), facing: Down, sprite: "npc.dario", script: Some("quartet_3.script.ron"), behavior: Static, sight_range: 0),
         (id: "quartet_4", at: (5, 24), facing: Down, sprite: "npc.dario", script: Some("quartet_4.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("battle_hall"),
 )

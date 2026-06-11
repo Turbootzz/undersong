@@ -91,5 +91,6 @@ MapDef(
         (id: "hall6_mason", at: (8, 5), facing: Left, sprite: "npc.trainer", script: Some("hall6_mason.script.ron"), behavior: Static, sight_range: 2),
         (id: "orsk", at: (6, 12), facing: Down, sprite: "npc.dario", script: Some("orsk.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("cantorel_bed"),
 )

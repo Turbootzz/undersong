@@ -207,6 +207,7 @@ fn import_level(level: &Value) -> Result<MapDef> {
         night_encounters: None,
         obstacles: Vec::new(),
         dark: false,
+        indoor: false,
     })
 }
 

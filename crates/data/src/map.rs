@@ -52,6 +52,10 @@ pub struct MapDef {
     /// Dark cave: unlit without Lumen Hum (doc 02 §11).
     #[serde(default)]
     pub dark: bool,
+    /// Interior map (halls, labs, towers): exempt from the outdoor
+    /// door-direction rule (you enter buildings at their bottom).
+    #[serde(default)]
+    pub indoor: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -80,5 +80,6 @@ MapDef(
     npcs: [
         (id: "encore_marshal", at: (4, 8), facing: Down, sprite: "npc.dario", script: Some("encore_marshal.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("battle_hall"),
 )

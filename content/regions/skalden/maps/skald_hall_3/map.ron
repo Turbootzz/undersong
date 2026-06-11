@@ -80,5 +80,6 @@ MapDef(
     npcs: [
         (id: "skald_maestro_3", at: (6, 10), facing: Down, sprite: "npc.dario", script: Some("skald_maestro_3.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("battle_skalden_hall"),
 )

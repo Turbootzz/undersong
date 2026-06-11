@@ -197,5 +197,6 @@ MapDef(
         (id: "vault_vesper", at: (5, 24), facing: Down, sprite: "npc.villager", script: Some("vault_vesper.script.ron"), behavior: Static, sight_range: 0),
     ],
     dark: true,
+    indoor: true,
     music: None,
 )

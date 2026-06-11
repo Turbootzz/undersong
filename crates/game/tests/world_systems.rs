@@ -32,6 +32,7 @@ fn void_map() -> data::MapDef {
         night_encounters: None,
         obstacles: vec![],
         dark: false,
+        indoor: false,
     }
 }
 

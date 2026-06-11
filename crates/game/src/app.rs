@@ -24,7 +24,6 @@ impl Plugin for UndersongPlugin {
         app.insert_resource(UiScale(WINDOW_SCALE as f32))
             .insert_resource(RenderedMap(None))
             .insert_resource(PlayerAnim(None))
-            .insert_resource(BufferedDir(None))
             .insert_resource(WanderTimer(Timer::from_seconds(1.2, TimerMode::Repeating)))
             .insert_resource(MenuCursor(0))
             .insert_resource(SettingsRes(save::Settings::default()))
@@ -114,11 +113,6 @@ struct RenderedMap(Option<undersong_core::ids::MapId>);
 
 #[derive(Resource)]
 struct PlayerAnim(Option<(Vec2, Vec2, f32)>);
-
-/// One-step input buffer (doc 03 §3): a tap during interpolation is
-/// remembered and fired the frame the lerp completes.
-#[derive(Resource)]
-struct BufferedDir(Option<Facing>);
 
 #[derive(Resource)]
 struct WanderTimer(Timer);
@@ -302,7 +296,6 @@ fn player_input(
     keys: Res<ButtonInput<KeyCode>>,
     mut world: ResMut<WorldRes>,
     mut anim: ResMut<PlayerAnim>,
-    mut buffered: ResMut<BufferedDir>,
     mut rendered: ResMut<RenderedMap>,
     mut wipe: ResMut<Wipe>,
     mut next: ResMut<NextState<AppState>>,
@@ -346,14 +339,14 @@ fn player_input(
         }
         return;
     }
-    // Movement: buffer one step while interpolating (doc 03 §3).
+    // Movement: no buffering — a tap inside the slide window once
+    // queued a second step (the playtest's "I skip one square").
+    // A held key continues the walk the frame the tile lands; a tap
+    // shorter than one slide moves exactly one tile.
     if anim.0.is_some() {
-        if let Some(dir) = pressed_direction(&keys) {
-            buffered.0 = Some(dir);
-        }
         return;
     }
-    let Some(dir) = buffered.0.take().or_else(|| pressed_direction(&keys)) else {
+    let Some(dir) = pressed_direction(&keys) else {
         return;
     };
     let from = world.0.player;

@@ -103,5 +103,6 @@ MapDef(
         (id: "ilva", at: (6, 14), facing: Down, sprite: "npc.dario", script: Some("ilva.script.ron"), behavior: Static, sight_range: 0),
     ],
     weather: Some(Flurry),
+    indoor: true,
     music: Some("town_prelude"),
 )

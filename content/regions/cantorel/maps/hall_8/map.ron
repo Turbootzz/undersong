@@ -101,5 +101,6 @@ MapDef(
         (id: "hall8_registrar", at: (3, 4), facing: Right, sprite: "npc.trainer", script: Some("hall8_registrar.script.ron"), behavior: Static, sight_range: 2),
         (id: "calder", at: (6, 14), facing: Down, sprite: "npc.dario", script: Some("calder.script.ron"), behavior: Static, sight_range: 0),
     ],
+    indoor: true,
     music: Some("battle_hall"),
 )

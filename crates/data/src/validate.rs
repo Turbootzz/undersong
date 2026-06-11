@@ -311,6 +311,38 @@ pub fn validate_palette(palette: &crate::content::Palette) -> Vec<Finding> {
 /// in-bounds coordinates, warp targets exist + in-bounds + non-solid,
 /// encounter table shape (12 slots, weights sum 100, levels ≥ 1, species
 /// resolve), referenced scripts exist.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Edge {
+    West,
+    East,
+    North,
+    South,
+}
+
+fn edge_of(map: &crate::map::MapDef, x: u32, y: u32) -> Option<Edge> {
+    let margin = 2;
+    if x <= margin {
+        Some(Edge::West)
+    } else if x + 1 + margin >= map.width {
+        Some(Edge::East)
+    } else if y <= margin {
+        Some(Edge::South)
+    } else if y + 1 + margin >= map.height {
+        Some(Edge::North)
+    } else {
+        None
+    }
+}
+
+fn opposite_edge(edge: Edge) -> Edge {
+    match edge {
+        Edge::West => Edge::East,
+        Edge::East => Edge::West,
+        Edge::North => Edge::South,
+        Edge::South => Edge::North,
+    }
+}
+
 pub fn validate_maps(
     maps: &std::collections::BTreeMap<undersong_core::ids::MapId, crate::map::MapDef>,
     pool: &crate::content::SpeciesPool,
@@ -360,6 +392,24 @@ pub fn validate_maps(
                         format!("`{mid}` warps to unknown map `{target}`"),
                     )),
                     Some(dest) => {
+                        // Direction continuity (P9, the playtest's
+                        // "left exit, left arrival"): an outdoor door
+                        // on one edge must land near the OPPOSITE edge
+                        // of an outdoor target. Interiors are exempt
+                        // (buildings are entered at their bottom).
+                        if !map.indoor
+                            && !dest.indoor
+                            && let (Some(from_edge), Some(to_edge)) =
+                                (edge_of(map, x, y), edge_of(dest, to.0, to.1))
+                            && to_edge != opposite_edge(from_edge)
+                        {
+                            findings.push(Finding::error(
+                                "map.door_direction",
+                                format!(
+                                    "`{mid}` door at ({x},{y}) [{from_edge:?} edge] lands on `{target}`'s {to_edge:?} edge — travel direction breaks"
+                                ),
+                            ));
+                        }
                         if !dest.in_bounds(to.0, to.1) {
                             findings.push(Finding::error(
                                 "map.warp_target",

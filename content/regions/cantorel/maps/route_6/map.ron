@@ -116,9 +116,9 @@ MapDef(
     ],
     triggers: [
         (at: (6, 0), kind: Warp(map: "frostine", to: (11, 12), facing: Down)),
-        (at: (6, 19), kind: Warp(map: "cadenza_city", to: (12, 1), facing: Up)),
+        (at: (6, 19), kind: Warp(map: "cadenza_city", to: (12, 2), facing: Up)),
         (at: (7, 0), kind: Warp(map: "frostine", to: (12, 12), facing: Down)),
-        (at: (7, 19), kind: Warp(map: "cadenza_city", to: (13, 1), facing: Up)),
+        (at: (7, 19), kind: Warp(map: "cadenza_city", to: (13, 2), facing: Up)),
     ],
     npcs: [
         (id: "rt6_virtuoso", at: (4, 8), facing: Right, sprite: "npc.trainer", script: Some("rt6_virtuoso.script.ron"), behavior: Static, sight_range: 3),

@@ -103,5 +103,6 @@ MapDef(
         (id: "maren", at: (6, 13), facing: Down, sprite: "npc.dario", script: Some("maren.script.ron"), behavior: Static, sight_range: 0),
     ],
     dark: true,
+    indoor: true,
     music: None,
 )
