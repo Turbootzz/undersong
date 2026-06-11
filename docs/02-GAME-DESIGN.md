@@ -528,3 +528,22 @@ Specifications P4 needs that earlier sections left open. Doc is law.
 4. **Dissonance in doubles** drops atk on both foe positions on entry.
 5. **Benchless fainted positions** stay on the field as silent (fainted)
    slots; single-target moves declared at them retarget per v1.5 #2.
+
+### v1.8 — 2026-06-11 (P4 phase-review rulings)
+
+1. **tuning_fork converts every feral-type move** (damaging or status)
+   to resonant with the ×1.2 boost — §10's "normal-effect" wording
+   meant "the normal-type analog" (feral), not "moves without secondary
+   effects".
+2. **T3 is anchored expectimax**: the v1.5 #3 probe scoring may only
+   override tier 2's analytic choice past a clear noise margin (the
+   unanchored form measurably loses to T1's exact arithmetic — §14
+   calibration table).
+3. **Exp Share** (§9) is implemented at the engine's exp award: each
+   non-fielded, conscious party Mote holding it gains 50% of the
+   unsplit base share, no dilution of participants.
+4. **The era Shift offer** fires only after a foe's KO replacement in
+   SINGLE-format trainer battles; doubles never offer it (positions
+   re-field at end of turn instead).
+5. **Rematch rewards**: payouts repeat per win; `reward_items` grant
+   once, on the first victory.

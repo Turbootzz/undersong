@@ -560,3 +560,62 @@ fn keysmith_doubles_bell_assist() {
         "keysmith ×2 equals a doubled bell"
     );
 }
+
+#[test]
+fn exp_share_pays_benched_holders_half_unsplit() {
+    let fast = species("expa", Type::Feral, 90);
+    let slow = species("expb", Type::Feral, 20);
+    let active = MoteBuilder::new(&fast, 30)
+        .moves(vec![strike("claw", Type::Feral, 200, true, false)])
+        .build();
+    let bench_holder = MoteBuilder::new(&fast, 10)
+        .held(HeldItem::ExpShare)
+        .moves(vec![strike("claw", Type::Feral, 50, true, false)])
+        .build();
+    let bench_plain = MoteBuilder::new(&fast, 10)
+        .moves(vec![strike("claw", Type::Feral, 50, true, false)])
+        .build();
+    let fodder = MoteBuilder::new(&slow, 5)
+        .moves(vec![strike("claw", Type::Feral, 50, true, false)])
+        .build();
+    let holder_exp = bench_holder.exp;
+    let plain_exp = bench_plain.exp;
+    let state = BattleState::new(
+        BattleKind::Trainer,
+        vec![active, bench_holder, bench_plain],
+        vec![fodder],
+        chart(),
+    );
+    let mut rng = BattleRng::from_seed(2);
+    let (next, events) = step(
+        &state,
+        &TurnActions::new(Action::Move { slot: 0 }, Action::Move { slot: 0 }),
+        &mut rng,
+    );
+    assert!(matches!(
+        next.outcome,
+        Some(battle::Outcome::Won { winner: 0 })
+    ));
+    assert!(
+        next.sides[0].party[1].exp > holder_exp,
+        "exp share holder gained on the bench"
+    );
+    assert_eq!(
+        next.sides[0].party[2].exp, plain_exp,
+        "plain bench mote gained nothing"
+    );
+    let share_events = events
+        .iter()
+        .filter(|e| {
+            matches!(
+                e,
+                BattleEvent::ExpGained {
+                    side: 0,
+                    slot: 1,
+                    ..
+                }
+            )
+        })
+        .count();
+    assert_eq!(share_events, 1);
+}

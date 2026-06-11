@@ -1329,9 +1329,11 @@ impl Engine {
             return;
         }
         self.pstate_mut(slot).fainted_emitted = true;
+        let party_index = self.state.side(slot.side).positions[usize::from(slot.pos)].party_index;
         self.events.push(BattleEvent::Fainted {
             target: slot.side,
             slot: slot.pos,
+            party_index,
         });
 
         // understudy (doc 02 §10): +1 atk/+1 spa to the surviving ally,
@@ -1444,6 +1446,49 @@ impl Engine {
                         self.events.push(BattleEvent::MoveLearnable {
                             side: victor,
                             slot: victor_slot,
+                            move_id,
+                        });
+                    }
+                }
+            }
+        }
+
+        // Exp Share (doc 02 §9, v1.8 #3): each conscious NON-fielded
+        // party Mote holding it gains 50% of the unsplit base share.
+        let share_gain = exp_gain(yield_base, level, 1, trainer, false) / 2;
+        if share_gain > 0 {
+            let fielded: Vec<u8> = self
+                .state
+                .side(victor)
+                .positions
+                .iter()
+                .map(|p| p.party_index)
+                .collect();
+            for index in 0..self.state.side(victor).party.len() {
+                let party_index = u8::try_from(index).expect("party ≤ 6");
+                if fielded.contains(&party_index) {
+                    continue;
+                }
+                let mote = &mut self.state.side_mut(victor).party[index];
+                if mote.is_fainted() || !matches!(mote.held, crate::abilities::HeldItem::ExpShare) {
+                    continue;
+                }
+                self.events.push(BattleEvent::ExpGained {
+                    side: victor,
+                    slot: party_index,
+                    amount: share_gain,
+                });
+                let ups = apply_exp(&mut self.state.side_mut(victor).party[index], share_gain);
+                for up in ups {
+                    self.events.push(BattleEvent::LeveledUp {
+                        side: victor,
+                        slot: party_index,
+                        level: up.new_level,
+                    });
+                    for move_id in up.learnable {
+                        self.events.push(BattleEvent::MoveLearnable {
+                            side: victor,
+                            slot: party_index,
                             move_id,
                         });
                     }

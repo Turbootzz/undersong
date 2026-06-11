@@ -154,6 +154,15 @@ pub fn queue_battle_events(
                         E::MoveMissed { side } => {
                             Some(format!("{} misses", if *side == 0 { "you" } else { "foe" }))
                         }
+                        E::MoveFailed { side, .. } => Some(format!(
+                            "{}'s move fails!",
+                            if *side == 0 { "your" } else { "the foe's" }
+                        )),
+                        E::SwitchedIn { side, species, .. } => Some(format!(
+                            "{} {} takes the stage",
+                            if *side == 0 { "your" } else { "foe" },
+                            world.text(&format!("motif.{species}"))
+                        )),
                         _ => None,
                     };
                     if let Some(line) = line {
@@ -200,6 +209,11 @@ pub fn queue_battle_events(
             }
             WorldEvent::ActionRejected { reason_key } => {
                 queue.lines.push_back(world.text(reason_key));
+            }
+            WorldEvent::ShiftOffered => {
+                queue
+                    .lines
+                    .push_back("send in another mote? (◀▶ pick · Z send · X keep)".into());
             }
             _ => {}
         }
@@ -457,7 +471,8 @@ fn battle_input(
     mut cursor: ResMut<BattleCursor>,
     mut next: ResMut<NextState<AppState>>,
     mut rows: Query<(&CommandRow, &mut BackgroundColor)>,
-    mut command_texts: Query<(&ChildOf, &mut Text)>,
+    mut command_texts: Query<(&ChildOf, &mut Text), Without<MessageText>>,
+    mut message_text: Query<&mut Text, With<MessageText>>,
 ) {
     // While messages are pending, only pumping happens (handled above);
     // and a Z that just popped a message must not double-fire here.
@@ -489,8 +504,23 @@ fn battle_input(
             return;
         }
         let pick = bench[cursor.index % bench.len()];
-        if keys.just_pressed(KeyCode::ArrowRight) || keys.just_pressed(KeyCode::ArrowLeft) {
+        if keys.just_pressed(KeyCode::ArrowRight) {
             cursor.index = (cursor.index + 1) % bench.len();
+        }
+        if keys.just_pressed(KeyCode::ArrowLeft) {
+            cursor.index = (cursor.index + bench.len() - 1) % bench.len();
+        }
+        if let Some(session) = &world.0.battle {
+            let species = &session.state.sides[0].party[usize::from(pick)].species;
+            let line = format!(
+                "send {}? (◀▶ pick · Z send · X keep)",
+                world.0.text(&format!("motif.{species}"))
+            );
+            if let Ok(mut message) = message_text.single_mut()
+                && message.0 != line
+            {
+                message.0 = line;
+            }
         }
         if keys.just_pressed(KeyCode::KeyZ) {
             let events = world.0.apply(WorldInput::Shift(Some(pick)));

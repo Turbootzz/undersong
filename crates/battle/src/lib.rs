@@ -39,4 +39,4 @@ pub use turn::step;
 /// v4: doc 02 v1.5 #2 — doubles: position slots serialized into nine
 /// event variants (`#[serde(default)]`, so v3 streams still parse; the
 /// singles rng stream itself is unchanged).
-pub const REPLAY_VERSION: u32 = 4;
+pub const REPLAY_VERSION: u32 = 5;

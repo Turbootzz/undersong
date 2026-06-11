@@ -167,6 +167,10 @@ pub enum BattleEvent {
         /// Fainted position (0 in singles).
         #[serde(default)]
         slot: u8,
+        /// Index into the side's battle party (stable across switches —
+        /// consumers fold results back through this, not the position).
+        #[serde(default)]
+        party_index: u8,
     },
     ExpGained {
         side: SideId,

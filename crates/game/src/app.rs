@@ -972,13 +972,25 @@ fn night_tint(
     world: Res<WorldRes>,
     settings: Res<SettingsRes>,
     existing: Query<Entity, With<NightTint>>,
+    mut tints: Query<&mut BackgroundColor, With<NightTint>>,
 ) {
     let dark_map = world.0.map().dark
         && !(world.0.vars.flags.contains("performance.lumen_hum")
             && world.0.party_has_tag("performer.light"));
     let wants = world.0.is_night() || dark_map;
-    let alpha = if dark_map { 0.6 } else { 0.35 };
-    let _ = &settings;
+    // High contrast lightens the veil so sprites stay readable.
+    let mut alpha = if dark_map { 0.6 } else { 0.35 };
+    if settings.0.high_contrast {
+        alpha *= 0.6;
+    }
+    // Live-refresh: walking from night into a dark cave (and back)
+    // retunes the alpha instead of keeping the spawn-time value.
+    if wants && let Ok(mut color) = tints.single_mut() {
+        let current = Color::srgba(0.05, 0.07, 0.2, alpha);
+        if color.0 != current {
+            color.0 = current;
+        }
+    }
     if wants && existing.is_empty() {
         commands.spawn((
             NightTint,
@@ -1097,6 +1109,7 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
 fn title_input(
     keys: Res<ButtonInput<KeyCode>>,
     mut world: ResMut<WorldRes>,
+    mut settings: ResMut<SettingsRes>,
     mut next: ResMut<NextState<AppState>>,
 ) {
     let load = keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter);
@@ -1108,6 +1121,7 @@ fn title_input(
         && let Some(backend) = save::FsBackend::platform_default()
         && let Ok(Some(file)) = save::load(&backend, save::SlotId::Slot1)
     {
+        settings.0 = file.player.settings.clone();
         world.0.restore(&file);
     } else {
         // A NEW song gets a fresh seed (app layer entropy — replays and

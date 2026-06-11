@@ -155,6 +155,10 @@ fn screens_input(
             }
             if state.in_bag {
                 let bag_len = world.0.bag.len();
+                // Clamp after consumption shrank the bag.
+                if state.bag_cursor >= bag_len && bag_len > 0 {
+                    state.bag_cursor = bag_len - 1;
+                }
                 if down && state.bag_cursor + 1 < bag_len {
                     state.bag_cursor += 1;
                 }

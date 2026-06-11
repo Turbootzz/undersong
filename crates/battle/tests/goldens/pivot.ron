@@ -1,4 +1,4 @@
-// golden replay `pivot` — REPLAY_VERSION 4
+// golden replay `pivot` — REPLAY_VERSION 5
 // regenerate: UPDATE_GOLDENS=1 cargo test -p battle --test goldens
 [
     TurnStarted(
@@ -51,6 +51,7 @@
     Fainted(
         target: 1,
         slot: 0,
+        party_index: 0,
     ),
     ExpGained(
         side: 0,

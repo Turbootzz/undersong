@@ -157,7 +157,7 @@ fn understudy_triggers_on_ally_faint() {
 
     let faint = events
         .iter()
-        .position(|e| matches!(e, BattleEvent::Fainted { target: 0, slot: 0 }))
+        .position(|e| matches!(e, BattleEvent::Fainted { target: 0, slot: 0, .. }))
         .expect("ally fainted");
     let note = events
         .iter()
@@ -223,7 +223,7 @@ fn retarget_hits_the_survivor_when_declared_target_fainted() {
 
     let faint = events
         .iter()
-        .position(|e| matches!(e, BattleEvent::Fainted { target: 1, slot: 0 }))
+        .position(|e| matches!(e, BattleEvent::Fainted { target: 1, slot: 0, .. }))
         .expect("declared target fainted first");
     let retargeted = events
         .iter()

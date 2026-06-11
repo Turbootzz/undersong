@@ -413,8 +413,9 @@ impl WorldState {
             events.push(WorldEvent::Bumped { at: (nx, ny) });
             return;
         }
-        // Performance obstacles block until cleared (doc 02 §11).
-        if self.obstacle_at(nx, ny).is_some() {
+        // Performance obstacles block until cleared (doc 02 §11);
+        // pushed boulders block at their new spot.
+        if self.obstacle_at(nx, ny).is_some() || self.boulder_pushed_to(nx, ny) {
             events.push(WorldEvent::Bumped { at: (nx, ny) });
             return;
         }
@@ -606,6 +607,13 @@ impl WorldState {
             })
     }
 
+    /// A boulder pushed to this tile earlier (blocks like an obstacle).
+    fn boulder_pushed_to(&self, x: u32, y: u32) -> bool {
+        self.vars
+            .flags
+            .contains(&format!("pushed.{}.{x}.{y}", self.current_map))
+    }
+
     /// Facing-tile Performance interactions (doc 02 §11).
     fn try_perform(&mut self, events: &mut Vec<WorldEvent>) -> bool {
         let (dx, dy) = self.facing.delta();
@@ -643,9 +651,10 @@ impl WorldState {
         }
         match kind {
             data::ObstacleKind::Boulder => {
-                // Push one tile along the facing if free (cleared flag
-                // marks the ORIGINAL spot; the pushed position lives in
-                // a var pair — boulders reset on map re-entry by design).
+                // Push one tile along the facing if free. The boulder
+                // KEEPS blocking at its new spot: the cleared flag frees
+                // the old tile and a pushed.<map>.<x>.<y> flag blocks
+                // the new one (doc 02 §11 anchor-boulder puzzles).
                 let Some(bx) = tx.checked_add_signed(dx) else {
                     return true;
                 };
@@ -655,12 +664,14 @@ impl WorldState {
                 let free = self.maps[&self.current_map].in_bounds(bx, by)
                     && !self.maps[&self.current_map].is_solid(bx, by)
                     && self.obstacle_at(bx, by).is_none()
+                    && !self.boulder_pushed_to(bx, by)
                     && !self.npc_blocking(bx, by);
                 if free {
                     let map_id = self.current_map.clone();
                     self.vars
                         .flags
                         .insert(format!("cleared.{map_id}.{tx}.{ty}"));
+                    self.vars.flags.insert(format!("pushed.{map_id}.{bx}.{by}"));
                     events.push(WorldEvent::Performed {
                         performance: key.into(),
                     });
@@ -941,6 +952,15 @@ impl WorldState {
         // Doc 02 v1.4 #3: illegal selections reject without consuming
         // the item or the turn (and without touching the rng stream).
         match command {
+            BattleCmd::Run => {
+                if matches!(session.context, BattleContext::Trainer { .. }) {
+                    events.push(WorldEvent::ActionRejected {
+                        reason_key: "ui.reject.run_trainer".into(),
+                    });
+                    self.battle = Some(session);
+                    return;
+                }
+            }
             BattleCmd::Bell => {
                 let is_wild = matches!(session.context, BattleContext::Wild { .. });
                 if !is_wild {
@@ -959,7 +979,15 @@ impl WorldState {
                 }
             }
             BattleCmd::Item => {
-                let active = session.state.sides[0].active_mote();
+                // In doubles the second declaration heals position 1 —
+                // gate against the declaring position's mote.
+                let declaring = usize::from(u8::from(session.pending_declaration.is_some()));
+                let active = match session.state.sides[0].positions.get(declaring) {
+                    Some(position) => {
+                        &session.state.sides[0].party[usize::from(position.party_index)]
+                    }
+                    None => session.state.sides[0].active_mote(),
+                };
                 if self.peek_best_potion().is_none() {
                     events.push(WorldEvent::ActionRejected {
                         reason_key: "ui.reject.no_tonics".into(),
@@ -996,11 +1024,16 @@ impl WorldState {
         }
         // Era Shift: foe replacement entered → offer a free switch when
         // a conscious bench exists (presenter hides it in Set mode).
-        if session.outcome().is_none()
-            && matches!(session.context, BattleContext::Trainer { .. })
+        let foe_replaced_after_ko = stream
+            .iter()
+            .any(|e| matches!(e, battle::BattleEvent::SwitchedIn { side: 1, .. }))
             && stream
                 .iter()
-                .any(|e| matches!(e, battle::BattleEvent::SwitchedIn { side: 1, .. }))
+                .any(|e| matches!(e, battle::BattleEvent::Fainted { target: 1, .. }));
+        if session.outcome().is_none()
+            && session.state.format == battle::Format::Single
+            && matches!(session.context, BattleContext::Trainer { .. })
+            && foe_replaced_after_ko
         {
             let bench: Vec<u8> = (0..session.state.sides[0].party.len() as u8)
                 .filter(|i| {
@@ -1174,6 +1207,7 @@ impl WorldState {
             }
         }
         self.pending_encounter = None;
+        self.pending_shift = false;
         events.push(WorldEvent::BattleFinished { outcome });
 
         match outcome {
@@ -1215,9 +1249,12 @@ impl WorldState {
                     let ace = trainer.party.iter().map(|m| m.level).max().unwrap_or(1);
                     let payout = trainer.payout_base * u32::from(ace);
                     self.money = self.money.saturating_add(payout);
+                    let first_win = !self.vars.flags.contains(&trainer.defeat_flag);
                     self.vars.flags.insert(trainer.defeat_flag.clone());
-                    for (item, count) in &trainer.reward_items {
-                        *self.bag.entry(item.clone()).or_insert(0) += count;
+                    if first_win {
+                        for (item, count) in &trainer.reward_items {
+                            *self.bag.entry(item.clone()).or_insert(0) += count;
+                        }
                     }
                     events.push(WorldEvent::MoneyChanged { money: self.money });
                 }
@@ -1275,10 +1312,14 @@ impl WorldState {
                     }
                 }
                 battle::BattleEvent::Fainted {
-                    target: 0, slot, ..
+                    target: 0,
+                    party_index,
+                    ..
                 } => {
-                    if let Some(party_index) = session.party_map.get(usize::from(*slot))
-                        && let Some(member) = self.party.get_mut(*party_index)
+                    // party_index is stable across switches; the position
+                    // slot must NOT be used for fold-back mapping.
+                    if let Some(world_index) = session.party_map.get(usize::from(*party_index))
+                        && let Some(member) = self.party.get_mut(*world_index)
                     {
                         member.friendship = member.friendship.saturating_sub(5);
                     }
@@ -1369,6 +1410,8 @@ impl WorldState {
             // resolve clamps against the new max; no free heal.
             let from = individual.species.clone();
             individual.species = target.clone();
+            self.vars.flags.insert(format!("dex.seen.{target}"));
+            self.vars.flags.insert(format!("dex.caught.{target}"));
             events.push(WorldEvent::Evolved { from, into: target });
         }
     }
@@ -1517,6 +1560,8 @@ impl WorldState {
                         if let Some(member) = self.party.get_mut(target_index) {
                             member.species = into.clone();
                         }
+                        self.vars.flags.insert(format!("dex.seen.{into}"));
+                        self.vars.flags.insert(format!("dex.caught.{into}"));
                         consumed = true;
                         events.push(WorldEvent::Evolved { from, into });
                     }
@@ -1656,6 +1701,7 @@ impl WorldState {
                 ("steps".to_string(), self.steps),
                 ("clock_ticks".to_string(), self.clock_ticks),
                 ("mute_steps".to_string(), u64::from(self.mute_steps)),
+                ("surfing".to_string(), u64::from(self.surfing)),
             ]),
             world_seed: self.world_seed,
             heal_point: Some((self.heal_point.0.to_string(), self.heal_point.1)),
@@ -1675,6 +1721,10 @@ impl WorldState {
         self.vars.vars = file.vars.clone();
         self.steps = file.counters.get("steps").copied().unwrap_or(0);
         self.clock_ticks = file.counters.get("clock_ticks").copied().unwrap_or(0);
+        self.surfing = file.counters.get("surfing").copied().unwrap_or(0) == 1;
+        self.badge_count = (1..=8u8)
+            .filter(|n| self.vars.flags.contains(&format!("badge.{n}")))
+            .count() as u8;
         self.mute_steps =
             u16::try_from(file.counters.get("mute_steps").copied().unwrap_or(0)).unwrap_or(0);
         self.party = file.party.clone();
