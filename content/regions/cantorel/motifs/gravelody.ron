@@ -1,0 +1,16 @@
+// Gravelody — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "gravelody", name_key: "motif.gravelody", types: [Stone],
+    base_stats: (hp: 62, atk: 72, def: 70, spa: 40, spd: 52, spe: 44),
+    catch_rate: 150, base_exp_yield: 96,
+    ev_yield: {atk: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "pebble_beat"), (1, "tackle"), (9, "quick_step"), (16, "stone_toll"), (24, "downbeat"), (32, "boulder_coda")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: Some((method: Level(32), target: "gravoross")),
+    cry_seed: 98514397896080, sigil_seed: 98514397896080,
+    dex: (height_dm: 6, weight_hg: 210, entry_key: "dex.gravelody"),
+)

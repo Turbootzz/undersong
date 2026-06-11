@@ -1,0 +1,16 @@
+// Fenadenza — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "fenadenza", name_key: "motif.fenadenza", types: [Venom, Bloom],
+    base_stats: (hp: 65, atk: 58, def: 62, spa: 78, spd: 72, spe: 55),
+    catch_rate: 90, base_exp_yield: 145,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sour_note"), (1, "bud_strum"), (10, "venom_trill"), (17, "leaf_pick"), (24, "toxic_toccata"), (32, "root_chord"), (40, "venom_cadenza")],
+    abilities: ["thorn_coat"],
+    hidden_ability: Some("keysmith"),
+    tags: ["habitat.swamp"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 192771711064009, sigil_seed: 192771711064009,
+    dex: (height_dm: 8, weight_hg: 264, entry_key: "dex.fenadenza"),
+)

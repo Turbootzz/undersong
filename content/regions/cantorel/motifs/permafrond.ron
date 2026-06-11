@@ -1,0 +1,16 @@
+// Permafrond — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "permafrond", name_key: "motif.permafrond", types: [Frost, Bloom],
+    base_stats: (hp: 74, atk: 56, def: 72, spa: 68, spd: 76, spe: 34),
+    catch_rate: 85, base_exp_yield: 148,
+    ev_yield: {spd: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sleet_staccato"), (1, "bud_strum"), (10, "frost_lull"), (17, "leaf_pick"), (24, "hail_chorale"), (32, "root_chord"), (41, "briar_bow")],
+    abilities: ["vigor"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 203293064078553, sigil_seed: 203293064078553,
+    dex: (height_dm: 8, weight_hg: 243, entry_key: "dex.permafrond"),
+)

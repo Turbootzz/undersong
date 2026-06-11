@@ -1,7 +1,7 @@
 // Torrentet — P5 batch A (Arbor Vale / routes 2–3)
 Motif(
     id: "torrentet", name_key: "motif.torrentet", types: [Tide],
-    base_stats: (hp: 70, atk: 58, def: 66, spa: 84, spd: 80, spe: 62),
+    base_stats: (hp: 70, atk: 58, def: 66, spa: 84, spd: 80, spe: 70),
     catch_rate: 85, base_exp_yield: 155,
     ev_yield: {spa: 2},
     growth_curve: MediumFast,

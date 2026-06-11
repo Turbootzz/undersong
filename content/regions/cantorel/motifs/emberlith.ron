@@ -1,0 +1,16 @@
+// Emberlith — P6 batch J (Triad + lategame)
+Motif(
+    id: "emberlith", name_key: "motif.emberlith", types: [Ember, Stone],
+    base_stats: (hp: 82, atk: 80, def: 84, spa: 62, spd: 64, spe: 46),
+    catch_rate: 60, base_exp_yield: 176,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ember_note"), (1, "pebble_beat"), (10, "flare_brass"), (17, "stone_toll"), (24, "cinder_waltz"), (32, "boulder_coda"), (41, "crescendo")],
+    abilities: ["heat_haze"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 202136546893101, sigil_seed: 202136546893101,
+    dex: (height_dm: 8, weight_hg: 256, entry_key: "dex.emberlith"),
+)

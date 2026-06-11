@@ -1,0 +1,16 @@
+// Orchestrios — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "orchestrios", name_key: "motif.orchestrios", types: [Alloy, Resonant],
+    base_stats: (hp: 76, atk: 62, def: 84, spa: 92, spd: 86, spe: 50),
+    catch_rate: 45, base_exp_yield: 200,
+    ev_yield: {spa: 3},
+    growth_curve: Slow,
+    learnset: [(1, "cymbal_tap"), (1, "overtone"), (11, "alloy_clang"), (18, "sostenuto"), (25, "anvil_anthem"), (33, "resonate"), (42, "anvil_chorus"), (50, "shatter_aria")],
+    abilities: ["amplify"],
+    hidden_ability: Some("chorister"),
+    tags: ["habitat.urban", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 179499794570412, sigil_seed: 179499794570412,
+    dex: (height_dm: 8, weight_hg: 257, entry_key: "dex.orchestrios"),
+)

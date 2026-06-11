@@ -1,0 +1,16 @@
+// Maestrina — P6 batch J (Triad + lategame)
+Motif(
+    id: "maestrina", name_key: "motif.maestrina", types: [Bloom, Resonant],
+    base_stats: (hp: 78, atk: 66, def: 74, spa: 94, spd: 88, spe: 72),
+    catch_rate: 50, base_exp_yield: 185,
+    ev_yield: {spa: 2},
+    growth_curve: Slow,
+    learnset: [(1, "bud_strum"), (1, "overtone"), (11, "leaf_pick"), (18, "root_chord"), (25, "sostenuto"), (33, "briar_bow"), (42, "resonate")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.forest", "performer.clear"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 248776063770440, sigil_seed: 248776063770440,
+    dex: (height_dm: 8, weight_hg: 276, entry_key: "dex.maestrina"),
+)

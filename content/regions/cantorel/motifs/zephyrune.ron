@@ -1,0 +1,16 @@
+// Zephyrune — P6 batch J (Triad + lategame)
+Motif(
+    id: "zephyrune", name_key: "motif.zephyrune", types: [Gale, Resonant],
+    base_stats: (hp: 66, atk: 58, def: 60, spa: 82, spd: 76, spe: 96),
+    catch_rate: 65, base_exp_yield: 172,
+    ev_yield: {spe: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "zephyr_pluck"), (1, "overtone"), (10, "gale_riff"), (17, "wing_beat"), (24, "sostenuto"), (32, "tempest_coda"), (41, "resonate")],
+    abilities: ["floating"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.peak", "performer.sky"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 123840997899521, sigil_seed: 123840997899521,
+    dex: (height_dm: 8, weight_hg: 284, entry_key: "dex.zephyrune"),
+)

@@ -1,0 +1,16 @@
+// Mirefall — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "mirefall", name_key: "motif.mirefall", types: [Venom, Tide],
+    base_stats: (hp: 72, atk: 64, def: 68, spa: 58, spd: 66, spe: 42),
+    catch_rate: 110, base_exp_yield: 132,
+    ev_yield: {hp: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "sour_note"), (1, "ripple"), (10, "venom_trill"), (17, "undertow"), (24, "toxic_toccata"), (32, "breaker_beat"), (41, "venom_cadenza")],
+    abilities: ["damper"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.swamp"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 153843040366666, sigil_seed: 153843040366666,
+    dex: (height_dm: 9, weight_hg: 251, entry_key: "dex.mirefall"),
+)

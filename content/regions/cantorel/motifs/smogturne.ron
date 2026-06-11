@@ -1,0 +1,16 @@
+// Smogturne — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "smogturne", name_key: "motif.smogturne", types: [Venom, Volt],
+    base_stats: (hp: 62, atk: 50, def: 56, spa: 82, spd: 64, spe: 72),
+    catch_rate: 100, base_exp_yield: 125,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sour_note"), (1, "static_strum"), (9, "venom_trill"), (16, "stun_chord"), (23, "toxic_toccata"), (31, "venom_cadenza"), (39, "shatter_aria")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 134707081748508, sigil_seed: 134707081748508,
+    dex: (height_dm: 7, weight_hg: 253, entry_key: "dex.smogturne"),
+)

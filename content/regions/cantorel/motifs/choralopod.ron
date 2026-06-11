@@ -1,0 +1,16 @@
+// Choralopod — P6 batch J (Triad + lategame)
+Motif(
+    id: "choralopod", name_key: "motif.choralopod", types: [Tide, Venom],
+    base_stats: (hp: 76, atk: 68, def: 68, spa: 68, spd: 72, spe: 52),
+    catch_rate: 70, base_exp_yield: 168,
+    ev_yield: {spa: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "ripple"), (1, "sour_note"), (10, "venom_trill"), (17, "undertow"), (24, "toxic_toccata"), (32, "riptide_finale"), (41, "venom_cadenza")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("keysmith"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 100623594513523, sigil_seed: 100623594513523,
+    dex: (height_dm: 10, weight_hg: 277, entry_key: "dex.choralopod"),
+)

@@ -1,0 +1,16 @@
+// Ferrobass — P6 batch J (Triad + lategame)
+Motif(
+    id: "ferrobass", name_key: "motif.ferrobass", types: [Alloy, Tide],
+    base_stats: (hp: 84, atk: 90, def: 88, spa: 58, spd: 72, spe: 40),
+    catch_rate: 60, base_exp_yield: 178,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "cymbal_tap"), (1, "ripple"), (10, "alloy_clang"), (17, "undertow"), (24, "anvil_anthem"), (32, "breaker_beat"), (41, "anvil_chorus")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.coast", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 40701849819566, sigil_seed: 40701849819566,
+    dex: (height_dm: 9, weight_hg: 262, entry_key: "dex.ferrobass"),
+)

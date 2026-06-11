@@ -1,0 +1,16 @@
+// Taciturn — P6 batch J (Triad + lategame)
+Motif(
+    id: "taciturn", name_key: "motif.taciturn", types: [Phantom, Stone],
+    base_stats: (hp: 104, atk: 88, def: 102, spa: 72, spd: 92, spe: 42),
+    catch_rate: 5, base_exp_yield: 250,
+    ev_yield: {def: 3},
+    growth_curve: Slow,
+    learnset: [(1, "hollow_hum"), (1, "pebble_beat"), (15, "stone_toll"), (25, "phantom_rest"), (35, "fermata_guard"), (45, "boulder_coda"), (55, "requiem_swell")],
+    abilities: ["damper"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 60787033167180, sigil_seed: 60787033167180,
+    dex: (height_dm: 8, weight_hg: 270, entry_key: "dex.taciturn"),
+)

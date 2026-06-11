@@ -1,7 +1,7 @@
 // Crescendola — P5 batch C/D (Port Calando / rares)
 Motif(
     id: "crescendola", name_key: "motif.crescendola", types: [Resonant],
-    base_stats: (hp: 72, atk: 58, def: 64, spa: 90, spd: 82, spe: 70),
+    base_stats: (hp: 72, atk: 58, def: 64, spa: 84, spd: 82, spe: 70),
     catch_rate: 45, base_exp_yield: 190,
     ev_yield: {spa: 3},
     growth_curve: Slow,

@@ -1,0 +1,16 @@
+// Intervallia — P6 batch J (Triad + lategame)
+Motif(
+    id: "intervallia", name_key: "motif.intervallia", types: [Resonant, Tide],
+    base_stats: (hp: 92, atk: 70, def: 86, spa: 104, spd: 98, spe: 84),
+    catch_rate: 5, base_exp_yield: 250,
+    ev_yield: {spd: 3},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "ripple"), (15, "undertow"), (25, "sostenuto"), (35, "riptide_finale"), (45, "resonate"), (55, "requiem_swell")],
+    abilities: ["encore_heart"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.coast", "performer.ferry"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 200542229886302, sigil_seed: 200542229886302,
+    dex: (height_dm: 10, weight_hg: 289, entry_key: "dex.intervallia"),
+)

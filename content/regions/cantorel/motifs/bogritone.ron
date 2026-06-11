@@ -1,0 +1,16 @@
+// Bogritone — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "bogritone", name_key: "motif.bogritone", types: [Bloom, Phantom],
+    base_stats: (hp: 80, atk: 74, def: 70, spa: 60, spd: 68, spe: 38),
+    catch_rate: 70, base_exp_yield: 158,
+    ev_yield: {hp: 2},
+    growth_curve: Slow,
+    learnset: [(1, "bud_strum"), (1, "hollow_hum"), (11, "leaf_pick"), (18, "root_chord"), (25, "phantom_rest"), (33, "briar_bow"), (42, "requiem_swell")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.swamp", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 223472672520571, sigil_seed: 223472672520571,
+    dex: (height_dm: 10, weight_hg: 246, entry_key: "dex.bogritone"),
+)

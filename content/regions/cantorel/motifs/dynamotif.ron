@@ -1,0 +1,16 @@
+// Dynamotif — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "dynamotif", name_key: "motif.dynamotif", types: [Volt],
+    base_stats: (hp: 60, atk: 55, def: 55, spa: 63, spd: 60, spe: 63),
+    catch_rate: 140, base_exp_yield: 105,
+    ev_yield: {spa: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "static_strum"), (1, "tackle"), (9, "volt_pluck"), (16, "stun_chord"), (23, "overtone"), (31, "shatter_aria")],
+    abilities: ["live_wire"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: Some((method: Level(30), target: "dynamaestro")),
+    cry_seed: 127811731759978, sigil_seed: 127811731759978,
+    dex: (height_dm: 9, weight_hg: 268, entry_key: "dex.dynamotif"),
+)

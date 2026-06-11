@@ -1,0 +1,16 @@
+// Cantavella — P6 batch J (Triad + lategame)
+Motif(
+    id: "cantavella", name_key: "motif.cantavella", types: [Resonant, Gale],
+    base_stats: (hp: 88, atk: 76, def: 78, spa: 108, spd: 88, spe: 102),
+    catch_rate: 5, base_exp_yield: 250,
+    ev_yield: {spe: 3},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "zephyr_pluck"), (15, "gale_riff"), (25, "sostenuto"), (35, "tempest_coda"), (45, "resonate"), (55, "shatter_aria")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("amplify"),
+    tags: ["habitat.peak", "performer.sky"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 131976493466347, sigil_seed: 131976493466347,
+    dex: (height_dm: 12, weight_hg: 297, entry_key: "dex.cantavella"),
+)

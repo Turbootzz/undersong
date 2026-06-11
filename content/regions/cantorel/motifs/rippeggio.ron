@@ -1,7 +1,7 @@
 // Rippeggio — Tide starter, first stage (canon doc 01 §9 example name). A glossy cal
 Motif(
     id: "rippeggio", name_key: "motif.rippeggio", types: [Tide],
-    base_stats: (hp: 55, atk: 38, def: 47, spa: 61, spd: 64, spe: 45),
+    base_stats: (hp: 55, atk: 30, def: 47, spa: 69, spd: 64, spe: 45),
     catch_rate: 45, base_exp_yield: 62,
     ev_yield: {spd: 1},
     growth_curve: MediumSlow,

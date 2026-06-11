@@ -1,0 +1,16 @@
+// Gravoross — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "gravoross", name_key: "motif.gravoross", types: [Stone, Feral],
+    base_stats: (hp: 85, atk: 96, def: 86, spa: 48, spd: 64, spe: 52),
+    catch_rate: 65, base_exp_yield: 180,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "pebble_beat"), (1, "tackle"), (9, "quick_step"), (16, "stone_toll"), (24, "downbeat"), (31, "fortissimo_slam"), (40, "boulder_coda"), (48, "fermata_guard")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.peak", "performer.lift"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 98514397896080, sigil_seed: 17077336282860,
+    dex: (height_dm: 7, weight_hg: 235, entry_key: "dex.gravoross"),
+)

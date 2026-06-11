@@ -1,0 +1,16 @@
+// Willowisp — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "willowisp", name_key: "motif.willowisp", types: [Phantom, Ember],
+    base_stats: (hp: 58, atk: 44, def: 52, spa: 86, spd: 72, spe: 76),
+    catch_rate: 80, base_exp_yield: 150,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "hollow_hum"), (1, "ember_note"), (10, "dampen"), (17, "flare_brass"), (24, "phantom_rest"), (31, "cinder_waltz"), (40, "requiem_swell")],
+    abilities: ["damper"],
+    hidden_ability: Some("heat_haze"),
+    tags: ["habitat.swamp", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 190106875220182, sigil_seed: 190106875220182,
+    dex: (height_dm: 9, weight_hg: 229, entry_key: "dex.willowisp"),
+)

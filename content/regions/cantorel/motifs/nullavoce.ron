@@ -1,0 +1,16 @@
+// Nullavoce — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "nullavoce", name_key: "motif.nullavoce", types: [Phantom, Alloy],
+    base_stats: (hp: 74, atk: 70, def: 88, spa: 80, spd: 84, spe: 54),
+    catch_rate: 45, base_exp_yield: 195,
+    ev_yield: {spd: 2},
+    growth_curve: Slow,
+    learnset: [(1, "hollow_hum"), (1, "cymbal_tap"), (11, "dampen"), (18, "alloy_clang"), (25, "phantom_rest"), (33, "fermata_guard"), (42, "requiem_swell"), (50, "resonate")],
+    abilities: ["damper"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 161737787661540, sigil_seed: 161737787661540,
+    dex: (height_dm: 7, weight_hg: 241, entry_key: "dex.nullavoce"),
+)

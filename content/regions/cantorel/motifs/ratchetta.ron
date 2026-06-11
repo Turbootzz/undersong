@@ -1,0 +1,16 @@
+// Ratchetta — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "ratchetta", name_key: "motif.ratchetta", types: [Feral, Alloy],
+    base_stats: (hp: 55, atk: 66, def: 60, spa: 40, spd: 45, spe: 68),
+    catch_rate: 160, base_exp_yield: 88,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "tackle"), (1, "cymbal_tap"), (8, "quick_step"), (14, "downbeat"), (21, "quick_march"), (28, "alloy_clang"), (36, "fortissimo_slam")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("iron_ear"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 15153926231140, sigil_seed: 15153926231140,
+    dex: (height_dm: 6, weight_hg: 231, entry_key: "dex.ratchetta"),
+)

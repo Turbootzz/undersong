@@ -1,0 +1,16 @@
+// Shiverine — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "shiverine", name_key: "motif.shiverine", types: [Frost, Gale],
+    base_stats: (hp: 58, atk: 52, def: 50, spa: 78, spd: 64, spe: 88),
+    catch_rate: 110, base_exp_yield: 128,
+    ev_yield: {spe: 1},
+    growth_curve: MediumFast,
+    learnset: [(1, "sleet_staccato"), (1, "zephyr_pluck"), (9, "gale_riff"), (16, "frost_lull"), (23, "hail_chorale"), (31, "wing_beat"), (40, "tempest_coda")],
+    abilities: ["flurry_caller"],
+    hidden_ability: Some("perfect_pitch"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 263719188777412, sigil_seed: 263719188777412,
+    dex: (height_dm: 7, weight_hg: 261, entry_key: "dex.shiverine"),
+)

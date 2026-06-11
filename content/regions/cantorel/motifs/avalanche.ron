@@ -1,0 +1,16 @@
+// Avalanchord — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "avalanche", name_key: "motif.avalanche", types: [Frost, Stone],
+    base_stats: (hp: 88, atk: 84, def: 82, spa: 56, spd: 70, spe: 30),
+    catch_rate: 55, base_exp_yield: 185,
+    ev_yield: {hp: 2},
+    growth_curve: Slow,
+    learnset: [(1, "sleet_staccato"), (1, "pebble_beat"), (11, "stone_toll"), (18, "hail_chorale"), (26, "fermata_guard"), (34, "boulder_coda"), (44, "requiem_swell")],
+    abilities: ["thick_hide"],
+    hidden_ability: Some("flurry_caller"),
+    tags: ["habitat.peak"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 206243523757341, sigil_seed: 206243523757341,
+    dex: (height_dm: 8, weight_hg: 246, entry_key: "dex.avalanche"),
+)

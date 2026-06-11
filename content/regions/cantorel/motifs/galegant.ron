@@ -1,0 +1,16 @@
+// Galegant — P6 batch J (Triad + lategame)
+Motif(
+    id: "galegant", name_key: "motif.galegant", types: [Gale, Feral],
+    base_stats: (hp: 74, atk: 88, def: 68, spa: 56, spd: 60, spe: 90),
+    catch_rate: 70, base_exp_yield: 165,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "zephyr_pluck"), (1, "tackle"), (9, "quick_step"), (16, "wing_beat"), (23, "downbeat"), (30, "quick_march"), (38, "tempest_coda"), (46, "fortissimo_slam")],
+    abilities: ["stage_fright"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.field"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 64271509106126, sigil_seed: 64271509106126,
+    dex: (height_dm: 9, weight_hg: 264, entry_key: "dex.galegant"),
+)

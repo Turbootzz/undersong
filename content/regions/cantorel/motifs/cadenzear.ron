@@ -1,0 +1,16 @@
+// Cadenzear — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "cadenzear", name_key: "motif.cadenzear", types: [Resonant, Feral],
+    base_stats: (hp: 70, atk: 80, def: 66, spa: 70, spd: 64, spe: 80),
+    catch_rate: 60, base_exp_yield: 175,
+    ev_yield: {atk: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "overtone"), (1, "tackle"), (9, "quick_step"), (16, "downbeat"), (23, "sostenuto"), (30, "quick_march"), (38, "fortissimo_slam"), (46, "resonate")],
+    abilities: ["soloist"],
+    hidden_ability: Some("stage_fright"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 22594788913479, sigil_seed: 22594788913479,
+    dex: (height_dm: 10, weight_hg: 278, entry_key: "dex.cadenzear"),
+)

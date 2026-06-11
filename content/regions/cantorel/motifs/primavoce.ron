@@ -1,0 +1,16 @@
+// Primavoce — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "primavoce", name_key: "motif.primavoce", types: [Resonant],
+    base_stats: (hp: 96, atk: 72, def: 84, spa: 116, spd: 96, spe: 86),
+    catch_rate: 3, base_exp_yield: 255,
+    ev_yield: {spa: 3},
+    growth_curve: Slow,
+    learnset: [(1, "overtone"), (1, "dampen"), (15, "sostenuto"), (25, "crescendo"), (35, "resonate"), (45, "requiem_swell"), (55, "shatter_aria")],
+    abilities: ["perfect_pitch"],
+    hidden_ability: Some("soloist"),
+    tags: ["habitat.ruin", "performer.light"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 68579467668415, sigil_seed: 68579467668415,
+    dex: (height_dm: 12, weight_hg: 350, entry_key: "dex.primavoce"),
+)

@@ -1,7 +1,7 @@
 // Staccatto — P5 batch E (type-gap fill)
 Motif(
     id: "staccatto", name_key: "motif.staccatto", types: [Volt, Alloy],
-    base_stats: (hp: 58, atk: 58, def: 62, spa: 50, spd: 52, spe: 66),
+    base_stats: (hp: 58, atk: 58, def: 62, spa: 50, spd: 52, spe: 62),
     catch_rate: 120, base_exp_yield: 112,
     ev_yield: {atk: 1},
     growth_curve: MediumFast,

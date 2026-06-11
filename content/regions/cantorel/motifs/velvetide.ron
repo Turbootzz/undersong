@@ -1,0 +1,16 @@
+// Velvetide — P6 batch J (Triad + lategame)
+Motif(
+    id: "velvetide", name_key: "motif.velvetide", types: [Tide, Phantom],
+    base_stats: (hp: 70, atk: 52, def: 66, spa: 72, spd: 74, spe: 68),
+    catch_rate: 55, base_exp_yield: 180,
+    ev_yield: {spd: 2},
+    growth_curve: Slow,
+    learnset: [(1, "ripple"), (1, "hollow_hum"), (11, "undertow"), (18, "phantom_rest"), (25, "sostenuto"), (33, "riptide_finale"), (42, "requiem_swell")],
+    abilities: ["damper"],
+    hidden_ability: Some("encore_heart"),
+    tags: ["habitat.coast"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 189787617639766, sigil_seed: 189787617639766,
+    dex: (height_dm: 9, weight_hg: 283, entry_key: "dex.velvetide"),
+)

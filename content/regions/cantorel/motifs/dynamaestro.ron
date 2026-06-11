@@ -1,0 +1,16 @@
+// Dynamaestro — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "dynamaestro", name_key: "motif.dynamaestro", types: [Volt, Alloy],
+    base_stats: (hp: 78, atk: 70, def: 76, spa: 100, spd: 78, spe: 88),
+    catch_rate: 60, base_exp_yield: 190,
+    ev_yield: {spa: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "static_strum"), (1, "cymbal_tap"), (9, "volt_pluck"), (16, "stun_chord"), (23, "overtone"), (30, "alloy_clang"), (38, "shatter_aria"), (46, "resonate")],
+    abilities: ["amplify"],
+    hidden_ability: Some("metronome_soul"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 127811731759978, sigil_seed: 30904051317541,
+    dex: (height_dm: 9, weight_hg: 266, entry_key: "dex.dynamaestro"),
+)

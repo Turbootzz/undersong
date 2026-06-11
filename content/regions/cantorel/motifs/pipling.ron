@@ -1,7 +1,7 @@
 // Pipling — Early bird, stage 1 (pipe/piccolo x nestling; name is doc-canon from 0
 Motif(
     id: "pipling", name_key: "motif.pipling", types: [Feral, Gale],
-    base_stats: (hp: 45, atk: 45, def: 38, spa: 55, spd: 37, spe: 80),
+    base_stats: (hp: 49, atk: 49, def: 50, spa: 55, spd: 49, spe: 80),
     catch_rate: 255, base_exp_yield: 55,
     ev_yield: {spe: 1},
     growth_curve: MediumFast,

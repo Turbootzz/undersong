@@ -1,0 +1,16 @@
+// Pistonna — P6 batch F/G (Voltaccia / Hollowfen)
+Motif(
+    id: "pistonna", name_key: "motif.pistonna", types: [Alloy],
+    base_stats: (hp: 70, atk: 82, def: 74, spa: 40, spd: 56, spe: 48),
+    catch_rate: 120, base_exp_yield: 118,
+    ev_yield: {atk: 1},
+    growth_curve: MediumSlow,
+    learnset: [(1, "cymbal_tap"), (1, "tackle"), (10, "downbeat"), (17, "alloy_clang"), (24, "anvil_anthem"), (32, "fortissimo_slam"), (41, "anvil_chorus")],
+    abilities: ["iron_ear"],
+    hidden_ability: Some("thick_hide"),
+    tags: ["habitat.urban"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 228225530489945, sigil_seed: 228225530489945,
+    dex: (height_dm: 8, weight_hg: 210, entry_key: "dex.pistonna"),
+)

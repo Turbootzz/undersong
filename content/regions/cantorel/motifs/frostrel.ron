@@ -1,7 +1,7 @@
 // Frostrel — P5 batch E (type-gap fill)
 Motif(
     id: "frostrel", name_key: "motif.frostrel", types: [Frost],
-    base_stats: (hp: 50, atk: 44, def: 52, spa: 60, spd: 58, spe: 52),
+    base_stats: (hp: 54, atk: 52, def: 52, spa: 60, spd: 58, spe: 52),
     catch_rate: 180, base_exp_yield: 62,
     ev_yield: {spa: 1},
     growth_curve: MediumFast,

@@ -1,0 +1,16 @@
+// Vespernox — P6 batch H/I (Graven/Frostine/Cadenza + aces)
+Motif(
+    id: "vespernox", name_key: "motif.vespernox", types: [Phantom, Venom],
+    base_stats: (hp: 68, atk: 88, def: 62, spa: 74, spd: 66, spe: 92),
+    catch_rate: 50, base_exp_yield: 190,
+    ev_yield: {spe: 2},
+    growth_curve: MediumSlow,
+    learnset: [(1, "hollow_hum"), (1, "sour_note"), (10, "grace_note"), (17, "venom_trill"), (24, "phantom_rest"), (31, "toxic_toccata"), (39, "venom_cadenza"), (47, "requiem_swell")],
+    abilities: ["keysmith"],
+    hidden_ability: Some("damper"),
+    tags: ["habitat.ruin"],
+    tm_set: [],
+    evolution: None,
+    cry_seed: 47054406578492, sigil_seed: 47054406578492,
+    dex: (height_dm: 8, weight_hg: 277, entry_key: "dex.vespernox"),
+)
