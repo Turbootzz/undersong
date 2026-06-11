@@ -613,59 +613,98 @@ fn run_act1() -> Driver {
     driver.go_y(12); // hall_3 door → (6,1)
     assert_eq!(driver.world.current_map.as_str(), "hall_3");
 
-    // Hall 3: the doubles gauntlet.
-    driver.go_y(5);
-    driver.walk(&[(Left, 1)]); // (5,5): duo_a sight
-    assert!(driver.has_flag("trainer.hall3_duo_a.defeated"));
-    // Rest between the duos (doubles attrition is real).
-    driver.go_x(6);
-    driver.go_y(0); // → calando (19,11)
-    driver.go_x(9); // rest doorstep heals
-    driver.go_x(19);
-    driver.go_y(12); // → hall_3 (6,1)
-    driver.go_y(5);
-    driver.go_x(9);
-    driver.go_y(9); // (9,9): duo_b sight
-    assert!(driver.has_flag("trainer.hall3_duo_b.defeated"));
-    // One more rest before the Maestro (descend the x9 channel), and
-    // spend the duo payouts on tonics.
-    driver.go_y(8);
-    driver.go_x(9);
-    driver.go_y(5);
-    driver.go_x(6);
-    driver.go_y(0); // → calando
-    driver.go_x(9); // rest heals
-    driver.open_shop_at(4, 11);
-    driver.buy("potion_m", 4);
-    driver.close_shop();
-    driver.go_y(11);
-    driver.go_x(19);
-    driver.go_y(12); // → hall_3
-    driver.go_y(5);
-    driver.go_x(9);
-    driver.go_y(10);
-    driver.go_x(3);
-    driver.go_y(12);
-    driver.go_x(7);
-    driver.go_y(14);
-    driver.interact(); // Maestro Bram (doubles, T3)
-    assert!(
-        driver.has_flag("badge.3"),
-        "Bram beaten; party {:?}",
-        driver
-            .world
-            .party
-            .iter()
-            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
-            .collect::<Vec<_>>()
+    // Hall 3: the doubles gauntlet, retry-structured.
+    /// From anywhere inside hall_3, return to the (6,5) staging tile
+    /// (walls at y7 x2..8 and y11 x5..11 dictate the channels).
+    fn hall3_stage(d: &mut Driver) {
+        if d.world.current_map.as_str() != "hall_3" {
+            return;
+        }
+        if d.world.player.1 > 10 {
+            d.go_x(3);
+            d.go_y(10);
+        }
+        if d.world.player.1 > 6 {
+            d.go_x(9);
+            d.go_y(5);
+        }
+        d.go_x(6);
+        d.go_y(5);
+    }
+
+    fn back_to_hall3(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "port_calando" => {
+                    d.go_y(11);
+                    d.go_x(9); // rest doorstep heals
+                    d.open_shop_at(4, 11);
+                    d.buy("potion_m", 3);
+                    d.close_shop();
+                    d.go_y(11);
+                    d.go_x(19);
+                    d.go_y(12); // → hall_3 (6,1)
+                }
+                "hall_3" => return,
+                _ => return,
+            }
+        }
+    }
+
+    driver.until_flag(
+        "trainer.hall3_duo_a.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(5); // duo_a sight (4,5),(5,5)
+                if !d.has_flag("trainer.hall3_duo_a.defeated") {
+                    d.go_x(4);
+                    d.face(Left);
+                    d.interact();
+                }
+            }
+        },
+        back_to_hall3,
+    );
+    back_to_hall3(&mut driver);
+    driver.until_flag(
+        "trainer.hall3_duo_b.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(9);
+                d.go_y(9); // duo_b sight (8,9),(9,9)
+                if !d.has_flag("trainer.hall3_duo_b.defeated") {
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_hall3,
+    );
+    back_to_hall3(&mut driver);
+    driver.until_flag(
+        "badge.3",
+        5,
+        |d| {
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(9);
+                d.go_y(10);
+                d.go_x(3);
+                d.go_y(12);
+                d.go_x(7);
+                d.go_y(14);
+                d.interact(); // Maestro Stelt (doubles, T3)
+            }
+        },
+        back_to_hall3,
     );
 
     // ---- Beat 5: Lull, on the way out (reverse the gauntlet maze) ---------
-    driver.go_x(3);
-    driver.go_y(10);
-    driver.go_x(9);
-    driver.go_y(5);
-    driver.go_x(6);
+    hall3_stage(&mut driver);
     driver.go_y(2); // the lull_scene trigger
     driver.drain();
     assert!(

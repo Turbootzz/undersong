@@ -1,0 +1,16 @@
+// Hall 3 Maestro Stelt (doc 01 §4: Tide, harbor cranes, first doubles;
+// complicity: Suspects).
+Trainer(
+    id: "maestro_stelt", class: "Maestro", name_key: "npc.stelt",
+    ai_tier: 3, payout_base: 80, double_battle: true,
+    party: [
+        (species: "torrentet", level: 20),
+        (species: "maridian", level: 22,
+         moves: Some(["ripple", "pebble_beat", "stone_toll", "dampen"]),
+         held_item: Some("oran_chime")),
+        (species: "brookoda", level: 20),
+    ],
+    defeat_flag: "hall.3.cleared",
+    reward_items: [("tm04", 1)],
+    intro_key: "hall3.stelt.intro", defeat_key: "hall3.stelt.defeat",
+)

@@ -1,0 +1,17 @@
+// Maestro Stelt — Hall 3, the first DOUBLES maestro (beat 5).
+[
+    If(flag: "hall.3.cleared",
+       then: [Say(who: "stelt", key: "hall3.stelt.after"), End],
+       else: []),
+    Say(who: "stelt", key: "hall3.stelt.intro"),
+    StartBattle(trainer: "maestro_stelt"),
+    If(flag: "hall.3.cleared",
+       then: [
+            Say(who: "stelt", key: "hall3.stelt.badge"),
+            SetFlag(flag: "badge.3"),
+            SetFlag(flag: "performance.tunneling_bass"),
+            Say(who: "stelt", key: "hall3.stelt.tunneling"),
+       ],
+       else: []),
+    End,
+]
