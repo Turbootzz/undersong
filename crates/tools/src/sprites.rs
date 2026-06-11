@@ -73,7 +73,7 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
     };
     match kind {
         "grass" => {
-            let base = hex(0x6a9a4e);
+            let base = hex(0x5fa653);
             fill(base, shade(base, 0.85), 90);
             // blade tufts
             for _ in 0..10 {
@@ -111,9 +111,9 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
         }
         "water" | "deep" => {
             let base = if kind == "deep" {
-                shade(hex(0x4a7a9c), 0.75)
+                shade(hex(0x3f7fb5), 0.7)
             } else {
-                hex(0x4a7a9c)
+                hex(0x3f7fb5)
             };
             fill(base, shade(base, 1.1), 40);
             // wave strokes
@@ -220,6 +220,145 @@ fn tile(kind: &str, rng: &mut BattleRng) -> RgbaImage {
                         img.put_pixel(x, y, p);
                     }
                 }
+            }
+        }
+        "wall_indoor" => {
+            // dark wainscot paneling — interiors need readable walls
+            let base = hex(0x4a4256);
+            fill(base, shade(base, 0.92), 24);
+            for x in (0..TILE).step_by(8) {
+                for y in 0..TILE {
+                    img.put_pixel(x, y, shade(base, 0.78));
+                }
+            }
+            for x in 0..TILE {
+                img.put_pixel(x, TILE - 2, shade(GILT, 0.85));
+                img.put_pixel(x, 0, shade(base, 0.7));
+            }
+        }
+        "roof_red" | "roof_blue" | "roof_green" => {
+            let base = match kind {
+                "roof_red" => hex(0xb5533c),
+                "roof_blue" => hex(0x4a6f9c),
+                _ => hex(0x5f8a4e),
+            };
+            fill(base, shade(base, 0.92), 30);
+            // shingle courses
+            for (row, y) in (0..TILE).step_by(6).enumerate() {
+                for x in 0..TILE {
+                    img.put_pixel(x, y, shade(base, 0.7));
+                }
+                let offset = if row % 2 == 0 { 3 } else { 9 };
+                for x in (offset..TILE).step_by(12) {
+                    for dy in 1..6u32 {
+                        if y + dy < TILE {
+                            img.put_pixel(x, y + dy, shade(base, 0.82));
+                        }
+                    }
+                }
+            }
+        }
+        "door" => {
+            // frame on parchment wall, warm wooden door, gilt knob
+            let wall = shade(PARCHMENT, 0.92);
+            fill(wall, shade(wall, 0.96), 16);
+            let wood = hex(0x7a4a2a);
+            for y in 6..TILE {
+                for x in 8..24u32 {
+                    img.put_pixel(x, y, if x % 5 == 0 { shade(wood, 0.85) } else { wood });
+                }
+            }
+            for y in 5..TILE {
+                img.put_pixel(7, y, INK);
+                img.put_pixel(24, y, INK);
+            }
+            for x in 7..25u32 {
+                img.put_pixel(x, 5, INK);
+            }
+            img.put_pixel(21, 18, GILT);
+            img.put_pixel(21, 19, GILT);
+            img.put_pixel(20, 18, shade(GILT, 0.8));
+        }
+        "window" => {
+            let wall = shade(PARCHMENT, 0.92);
+            fill(wall, shade(wall, 0.96), 16);
+            let glow = hex(0xf2d06b);
+            for y in 9..21u32 {
+                for x in 9..23u32 {
+                    img.put_pixel(
+                        x,
+                        y,
+                        if (x + y) % 7 == 0 {
+                            shade(glow, 1.1)
+                        } else {
+                            glow
+                        },
+                    );
+                }
+            }
+            for y in 8..22u32 {
+                img.put_pixel(8, y, INK);
+                img.put_pixel(23, y, INK);
+            }
+            for x in 8..24u32 {
+                img.put_pixel(x, 8, INK);
+                img.put_pixel(x, 21, INK);
+            }
+            for y in 9..21u32 {
+                img.put_pixel(15, y, shade(INK, 1.4));
+                img.put_pixel(16, y, shade(INK, 1.4));
+            }
+        }
+        "flowers" => {
+            // transparent over grass: scattered blooms
+            let blooms = [hex(0xd45a6e), hex(0xf2d06b), hex(0xe8e8f0), hex(0xb08ec4)];
+            for (i, &bloom) in blooms.iter().enumerate() {
+                for _ in 0..3 {
+                    let x = 2 + rng.below(TILE - 5);
+                    let y = 2 + rng.below(TILE - 5);
+                    img.put_pixel(x + 1, y, bloom);
+                    img.put_pixel(x, y + 1, bloom);
+                    img.put_pixel(x + 2, y + 1, bloom);
+                    img.put_pixel(x + 1, y + 2, bloom);
+                    img.put_pixel(x + 1, y + 1, shade(blooms[(i + 1) % 4], 1.1));
+                    img.put_pixel(x + 1, y + 3, hex(0x3f6e35));
+                }
+            }
+        }
+        "fence" => {
+            let wood = hex(0x8a6a42);
+            for y in 12..26u32 {
+                for x in 0..TILE {
+                    if x % 8 < 3 {
+                        img.put_pixel(x, y, if x % 8 == 1 { wood } else { shade(wood, 0.8) });
+                    }
+                }
+            }
+            for x in 0..TILE {
+                img.put_pixel(x, 15, shade(wood, 0.9));
+                img.put_pixel(x, 16, wood);
+                img.put_pixel(x, 21, shade(wood, 0.9));
+                img.put_pixel(x, 22, wood);
+            }
+        }
+        "lamp" => {
+            let post = hex(0x3a3a44);
+            for y in 10..30u32 {
+                img.put_pixel(15, y, post);
+                img.put_pixel(16, y, shade(post, 1.3));
+            }
+            for y in 4..10u32 {
+                for x in 12..20u32 {
+                    img.put_pixel(x, y, hex(0xf2d06b));
+                }
+            }
+            for x in 11..21u32 {
+                img.put_pixel(x, 3, post);
+                img.put_pixel(x, 10, post);
+            }
+            for y in 4..10u32 {
+                img.put_pixel(11, y, post);
+                img.put_pixel(20, y, post);
             }
         }
         _ => fill(hex(0x444444), hex(0x555555), 20),
@@ -1231,7 +1370,25 @@ pub fn render_platform(out: &Path) -> Result<()> {
 pub fn render_tiles(out: &Path) -> Result<usize> {
     std::fs::create_dir_all(out).with_context(|| format!("creating {}", out.display()))?;
     let kinds = [
-        "grass", "patch", "path", "water", "deep", "floor", "wall", "bush", "sign", "canopy",
+        "grass",
+        "patch",
+        "path",
+        "water",
+        "deep",
+        "floor",
+        "wall",
+        "bush",
+        "sign",
+        "canopy",
+        "roof_red",
+        "roof_blue",
+        "roof_green",
+        "door",
+        "window",
+        "flowers",
+        "fence",
+        "lamp",
+        "wall_indoor",
     ];
     for kind in kinds {
         let mut rng = BattleRng::from_seed(0x711e ^ (kind.len() as u64 * 7919));

@@ -42,6 +42,9 @@ class M:
     def npc(s, nid, x, y, facing, sprite, script=None, wander=None, sight=0):
         s.npcs.append((nid, x, y, facing, sprite, script, wander, sight))
     def emit(s, root):
+        music = getattr(s, 'music', None) or ''
+        dress(s, flowers=10 if 'town' in music else 0,
+              seed=sum(ord(c) for c in s.id))
         d = os.path.join(root, s.id)
         os.makedirs(os.path.join(d, 'scripts'), exist_ok=True)
         def layer(rows, name, required=True):
@@ -89,6 +92,39 @@ class M:
             parts.append("    indoor: true,\n")
         parts.append(f"    music: {('Some(\"' + s.music + '\")') if getattr(s, 'music', None) else 'None'},\n)\n")
         open(os.path.join(d, 'map.ron'), 'w').write("".join(parts))
+
+
+# ---- P14: building anatomy + color (decor-only; replay-safe) ----------
+DECOR_ROOF, DECOR_DOOR, DECOR_WINDOW, DECOR_FLOWERS, DECOR_FENCE, DECOR_LAMP = 10, 12, 13, 14, 15, 16
+
+def dress(m, flowers=0, seed=1):
+    """Paint roofs/windows on ground-4 blocks, doors on carved warp
+    tiles inside blocks, flowers on town grass. Decor only."""
+    if getattr(m, 'indoor', False):
+        return
+    rnd = seed
+    def roll(n):
+        nonlocal rnd
+        rnd = (rnd * 1103515245 + 12345) % (2**31)
+        return rnd % n
+    warps = {(t[0], t[1]) for t in m.triggers if t[2].startswith('Warp')}
+    for y in range(m.h):
+        for x in range(m.w):
+            if m.ground[y][x] != 4:
+                continue
+            above = m.ground[y+1][x] if y + 1 < m.h else 0
+            below_is_wall = y > 0 and m.ground[y-1][x] == 4
+            if (x, y) in warps and m.coll[y][x] == 0:
+                m.decor[y][x] = DECOR_DOOR
+            elif above != 4:
+                m.decor[y][x] = DECOR_ROOF
+            elif not below_is_wall and m.coll[y][x] == 1 and roll(3) == 0:
+                m.decor[y][x] = DECOR_WINDOW
+    if flowers:
+        for _ in range(flowers):
+            x, y = 1 + roll(m.w - 2), 1 + roll(m.h - 2)
+            if m.ground[y][x] == 1 and m.decor[y][x] == 0 and m.coll[y][x] == 0                and not m.is_patch_cell(x, y) if hasattr(m, 'is_patch_cell') else m.ground[y][x] == 1:
+                m.decor[y][x] = DECOR_FLOWERS
 
 root = 'content/regions/cantorel/maps'
 

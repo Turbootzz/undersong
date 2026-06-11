@@ -264,7 +264,7 @@ fn rebuild_map_if_needed(
         3 => "sprites/tiles/water.png",
         4 => {
             if map.indoor {
-                "sprites/tiles/floor.png"
+                "sprites/tiles/floor.png" // solids resolved per-tile below
             } else {
                 "sprites/tiles/wall.png"
             }
@@ -277,11 +277,12 @@ fn rebuild_map_if_needed(
             let index = map.index(x, y);
             let ground = map.ground[index];
             if ground != 0 {
-                commands.spawn((
-                    MapTile,
-                    art_sprite(&assets, ground_tile(ground), TILE),
-                    tile_pos(x, y, 0.0),
-                ));
+                let rel = if map.indoor && ground == 4 && map.is_solid(x, y) {
+                    "sprites/tiles/wall_indoor.png"
+                } else {
+                    ground_tile(ground)
+                };
+                commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 0.0)));
             }
             if map.is_patch(x, y) {
                 commands.spawn((
@@ -293,9 +294,29 @@ fn rebuild_map_if_needed(
             if let Some(&decor) = map.decor.get(index)
                 && decor != 0
             {
+                // Town roof color rides the map id (P14 identity).
+                let roof = match world
+                    .0
+                    .current_map
+                    .as_str()
+                    .bytes()
+                    .map(u32::from)
+                    .sum::<u32>()
+                    % 3
+                {
+                    0 => "sprites/tiles/roof_red.png",
+                    1 => "sprites/tiles/roof_blue.png",
+                    _ => "sprites/tiles/roof_green.png",
+                };
                 let rel = match decor {
                     5 => "sprites/tiles/bush.png",
                     6 => "sprites/tiles/sign.png",
+                    10 => roof,
+                    12 => "sprites/tiles/door.png",
+                    13 => "sprites/tiles/window.png",
+                    14 => "sprites/tiles/flowers.png",
+                    15 => "sprites/tiles/fence.png",
+                    16 => "sprites/tiles/lamp.png",
                     _ => "sprites/tiles/bush.png",
                 };
                 commands.spawn((MapTile, art_sprite(&assets, rel, TILE), tile_pos(x, y, 1.0)));
@@ -1622,10 +1643,16 @@ fn title_input(
     mut next: ResMut<NextState<AppState>>,
 ) {
     let load = keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter);
-    let fresh = keys.just_pressed(KeyCode::KeyN);
-    if !load && !fresh {
+    // Dev rig: UNDERSONG_BOOT_CONTINUE walks past the title unattended
+    // (screenshot runs).
+    let auto = std::env::var_os("UNDERSONG_BOOT_CONTINUE").is_some()
+        && std::env::var("UNDERSONG_BOOT_CONTINUE").as_deref() != Ok("fresh");
+    let auto_fresh = std::env::var("UNDERSONG_BOOT_CONTINUE").as_deref() == Ok("fresh");
+    let fresh = keys.just_pressed(KeyCode::KeyN) || auto_fresh;
+    if !load && !fresh && !auto {
         return;
     }
+    let load = (load || auto) && !auto_fresh;
     if load
         && let Some(backend) = platform_backend()
         && let Ok(Some(file)) = save::load(&backend, save::SlotId::Slot1)
