@@ -18,7 +18,7 @@ impl Plugin for ScreensPlugin {
             .add_systems(OnEnter(AppState::Dialogue), screens_open)
             .add_systems(
                 Update,
-                (screens_input, screens_render)
+                (screens_input, screens_render, screens_visual)
                     .chain()
                     .run_if(in_state(AppState::Dialogue)),
             )
@@ -31,6 +31,10 @@ pub struct ScreenUi;
 
 #[derive(Component)]
 struct ScreenText;
+
+/// The right-hand visual pane (party rows, dex detail).
+#[derive(Component)]
+struct ScreenVisual;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Screen {
@@ -81,16 +85,38 @@ fn screens_open(mut commands: Commands, theme: Res<Theme>, mut state: ResMut<Scr
                 top: Val::Px(10.0),
                 bottom: Val::Px(10.0),
                 padding: UiRect::all(Val::Px(8.0)),
+                border: UiRect::all(Val::Px(2.0)),
+                column_gap: Val::Px(10.0),
                 ..default()
             },
             BackgroundColor(theme.color(&theme.palette.parchment)),
+            BorderColor::all(theme.color(&theme.palette.ink)),
         ))
-        .with_child((
-            ScreenText,
-            Text::new(""),
-            TextFont::from_font_size(8.0),
-            TextColor(theme.color(&theme.palette.ink)),
-        ));
+        .with_children(|root| {
+            root.spawn((
+                Node {
+                    width: Val::Percent(52.0),
+                    height: Val::Percent(100.0),
+                    ..default()
+                },
+                children![(
+                    ScreenText,
+                    Text::new(""),
+                    TextFont::from_font_size(8.0),
+                    TextColor(theme.color(&theme.palette.ink)),
+                )],
+            ));
+            root.spawn((
+                ScreenVisual,
+                Node {
+                    width: Val::Percent(46.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(4.0),
+                    ..default()
+                },
+            ));
+        });
 }
 
 fn screens_input(
@@ -306,6 +332,45 @@ fn screens_input(
             if up {
                 state.cursor = state.cursor.saturating_sub(1);
             }
+            if state.screen == Screen::Score {
+                let dex_len = if world.0.primary_dex.is_empty() {
+                    world
+                        .0
+                        .registry
+                        .as_ref()
+                        .map(|r| r.species.len())
+                        .unwrap_or(0)
+                } else {
+                    world.0.primary_dex.len()
+                };
+                state.cursor = state.cursor.min(dex_len.saturating_sub(1));
+                // Z: the cry — the Score is a songbook, after all.
+                if keys.just_pressed(KeyCode::KeyZ) || keys.just_pressed(KeyCode::Enter) {
+                    let dex: Vec<undersong_core::ids::SpeciesId> = if world.0.primary_dex.is_empty()
+                    {
+                        world
+                            .0
+                            .registry
+                            .as_ref()
+                            .map(|r| r.species.keys().cloned().collect())
+                            .unwrap_or_default()
+                    } else {
+                        world.0.primary_dex.clone()
+                    };
+                    if let Some(species) = dex.get(state.cursor)
+                        && world.0.vars.flags.contains(&format!("dex.seen.{species}"))
+                    {
+                        let volume = f32::from(settings.0.volume_sfx) / 100.0 * 0.8;
+                        commands.spawn((
+                            bevy::audio::AudioPlayer::new(
+                                assets.load(format!("cries/{}/{}.wav", world.0.region_id, species)),
+                            ),
+                            bevy::audio::PlaybackSettings::DESPAWN
+                                .with_volume(bevy::audio::Volume::Linear(volume)),
+                        ));
+                    }
+                }
+            }
         }
     }
 }
@@ -428,9 +493,13 @@ fn screens_render(
         }
         Screen::Score => {
             let registry = world.registry.as_ref();
-            let dex: Vec<&undersong_core::ids::SpeciesId> = registry
-                .map(|r| r.species.keys().collect())
-                .unwrap_or_default();
+            let dex: Vec<undersong_core::ids::SpeciesId> = if world.primary_dex.is_empty() {
+                registry
+                    .map(|r| r.species.keys().cloned().collect())
+                    .unwrap_or_default()
+            } else {
+                world.primary_dex.clone()
+            };
             let caught = dex
                 .iter()
                 .filter(|s| world.vars.flags.contains(&format!("dex.caught.{s}")))
@@ -439,27 +508,33 @@ fn screens_render(
                 .iter()
                 .filter(|s| world.vars.flags.contains(&format!("dex.seen.{s}")))
                 .count();
-            // Measure-fill (doc 05): one ♪ per catch over a bar of rests.
-            let bar: String = (0..dex.len())
-                .map(|i| if i < caught { '♪' } else { '·' })
-                .collect();
-            lines.push(format!("caught {caught} / seen {seen} / {}", dex.len()));
-            lines.push(format!("|{bar}|"));
-            for species in dex {
+            lines.push(format!(
+                "transcribed {caught} / heard {seen} / {}   ({}%)",
+                dex.len(),
+                caught * 100 / dex.len().max(1)
+            ));
+            lines.push(String::new());
+            // A windowed list around the cursor (the panel shows detail).
+            let window = 14usize;
+            let lo = state.cursor.saturating_sub(window / 2);
+            for (i, species) in dex.iter().enumerate().skip(lo).take(window) {
                 let mark = if world.vars.flags.contains(&format!("dex.caught.{species}")) {
-                    "●"
+                    "*"
                 } else if world.vars.flags.contains(&format!("dex.seen.{species}")) {
-                    "○"
+                    "o"
                 } else {
-                    " "
+                    "."
                 };
-                let name = if world.vars.flags.contains(&format!("dex.seen.{species}")) {
-                    world.text(&format!("motif.{species}"))
+                let name = if mark == "." {
+                    "-----".to_string()
                 } else {
-                    "-- --".into()
+                    world.text(&format!("motif.{species}")).to_string()
                 };
-                lines.push(format!("{mark} {name}"));
+                let cursor_mark = if i == state.cursor { ">" } else { " " };
+                lines.push(format!("{cursor_mark} {:>3} {mark} {name}", i + 1));
             }
+            lines.push(String::new());
+            lines.push("(Z: hear its cry)".into());
         }
         Screen::Programme => {
             lines.push("the eight clefs of Cantorel".into());
@@ -552,5 +627,283 @@ fn screens_render(
     let body = lines.join("\n");
     if target.0 != body {
         target.0 = body;
+    }
+}
+
+/// The right-hand pane: party rows with icons + HP bars, or the
+/// Score-dex detail card for the cursored species (P15).
+#[expect(clippy::too_many_lines, reason = "two visual layouts")]
+fn screens_visual(
+    mut commands: Commands,
+    state: Res<ScreenState>,
+    world: Res<WorldRes>,
+    theme: Res<Theme>,
+    assets: Res<AssetServer>,
+    panel: Query<Entity, With<ScreenVisual>>,
+    mut key: Local<String>,
+) {
+    let Ok(panel) = panel.single() else { return };
+    let world = &world.0;
+    // Cheap change key: rebuild only when content shifts.
+    let new_key = match state.screen {
+        Screen::Party => format!(
+            "party:{}",
+            world
+                .party
+                .iter()
+                .map(|p| format!("{}:{}:{:?}", p.species, p.level, p.hp))
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
+        Screen::Score => format!("score:{}", state.cursor),
+        _ => "none".into(),
+    };
+    if *key == new_key {
+        return;
+    }
+    *key = new_key;
+    commands.entity(panel).despawn_related::<Children>();
+
+    match state.screen {
+        Screen::Party => {
+            for member in &world.party {
+                let hp = member.hp.unwrap_or(0);
+                let max = world
+                    .registry
+                    .as_ref()
+                    .and_then(|r| r.species.get(&member.species))
+                    .map(|spec| {
+                        battle::stats::compute_all(
+                            &spec.base_stats,
+                            &member.ivs,
+                            &member.evs,
+                            member.level,
+                            member.nature,
+                        )
+                        .hp
+                    })
+                    .unwrap_or(hp.max(1));
+                let frac = if max > 0 {
+                    f32::from(hp.min(max)) / f32::from(max)
+                } else {
+                    0.0
+                };
+                let bar_color = if frac > 0.5 {
+                    theme.color(&theme.palette.hp_high)
+                } else if frac > 0.2 {
+                    theme.color(&theme.palette.hp_mid)
+                } else {
+                    theme.color(&theme.palette.hp_low)
+                };
+                let icon = game::art::art(&format!(
+                    "sprites/monsters/{}/{}.icon.png",
+                    world.region_id, member.species
+                ));
+                let row = commands
+                    .spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(26.0),
+                            align_items: AlignItems::Center,
+                            column_gap: Val::Px(6.0),
+                            padding: UiRect::all(Val::Px(3.0)),
+                            border: UiRect::all(Val::Px(1.0)),
+                            ..default()
+                        },
+                        BackgroundColor(theme.color(&theme.palette.parchment_dim)),
+                        BorderColor::all(theme.color(&theme.palette.ink)),
+                    ))
+                    .id();
+                let icon_node = commands
+                    .spawn((
+                        ImageNode::new(assets.load(icon)),
+                        Node {
+                            width: Val::Px(18.0),
+                            height: Val::Px(18.0),
+                            ..default()
+                        },
+                    ))
+                    .id();
+                let label = commands
+                    .spawn((
+                        Text::new(format!("{}  L{}", member.species, member.level)),
+                        TextFont::from_font_size(8.0),
+                        TextColor(theme.color(&theme.palette.ink)),
+                        Node {
+                            width: Val::Px(110.0),
+                            ..default()
+                        },
+                    ))
+                    .id();
+                let bar_back = commands
+                    .spawn((
+                        Node {
+                            width: Val::Px(70.0),
+                            height: Val::Px(6.0),
+                            ..default()
+                        },
+                        BackgroundColor(theme.color(&theme.palette.ink)),
+                    ))
+                    .id();
+                let bar = commands
+                    .spawn((
+                        Node {
+                            width: Val::Percent(frac * 100.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        BackgroundColor(bar_color),
+                    ))
+                    .id();
+                let hp_text = commands
+                    .spawn((
+                        Text::new(format!("{hp}/{max}")),
+                        TextFont::from_font_size(7.0),
+                        TextColor(theme.color(&theme.palette.ink_soft)),
+                    ))
+                    .id();
+                commands.entity(bar_back).add_child(bar);
+                commands
+                    .entity(row)
+                    .add_children(&[icon_node, label, bar_back, hp_text]);
+                commands.entity(panel).add_child(row);
+            }
+        }
+        Screen::Score => {
+            let Some(registry) = world.registry.as_ref() else {
+                return;
+            };
+            let dex: Vec<_> = if world.primary_dex.is_empty() {
+                registry.species.keys().cloned().collect()
+            } else {
+                world.primary_dex.clone()
+            };
+            let Some(species) = dex.get(state.cursor) else {
+                return;
+            };
+            let caught = world.vars.flags.contains(&format!("dex.caught.{species}"));
+            let seen = world.vars.flags.contains(&format!("dex.seen.{species}"));
+            if !caught && !seen {
+                let unknown = commands
+                    .spawn((
+                        Text::new("- unheard -"),
+                        TextFont::from_font_size(10.0),
+                        TextColor(theme.color(&theme.palette.ink_soft)),
+                    ))
+                    .id();
+                commands.entity(panel).add_child(unknown);
+                return;
+            }
+            let sprite = commands
+                .spawn((
+                    ImageNode::new(assets.load(game::art::art(&format!(
+                        "sprites/monsters/{}/{}.front.png",
+                        world.region_id, species
+                    )))),
+                    Node {
+                        width: Val::Px(72.0),
+                        height: Val::Px(72.0),
+                        ..default()
+                    },
+                ))
+                .id();
+            let name = commands
+                .spawn((
+                    Text::new(format!(
+                        "{}  {}",
+                        world.text(&format!("motif.{species}")),
+                        if caught {
+                            "(in the Score)"
+                        } else {
+                            "(heard only)"
+                        }
+                    )),
+                    TextFont::from_font_size(9.0),
+                    TextColor(theme.color(&theme.palette.ink)),
+                ))
+                .id();
+            commands.entity(panel).add_children(&[sprite, name]);
+            if let Some(spec) = registry.species.get(species) {
+                let types = spec
+                    .types
+                    .iter()
+                    .map(|t| format!("{t:?}"))
+                    .collect::<Vec<_>>()
+                    .join(" / ");
+                let type_row = commands
+                    .spawn((
+                        Text::new(types),
+                        TextFont::from_font_size(8.0),
+                        TextColor(theme.color(&theme.palette.gilt)),
+                    ))
+                    .id();
+                commands.entity(panel).add_child(type_row);
+                if caught {
+                    for (label, value) in [
+                        ("HP", spec.base_stats.hp),
+                        ("ATK", spec.base_stats.atk),
+                        ("DEF", spec.base_stats.def),
+                        ("SPA", spec.base_stats.spa),
+                        ("SPD", spec.base_stats.spd),
+                        ("SPE", spec.base_stats.spe),
+                    ] {
+                        let row = commands
+                            .spawn((Node {
+                                width: Val::Percent(100.0),
+                                height: Val::Px(9.0),
+                                align_items: AlignItems::Center,
+                                column_gap: Val::Px(4.0),
+                                ..default()
+                            },))
+                            .id();
+                        let tag = commands
+                            .spawn((
+                                Text::new(label),
+                                TextFont::from_font_size(7.0),
+                                TextColor(theme.color(&theme.palette.ink_soft)),
+                                Node {
+                                    width: Val::Px(26.0),
+                                    ..default()
+                                },
+                            ))
+                            .id();
+                        let back = commands
+                            .spawn((
+                                Node {
+                                    width: Val::Px(110.0),
+                                    height: Val::Px(5.0),
+                                    ..default()
+                                },
+                                BackgroundColor(theme.color(&theme.palette.ink)),
+                            ))
+                            .id();
+                        let fill = commands
+                            .spawn((
+                                Node {
+                                    width: Val::Percent(f32::from(value).min(120.0) / 1.2),
+                                    height: Val::Percent(100.0),
+                                    ..default()
+                                },
+                                BackgroundColor(theme.color(&theme.palette.gilt)),
+                            ))
+                            .id();
+                        commands.entity(back).add_child(fill);
+                        commands.entity(row).add_children(&[tag, back]);
+                        commands.entity(panel).add_child(row);
+                    }
+                }
+            }
+            if caught {
+                let entry = commands
+                    .spawn((
+                        Text::new(world.text(&format!("dex.{species}")).to_string()),
+                        TextFont::from_font_size(7.0),
+                        TextColor(theme.color(&theme.palette.ink)),
+                    ))
+                    .id();
+                commands.entity(panel).add_child(entry);
+            }
+        }
+        _ => {}
     }
 }

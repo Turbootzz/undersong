@@ -48,6 +48,9 @@ struct FoeHpBar;
 struct PlayerPlateText;
 
 #[derive(Component)]
+struct PlayerExpBar;
+
+#[derive(Component)]
 struct PlayerHpBar;
 
 #[derive(Component)]
@@ -464,6 +467,25 @@ fn battle_enter(
                         },
                         BackgroundColor(theme.color(&theme.palette.hp_high)),
                     ));
+                // EXP toward the next level (P15) — the thin gilt line.
+                plate
+                    .spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(3.0),
+                            ..default()
+                        },
+                        BackgroundColor(theme.color(&theme.palette.ink_soft)),
+                    ))
+                    .with_child((
+                        PlayerExpBar,
+                        Node {
+                            width: Val::Percent(0.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        BackgroundColor(theme.color(&theme.palette.gilt)),
+                    ));
             });
             // Command / move row.
             root.spawn((
@@ -866,6 +888,17 @@ fn refresh_sprites(
     }
 }
 
+type ExpBarQuery<'w, 's> = Query<
+    'w,
+    's,
+    &'static mut Node,
+    (
+        With<PlayerExpBar>,
+        Without<FoeHpBar>,
+        Without<PlayerHpBar>,
+    ),
+>;
+
 fn refresh_panels(
     theme: Res<Theme>,
     world: Res<WorldRes>,
@@ -873,6 +906,7 @@ fn refresh_panels(
     mut player_text: Query<&mut Text, (With<PlayerPlateText>, Without<FoePlateText>)>,
     mut foe_bar: HpBarQuery<FoeHpBar, PlayerHpBar>,
     mut player_bar: HpBarQuery<PlayerHpBar, FoeHpBar>,
+    mut exp_bar: ExpBarQuery,
 ) {
     let Some(session) = &world.0.battle else {
         return;
@@ -881,8 +915,12 @@ fn refresh_panels(
                  text: &mut Text,
                  bar: (&mut Node, &mut BackgroundColor),
                  theme: &Theme| {
+        let status = match mote.status {
+            Some(status) => format!("  [{status:?}]"),
+            None => String::new(),
+        };
         text.0 = format!(
-            "{}  L{}  {}/{}",
+            "{}  L{}  {}/{}{status}",
             mote.species,
             mote.level,
             mote.hp,
@@ -910,11 +948,16 @@ fn refresh_panels(
     if let (Ok(mut text), Ok((mut node, mut color))) =
         (player_text.single_mut(), player_bar.single_mut())
     {
-        paint(
-            session.state.sides[0].active_mote(),
-            &mut text,
-            (&mut node, &mut color),
-            &theme,
-        );
+        let mote = session.state.sides[0].active_mote();
+        paint(mote, &mut text, (&mut node, &mut color), &theme);
+        if let Ok(mut exp_node) = exp_bar.single_mut() {
+            let floor = mote.growth.total_exp(mote.level);
+            let ceil = mote
+                .growth
+                .total_exp(mote.level.saturating_add(1))
+                .max(floor + 1);
+            let fraction = (mote.exp.saturating_sub(floor)) as f32 / (ceil - floor) as f32;
+            exp_node.width = Val::Percent(fraction.clamp(0.0, 1.0) * 100.0);
+        }
     }
 }
