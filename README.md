@@ -10,6 +10,12 @@ The world runs on music. Every creature ("Mote") is a fragment of the
 The badge circuit is not what it seems, and the truth at the bottom of
 the Vault of the Bass Clef has three different prices.
 
+## Screenshots
+
+| Overworld | Battle | Title |
+|---|---|---|
+| ![overworld](docs/screenshots/p10-overworld.png) | ![battle](docs/screenshots/p12-battle.png) | ![title](docs/screenshots/p11-title.png) |
+
 ## Playing
 
 ```bash

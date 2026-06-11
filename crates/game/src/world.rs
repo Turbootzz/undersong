@@ -1324,7 +1324,9 @@ impl WorldState {
             battle::Outcome::Won { .. } | battle::Outcome::Drawn => {
                 // Loss: half money, heal, return to the rest point
                 // (doc 02 §15).
-                self.money /= 2;
+                // Half the wallet, capped (doc 02 v2.0 #1): the sting
+                // without the death spiral.
+                self.money -= (self.money / 2).min(2000);
                 self.heal_party();
                 self.current_map = self.heal_point.0.clone();
                 self.player = self.heal_point.1;

@@ -56,7 +56,13 @@ impl Plugin for UndersongPlugin {
             .insert_resource(AudioUnlocked::default())
             .add_systems(
                 Update,
-                (audio_unlock, music_director, credits_watch, screenshot_key),
+                (
+                    audio_unlock,
+                    music_director,
+                    credits_watch,
+                    screenshot_key,
+                    boot_battle_rig,
+                ),
             )
             .add_systems(
                 Update,
@@ -536,13 +542,21 @@ fn handle_events(
 
 fn animate_player(
     time: Res<Time>,
+    keys: Res<ButtonInput<KeyCode>>,
     mut anim: ResMut<PlayerAnim>,
     mut player: Query<&mut Transform, With<PlayerSprite>>,
 ) {
     let Some((from, to, mut t)) = anim.0 else {
         return;
     };
-    t = (t + time.delta_secs() / WALK_SECONDS).min(1.0);
+    // Hold X to run (doc 02 v2.0 #2) — presenter-only: the logical
+    // step cadence and the replays never see it.
+    let speed = if keys.pressed(KeyCode::KeyX) {
+        2.0
+    } else {
+        1.0
+    };
+    t = (t + time.delta_secs() * speed / WALK_SECONDS).min(1.0);
     if let Ok(mut transform) = player.single_mut() {
         let p = from.lerp(to, t);
         transform.translation = Vec3::new(p.x, p.y, 2.0);
@@ -1179,6 +1193,40 @@ fn screenshot_key(
         commands
             .spawn(Screenshot::primary_window())
             .observe(save_to_disk(std::path::PathBuf::from(path)));
+    }
+}
+
+/// Dev rig: UNDERSONG_BOOT_BATTLE=<trainer_id> jumps straight from
+/// the title into that fight (README battle shots without a hand on
+/// the keys). Dev-only; does nothing unless the env var is set.
+fn boot_battle_rig(
+    time: Res<Time>,
+    mut world: ResMut<WorldRes>,
+    mut next: ResMut<NextState<AppState>>,
+    mut done: Local<bool>,
+) {
+    if *done || time.elapsed_secs() < 2.0 {
+        return;
+    }
+    let Some(trainer) = std::env::var_os("UNDERSONG_BOOT_BATTLE") else {
+        return;
+    };
+    *done = true;
+    let trainer = trainer.to_string_lossy().to_string();
+    let mut rng = undersong_core::rng::BattleRng::from_seed(0xB007);
+    let mut party = Vec::new();
+    if let Some(registry) = &world.0.registry {
+        for (species, level) in [("embaritone", 24), ("galliard", 22)] {
+            if let Some(mut mote) = registry.wild_individual(&species.into(), level, &mut rng) {
+                mote.ot = "player".into();
+                party.push(mote);
+            }
+        }
+    }
+    world.0.party = party;
+    world.0.start_trainer_battle(&trainer.as_str().into());
+    if world.0.battle.is_some() {
+        next.set(AppState::Battle);
     }
 }
 

@@ -294,6 +294,17 @@ are where T3's plan-reading shows).
 
 ## Changelog
 
+### v2.0 — 2026-06-11 (P12 QoL rulings)
+
+1. **Whiteout loss cap.** A whiteout still costs half the wallet, but
+   never more than ₵2,000. Rationale: the uncapped halving compounds
+   brutally for struggling players (each retry funds itself away — the
+   P6 driver's economy collapsed exactly this way); the cap keeps the
+   sting without the spiral.
+2. **Run toggle (presenter-only).** Holding X doubles walk speed. Pure
+   render-interpolation change: the logical step cadence and every
+   recorded input stream are untouched.
+
 ### v1.9 — 2026-06-11 (P6 phase rulings)
 
 1. **AI ability awareness.** All AI tiers' expected-damage scoring now
