@@ -337,6 +337,130 @@ story beats, endings, legendaries, late-game locations.
 the wiki answers "what beats what" and "where do I find X" without
 opening RON files; a harness run produces a reviewable frame series.
 
+## P17 — Battle theater (third playtest)
+
+Decisions (2026-06-11): hero = **variant B** (teal wayfarer); pixel font
+vendored; move effects **type-flavored**; self-review mandate active
+(see docs/09-HANDOFF.md §Self-review).
+
+- [ ] **Task zero — hero B**: in `crates/tools/src/heroes.rs`,
+      `render_heroes` paints the live `player.*` set with `legend_a()`;
+      switch to `legend_b()`, regenerate (`cargo run -p tools -- sprites`),
+      and verify with a boot screenshot. Consider giving B its own hair
+      rows later (currently variants share the A silhouette).
+- [ ] **Battle entry**: foe sprite slides in from the right with its cry;
+      ally back lobs in from the left; plates fade in after. The ink wipe
+      already covers the scene switch.
+- [ ] **Move animations, type-flavored**: a small effect vocabulary in
+      `battle_ui.rs` driven by `BattleEvent::MoveUsed`'s move type —
+      attacker lunge (UI node offset tween) + per-type impact on the
+      target: Ember flame burst, Tide splash arc, Volt jagged flash,
+      Gale streak lines, Bloom petal puffs, Stone shard drop, Frost
+      crystal glints, Venom bubble drip, Phantom ripple fade, Alloy
+      clang ring, Resonant concentric rings, Feral plain slash. Sprite
+      effects can be generated 32×32 frame strips by `tools sprites`
+      (effects module) — 3-4 frames each, despawn on finish.
+- [ ] **Damage feedback**: target flash + shake exists (FxState) — add
+      HP bar tweening (drain over ~0.4s instead of snapping) and a
+      brief freeze-frame on crits.
+- [ ] **Faint & switch**: faint = sprite drops + fades with a low cue;
+      switch-in = slide + cry.
+- [ ] **Capture theater**: bell ring → sprite shrinks into a gilt point →
+      three wobble pulses (matching the engine's shake count if
+      exposed; otherwise three) → settle chime or break-out.
+- [ ] **The evolution scene**: on `Evolve { accept: true }`, a dedicated
+      overlay — darken, the old sprite silhouettes white, flashes
+      alternate old/new silhouette accelerating, resolve to the new
+      front sprite + cry + fanfare cue + "what? <name> is evolving!"
+      typewriter text. Skippable with X (era-honest: B button cancels
+      nothing once accepted, only the *scene* fast-forwards).
+- [ ] **Typewriter text**: battle messages and overworld dialogue reveal
+      per-character (speed from the existing settings) with a soft blip
+      every 2-3 characters; Z reveals fully, then advances.
+- [ ] **Self-review + phase review**; STATUS with harness film notes.
+
+**Gate P17:** a harness film of one wild fight + one capture + one
+evolution shows every animation; the agent's playfeel review (honest
+paragraph: what reads well, what still feels stiff) is in STATUS;
+193+ tests green; replays untouched (presenter-only).
+
+## P18 — Overworld feel
+
+- [ ] **Spotted!**: when a trainer's line-of-sight engages, the world
+      already emits the engagement — the presenter must add: a cue
+      (new "alert" sfx, two sharp rising notes), an ink "!" bubble
+      popping above the trainer's head for ~0.6s, and a beat of pause
+      before the battle wipe. The bubble is a generated 16×16 sprite.
+- [ ] **Walk animation v2**: 4-frame player gait (two new frames per
+      direction in `heroes.rs` — contact/passing poses), 2-frame NPC
+      bob retained; fix frame timing so the cycle reads at walk speed
+      and doubles correctly when running (hold-X).
+- [ ] **World touches**: grass rustle particle on patch steps; door
+      tiles "open" (swap to a lit doorway sprite) for ~0.2s on warp;
+      a soft drop-shadow ellipse under every actor; map-edge water
+      shimmer (animate the existing water tile via 2 frames).
+- [ ] **Night & weather reads**: night tint slightly blue-shifted with
+      window glows brightened; heatwave = faint warm vignette; flurry =
+      drifting white specks (a particle overlay, presenter-only).
+- [ ] **Self-review + phase review**; STATUS with film notes.
+
+**Gate P18:** harness film shows spotted-bubble + pause + wipe in a
+trainer engagement, the 4-frame walk, and door/rustle touches; replays
+untouched.
+
+## P19 — Beauty pass 2 (the indie-reference audit)
+
+- [ ] **Pixel font**: vendor m5x7 (or monogram) — both free/CC0; record
+      the license file in-repo and the dependency note in doc 03 §7
+      (it's an asset, not a crate). Load as the default UI font; pass
+      over every TextFont size (pixel fonts want exact px multiples);
+      doc 05 §3 updated.
+- [ ] **Tile variety**: 3 grass variants + 2 path variants chosen by
+      tile-position hash (kills the repetition shimmer); grass→path and
+      grass→water edge tiles (8 edge pieces each, picked by neighbor
+      mask in the renderer — data unchanged).
+- [ ] **Palette audit**: side-by-side the game against two indie
+      references (the agent picks; e.g. a Stardew screenshot's value
+      range) using harness stills; adjust ramps (deeper shadows, warmer
+      lights) in `tools sprites` constants; regenerate.
+- [ ] **Monster personality pass v3**: per-plan pose variance (head
+      tilt, asymmetric tail/ear flips from the seed), 2-3 species-kit
+      details per plan (whisker dots, back ridges, wing patterns),
+      mouth lines (smile/frown/beak-open by temperament = catch rate
+      proxy). Stars untouched (already hand-made) unless review says
+      otherwise.
+- [ ] **UI skin v3**: parchment paper-grain texture on panels (generated
+      tile), corner caps on borders, hover/selected states with the
+      gilt sweep, battle command icons (tiny sword/bell/flask/door
+      glyphs drawn as sprites).
+- [ ] **Self-review + phase review**; STATUS with before/after stills.
+
+**Gate P19:** the agent's side-by-side verdict says the game holds its
+own next to the references on readability and palette (with stills in
+docs/playtests/); all text renders in the pixel font with no tofu.
+
+## P20 — Sound & story breath
+
+- [ ] **Story themes**: dedicated stems — Lull's theme (sparse, wrong-
+      key lullaby), Vesper's theme (low strings, held rests), per-ending
+      credits themes (Da Capo = the main theme again, slower; Tacet =
+      near-silence with one voice; Chorus = the main theme, full band),
+      a hall-final theme for Ilva/Calder. Track table in `tools music`.
+- [ ] **Jingles**: victory (4 bars), capture success, evolution fanfare,
+      badge get (replaces the bare cue), heal chime rework. Wire into
+      battle_ui/world events.
+- [ ] **Chat sound polish**: per-character typewriter blips (P17) get
+      per-speaker pitch (hash of the speaker key), narrator stays
+      silent-soft.
+- [ ] **Light story expansion**: the parked 25 recontext pairs (doc 04
+      §8 pattern — plain line + post-Roster variant per named NPC);
+      2-3 more flavor NPCs per hall town with act-aware lines;
+      evolution-scene strings; keep it data-only (content/ + strings).
+- [ ] **Self-review + phase review**; final arc STATUS.
+
+**Gate P20:** every story beat named above has its own audible theme in
+a harness film; recontext pairs counted in STATUS; validate 0/0.
+
 ### Parked from this playtest (explicitly later, user's call)
 - Battle move animations beyond flash/shake; more music variety;
   more story content. Logged here so they aren't lost.

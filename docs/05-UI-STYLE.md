@@ -177,3 +177,17 @@ Supersedes the flat-quad placeholder look everywhere it conflicts.
    and dex entries (it stays the species' "signature", not its battle body).
 7. **UI chrome**: 9-slice parchment panels with ink borders and gilt accents,
    text blips during dialogue, cursor/confirm/cancel cues on every menu.
+
+
+## v3 addenda (P17–P20 arc, decided 2026-06-11)
+
+1. **Hero**: variant B — the teal Wayfarer (scarf, auburn hair, satchel).
+2. **Font**: a vendored pixel font (m5x7 or monogram) replaces the
+   default; all UI sizes move to integer multiples of its native size.
+3. **Motion language**: battle = type-flavored effect families over a
+   universal lunge/flash/shake base; overworld = 4-frame player gait,
+   2-frame NPC bob, "!" spotted bubble with alert cue and a beat of
+   pause. Animations are presenter-only — they read events, never make
+   inputs (doc 03 determinism holds).
+4. **Self-review**: every presentation phase closes with the agent
+   filming harness runs and writing a playfeel verdict in STATUS.
