@@ -888,16 +888,8 @@ fn refresh_sprites(
     }
 }
 
-type ExpBarQuery<'w, 's> = Query<
-    'w,
-    's,
-    &'static mut Node,
-    (
-        With<PlayerExpBar>,
-        Without<FoeHpBar>,
-        Without<PlayerHpBar>,
-    ),
->;
+type ExpBarQuery<'w, 's> =
+    Query<'w, 's, &'static mut Node, (With<PlayerExpBar>, Without<FoeHpBar>, Without<PlayerHpBar>)>;
 
 fn refresh_panels(
     theme: Res<Theme>,

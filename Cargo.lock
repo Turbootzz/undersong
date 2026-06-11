@@ -5789,6 +5789,7 @@ dependencies = [
  "image",
  "ron",
  "script",
+ "serde",
  "serde_json",
  "undersong-core",
 ]

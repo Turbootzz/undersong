@@ -62,6 +62,7 @@ impl Plugin for UndersongPlugin {
                     credits_watch,
                     screenshot_key,
                     boot_battle_rig,
+                    visual_replay,
                 ),
             )
             .add_systems(
@@ -1254,6 +1255,116 @@ fn boot_battle_rig(
     world.0.start_trainer_battle(&trainer.as_str().into());
     if world.0.battle.is_some() {
         next.set(AppState::Battle);
+    }
+}
+
+/// The visual playtest harness (P16): UNDERSONG_VISUAL_REPLAY=<file>
+/// replays a recorded run inside the windowed app, pacing the input
+/// stream and capturing a frame series to docs/playtests/<stem>/ —
+/// the agent's eyes on motion it can't otherwise see.
+#[derive(Default)]
+struct VisualReplay {
+    inputs: Option<Vec<game::world::Input>>,
+    index: usize,
+    shots: u32,
+    since_shot: f32,
+}
+
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
+fn visual_replay(
+    mut commands: Commands,
+    time: Res<Time>,
+    state: Res<State<AppState>>,
+    mut world: ResMut<WorldRes>,
+    mut next: ResMut<NextState<AppState>>,
+    mut rendered: ResMut<RenderedMap>,
+    mut anim: ResMut<PlayerAnim>,
+    mut player: Query<&mut Transform, With<PlayerSprite>>,
+    mut rig: Local<VisualReplay>,
+) {
+    use bevy::render::view::screenshot::{Screenshot, save_to_disk};
+    let Some(path) = std::env::var_os("UNDERSONG_VISUAL_REPLAY") else {
+        return;
+    };
+    if time.elapsed_secs() < 2.0 {
+        return;
+    }
+    let path = std::path::PathBuf::from(path);
+    if rig.inputs.is_none() {
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            return;
+        };
+        let stripped: String = text
+            .lines()
+            .filter(|l| !l.trim_start().starts_with("//"))
+            .collect::<Vec<_>>()
+            .join(
+                "
+",
+            );
+        let Ok(file) = ron::from_str::<game::replay::ReplayFile>(&stripped) else {
+            bevy::log::warn!("visual replay: cannot parse {}", path.display());
+            return;
+        };
+        if let Ok(reseeded) = load_game_world(std::path::Path::new("content"), file.seed) {
+            world.0 = reseeded;
+            rendered.0 = None;
+        }
+        rig.inputs = Some(file.inputs);
+        if *state.get() == AppState::Title {
+            next.set(AppState::Overworld);
+        }
+    }
+    let total = rig.inputs.as_ref().map(Vec::len).unwrap_or(0);
+    let finished = rig.index >= total;
+    // Pace: a small slice per frame keeps motion watchable.
+    let end = (rig.index + 4).min(total);
+    let battle_now = world.0.battle.is_some();
+    for i in rig.index..end {
+        let _ = finished;
+        let input = rig.inputs.as_ref().expect("loaded")[i].clone();
+        let events = world.0.apply(input);
+        for event in &events {
+            if matches!(event, WorldEvent::Warped { .. }) {
+                rendered.0 = None;
+                anim.0 = None;
+                if let Ok(mut transform) = player.single_mut() {
+                    let (x, y) = world.0.player;
+                    transform.translation =
+                        Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+                }
+            }
+        }
+        let battle_after = world.0.battle.is_some();
+        if battle_after != battle_now {
+            next.set(if battle_after {
+                AppState::Battle
+            } else {
+                AppState::Overworld
+            });
+            let _ = battle_now;
+            rig.index = i + 1;
+            break; // let the scene switch render before continuing
+        }
+        rig.index = i + 1;
+    }
+    // Frame series: one shot every ~2.5s, capped (keeps shooting a few
+    // beats after the run ends so the final scene lands on film).
+    rig.since_shot += time.delta_secs();
+    if rig.since_shot > 2.5 && rig.shots < 40 && (!finished || rig.shots < 3) {
+        rig.since_shot = 0.0;
+        rig.shots += 1;
+        let stem = path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "run".into());
+        let dir = std::path::PathBuf::from("docs/playtests").join(stem);
+        std::fs::create_dir_all(&dir).ok();
+        commands
+            .spawn(Screenshot::primary_window())
+            .observe(save_to_disk(
+                dir.join(format!("frame_{:02}.png", rig.shots)),
+            ));
     }
 }
 

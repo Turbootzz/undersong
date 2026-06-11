@@ -1,0 +1,7429 @@
+[
+  {
+    "id": "ampurr",
+    "name": "Ampurr",
+    "region": "cantorel",
+    "types": [
+      "Volt"
+    ],
+    "base_stats": [
+      55,
+      52,
+      50,
+      66,
+      58,
+      72
+    ],
+    "catch_rate": 160,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "volt_pluck"
+      ],
+      [
+        14,
+        "quick_step"
+      ],
+      [
+        21,
+        "stun_chord"
+      ],
+      [
+        28,
+        "downbeat"
+      ],
+      [
+        35,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": [
+      "voltacelle",
+      "Level(24)"
+    ],
+    "entry": "Its purr browns out streetlamps one block at a time, in order. Innkeepers along its route bill the Conservatory for candles.",
+    "spoiler": false
+  },
+  {
+    "id": "anemonet",
+    "name": "Anemonet",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Venom"
+    ],
+    "base_stats": [
+      62,
+      40,
+      68,
+      64,
+      70,
+      30
+    ],
+    "catch_rate": 160,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        9,
+        "venom_trill"
+      ],
+      [
+        15,
+        "dampen"
+      ],
+      [
+        21,
+        "toxic_toccata"
+      ],
+      [
+        28,
+        "undertow"
+      ],
+      [
+        36,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its tendrils tune to whatever brushes them - then play it back wrong, with interest. Tide-pool guides carry two antidotes and one apology.",
+    "spoiler": false
+  },
+  {
+    "id": "avalanche",
+    "name": "Avalanchord",
+    "region": "cantorel",
+    "types": [
+      "Frost",
+      "Stone"
+    ],
+    "base_stats": [
+      88,
+      84,
+      82,
+      56,
+      70,
+      30
+    ],
+    "catch_rate": 55,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        11,
+        "stone_toll"
+      ],
+      [
+        18,
+        "hail_chorale"
+      ],
+      [
+        26,
+        "fermata_guard"
+      ],
+      [
+        34,
+        "boulder_coda"
+      ],
+      [
+        44,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "When it shrugs, the mountain plays one enormous chord and then a very long rest. Graven Pass closes on its birthday, which nobody has dared confirm.",
+    "spoiler": false
+  },
+  {
+    "id": "bloomara",
+    "name": "Bloomara",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Gale"
+    ],
+    "base_stats": [
+      62,
+      52,
+      58,
+      92,
+      76,
+      75
+    ],
+    "catch_rate": 80,
+    "growth": "MediumFast",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        13,
+        "gale_riff"
+      ],
+      [
+        19,
+        "leaf_pick"
+      ],
+      [
+        24,
+        "tempest_coda"
+      ],
+      [
+        31,
+        "briar_bow"
+      ],
+      [
+        38,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The full bloom of its wings plays four bars no composer has transcribed without weeping. It molts once a year; collectors fight over the husks.",
+    "spoiler": false
+  },
+  {
+    "id": "bogritone",
+    "name": "Bogritone",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Phantom"
+    ],
+    "base_stats": [
+      80,
+      74,
+      70,
+      60,
+      68,
+      38
+    ],
+    "catch_rate": 70,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        11,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "root_chord"
+      ],
+      [
+        25,
+        "phantom_rest"
+      ],
+      [
+        33,
+        "briar_bow"
+      ],
+      [
+        42,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A drowned log that kept the song it sank with. It surfaces every few years to check whether anyone still remembers the words. Nobody does.",
+    "spoiler": false
+  },
+  {
+    "id": "brasshorn",
+    "name": "Brasshorn",
+    "region": "cantorel",
+    "types": [
+      "Alloy",
+      "Feral"
+    ],
+    "base_stats": [
+      80,
+      88,
+      76,
+      52,
+      60,
+      54
+    ],
+    "catch_rate": 70,
+    "growth": "MediumSlow",
+    "abilities": [
+      "iron_ear"
+    ],
+    "hidden_ability": "chorister",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        10,
+        "downbeat"
+      ],
+      [
+        17,
+        "alloy_clang"
+      ],
+      [
+        24,
+        "quick_march"
+      ],
+      [
+        31,
+        "fortissimo_slam"
+      ],
+      [
+        40,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Herds winter-call in staggered fifths that carry across two valleys. Drovers say a lone Brasshorn is just a herd that hasn't answered yet.",
+    "spoiler": false
+  },
+  {
+    "id": "brinargo",
+    "name": "Brinargo",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      52,
+      58,
+      46,
+      44,
+      42,
+      66
+    ],
+    "catch_rate": 200,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        13,
+        "breaker_beat"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        26,
+        "quick_march"
+      ]
+    ],
+    "evolves_to": [
+      "largotide",
+      "Level(21)"
+    ],
+    "entry": "It races the ebb in broad, lazy strokes that fool every predator into mistiming the lunge. Largo, the fishers call it - then it's gone.",
+    "spoiler": false
+  },
+  {
+    "id": "brookoda",
+    "name": "Brookoda",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      54,
+      44,
+      50,
+      58,
+      60,
+      48
+    ],
+    "catch_rate": 190,
+    "growth": "MediumFast",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        13,
+        "frost_lull"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        26,
+        "da_capo"
+      ]
+    ],
+    "evolves_to": [
+      "torrentet",
+      "Level(19)"
+    ],
+    "entry": "It ends every swim with the same three settling notes - its coda - before sliding under the bank. Anglers pack up when they hear it; the fish already have.",
+    "spoiler": false
+  },
+  {
+    "id": "burrbass",
+    "name": "Burrbass",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Feral"
+    ],
+    "base_stats": [
+      60,
+      55,
+      75,
+      40,
+      60,
+      30
+    ],
+    "catch_rate": 220,
+    "growth": "MediumFast",
+    "abilities": [
+      "thorn_coat"
+    ],
+    "hidden_ability": null,
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        6,
+        "leaf_pick"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        14,
+        "venom_trill"
+      ],
+      [
+        18,
+        "fermata_guard"
+      ],
+      [
+        21,
+        "root_chord"
+      ],
+      [
+        26,
+        "stone_toll"
+      ],
+      [
+        33,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It naps deep in hedges, droning a bass line that knots the brush tighter around it. A traveler it trusts can ask instead for the chord that parts the brambles.",
+    "spoiler": false
+  },
+  {
+    "id": "buzzoon",
+    "name": "Buzzoon",
+    "region": "cantorel",
+    "types": [
+      "Venom"
+    ],
+    "base_stats": [
+      55,
+      50,
+      50,
+      70,
+      55,
+      60
+    ],
+    "catch_rate": 200,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": null,
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        6,
+        "dampen"
+      ],
+      [
+        11,
+        "gale_riff"
+      ],
+      [
+        14,
+        "venom_trill"
+      ],
+      [
+        20,
+        "crescendo"
+      ],
+      [
+        25,
+        "phantom_rest"
+      ],
+      [
+        31,
+        "venom_cadenza"
+      ],
+      [
+        40,
+        "toxic_toccata"
+      ],
+      [
+        44,
+        "quill_pizzicato"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The reed-shaped horn on its abdomen drones a note that wilts orchard pests, so Pausa growers tolerate the smell. The drone sinks as venom builds - field hands know to leave at the low octave.",
+    "spoiler": false
+  },
+  {
+    "id": "cadenzear",
+    "name": "Cadenzear",
+    "region": "cantorel",
+    "types": [
+      "Resonant",
+      "Feral"
+    ],
+    "base_stats": [
+      70,
+      80,
+      66,
+      70,
+      64,
+      80
+    ],
+    "catch_rate": 60,
+    "growth": "MediumSlow",
+    "abilities": [
+      "soloist"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "downbeat"
+      ],
+      [
+        23,
+        "sostenuto"
+      ],
+      [
+        30,
+        "quick_march"
+      ],
+      [
+        38,
+        "fortissimo_slam"
+      ],
+      [
+        46,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Born in concert-hall rafters, it improvises codas onto street musicians' endings. Cadenza City's buskers split tips with it by custom.",
+    "spoiler": false
+  },
+  {
+    "id": "cantavella",
+    "name": "Cantavella",
+    "region": "cantorel",
+    "types": [
+      "Resonant",
+      "Gale"
+    ],
+    "base_stats": [
+      88,
+      76,
+      78,
+      108,
+      88,
+      102
+    ],
+    "catch_rate": 5,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        15,
+        "gale_riff"
+      ],
+      [
+        25,
+        "sostenuto"
+      ],
+      [
+        35,
+        "tempest_coda"
+      ],
+      [
+        45,
+        "resonate"
+      ],
+      [
+        55,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The Triad's rising third: the phrase that asks. Pilgrims climb Graven Pass to hear one question and spend their lives on the answer.",
+    "spoiler": true
+  },
+  {
+    "id": "carilloy",
+    "name": "Carilloy",
+    "region": "cantorel",
+    "types": [
+      "Alloy"
+    ],
+    "base_stats": [
+      60,
+      40,
+      85,
+      80,
+      95,
+      40
+    ],
+    "catch_rate": 120,
+    "growth": "MediumSlow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "tuning_fork",
+    "learnset": [
+      [
+        1,
+        "chime_peal"
+      ],
+      [
+        6,
+        "dampen"
+      ],
+      [
+        10,
+        "gale_riff"
+      ],
+      [
+        16,
+        "anvil_chorus"
+      ],
+      [
+        22,
+        "fermata_guard"
+      ],
+      [
+        28,
+        "volt_pluck"
+      ],
+      [
+        34,
+        "hour_toll"
+      ],
+      [
+        40,
+        "cymbal_tap"
+      ],
+      [
+        44,
+        "anvil_anthem"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A drifting frame of scavenged bells that adopts the hour-toll of whatever town it settles over, always a beat behind the true one. Bell-wardens in Cadenza swear their towers ring cleaner when a Carilloy roosts in the rafters.",
+    "spoiler": false
+  },
+  {
+    "id": "cellorca",
+    "name": "Cellorca",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      95,
+      60,
+      80,
+      105,
+      110,
+      80
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_tide"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        21,
+        "undertow"
+      ],
+      [
+        28,
+        "phantom_rest"
+      ],
+      [
+        34,
+        "crescendo"
+      ],
+      [
+        38,
+        "riptide_finale"
+      ],
+      [
+        42,
+        "breaker_beat"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its hollow body holds a low open C that carries for miles beneath the surface, and deep-water sailors steer through fog by it. When a Cellorca rises to breathe, the whole bay briefly hums in sympathy.",
+    "spoiler": false
+  },
+  {
+    "id": "choralopod",
+    "name": "Choralopod",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Venom"
+    ],
+    "base_stats": [
+      76,
+      68,
+      68,
+      68,
+      72,
+      52
+    ],
+    "catch_rate": 70,
+    "growth": "MediumSlow",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "keysmith",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        10,
+        "venom_trill"
+      ],
+      [
+        17,
+        "undertow"
+      ],
+      [
+        24,
+        "toxic_toccata"
+      ],
+      [
+        32,
+        "riptide_finale"
+      ],
+      [
+        41,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Eight arms, eight parts, one extremely confident soloist's ego. Reef fish school in whatever key it's rehearsing.",
+    "spoiler": false
+  },
+  {
+    "id": "cinderle",
+    "name": "Cinderle",
+    "region": "cantorel",
+    "types": [
+      "Ember"
+    ],
+    "base_stats": [
+      48,
+      56,
+      42,
+      58,
+      44,
+      62
+    ],
+    "catch_rate": 190,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        14,
+        "flare_brass"
+      ],
+      [
+        21,
+        "cinder_waltz"
+      ],
+      [
+        28,
+        "downbeat"
+      ]
+    ],
+    "evolves_to": [
+      "pyrelodie",
+      "Level(22)"
+    ],
+    "entry": "It kindles itself each dawn from yesterday's ash, a small reliable downbeat of warmth. Hearth-keepers along Route 4 leave their grates open on cold nights.",
+    "spoiler": false
+  },
+  {
+    "id": "clockerel",
+    "name": "Clockerel",
+    "region": "cantorel",
+    "types": [
+      "Alloy",
+      "Gale"
+    ],
+    "base_stats": [
+      56,
+      68,
+      60,
+      46,
+      50,
+      76
+    ],
+    "catch_rate": 130,
+    "growth": "MediumFast",
+    "abilities": [
+      "metronome_soul"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "alloy_clang"
+      ],
+      [
+        23,
+        "wing_beat"
+      ],
+      [
+        30,
+        "anvil_anthem"
+      ],
+      [
+        38,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It crows at intervals so exact the port replaced its bell tower with a perch and an apology. Sailors call its third crow the honest one.",
+    "spoiler": false
+  },
+  {
+    "id": "conchord",
+    "name": "Conchord",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Alloy"
+    ],
+    "base_stats": [
+      66,
+      54,
+      84,
+      58,
+      72,
+      28
+    ],
+    "catch_rate": 130,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        16,
+        "alloy_clang"
+      ],
+      [
+        23,
+        "fermata_guard"
+      ],
+      [
+        30,
+        "undertow"
+      ],
+      [
+        38,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its spiral shell is a natural horn, and storms play it from three bays away. Coast families read tomorrow's weather in tonight's key.",
+    "spoiler": false
+  },
+  {
+    "id": "crescendola",
+    "name": "Crescendola",
+    "region": "cantorel",
+    "types": [
+      "Resonant"
+    ],
+    "base_stats": [
+      72,
+      58,
+      64,
+      84,
+      82,
+      70
+    ],
+    "catch_rate": 45,
+    "growth": "Slow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "dampen"
+      ],
+      [
+        12,
+        "sostenuto"
+      ],
+      [
+        20,
+        "crescendo"
+      ],
+      [
+        28,
+        "resonate"
+      ],
+      [
+        36,
+        "requiem_swell"
+      ],
+      [
+        45,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Each generation, a handful are born hearing the whole score at once. Most go quiet young; the coast keeps a list of the ones who didn't.",
+    "spoiler": false
+  },
+  {
+    "id": "croakorus",
+    "name": "Croakorus",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Feral"
+    ],
+    "base_stats": [
+      62,
+      68,
+      56,
+      52,
+      50,
+      66
+    ],
+    "catch_rate": 150,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        15,
+        "downbeat"
+      ],
+      [
+        22,
+        "undertow"
+      ],
+      [
+        29,
+        "quick_march"
+      ],
+      [
+        37,
+        "breaker_beat"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "One Croakorus is a metronome; a bog of them is a male voice choir with no conductor and no shame. Hollowfen sells earplugs at the ferry dock.",
+    "spoiler": false
+  },
+  {
+    "id": "dirgeist",
+    "name": "Dirgeist",
+    "region": "cantorel",
+    "types": [
+      "Phantom"
+    ],
+    "base_stats": [
+      38,
+      35,
+      45,
+      78,
+      80,
+      70
+    ],
+    "catch_rate": 90,
+    "growth": "Slow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        11,
+        "venom_trill"
+      ],
+      [
+        22,
+        "phantom_rest"
+      ],
+      [
+        26,
+        "frost_lull"
+      ],
+      [
+        31,
+        "resonate"
+      ],
+      [
+        36,
+        "requiem_swell"
+      ],
+      [
+        40,
+        "overtone"
+      ],
+      [
+        44,
+        "sostenuto"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A funeral song that was never allowed its final chord, still circling the resolution it is owed. It drifts through empty halls at night, humming the endings of other Motes' phrases a half-step flat.",
+    "spoiler": false
+  },
+  {
+    "id": "dunelay",
+    "name": "Dunelay",
+    "region": "cantorel",
+    "types": [
+      "Stone",
+      "Gale"
+    ],
+    "base_stats": [
+      60,
+      56,
+      66,
+      40,
+      50,
+      56
+    ],
+    "catch_rate": 150,
+    "growth": "MediumFast",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        15,
+        "stone_toll"
+      ],
+      [
+        22,
+        "wing_beat"
+      ],
+      [
+        29,
+        "downbeat"
+      ],
+      [
+        36,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It surfs collapsing dunes on splayed stone toes, riding each slide to the exact note of rest. The coast road moves every year; the Dunelay's beach never does.",
+    "spoiler": false
+  },
+  {
+    "id": "dynamaestro",
+    "name": "Dynamaestro",
+    "region": "cantorel",
+    "types": [
+      "Volt",
+      "Alloy"
+    ],
+    "base_stats": [
+      78,
+      70,
+      76,
+      100,
+      78,
+      88
+    ],
+    "catch_rate": 60,
+    "growth": "MediumSlow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        9,
+        "volt_pluck"
+      ],
+      [
+        16,
+        "stun_chord"
+      ],
+      [
+        23,
+        "overtone"
+      ],
+      [
+        30,
+        "alloy_clang"
+      ],
+      [
+        38,
+        "shatter_aria"
+      ],
+      [
+        46,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Four turbines of muscle conduct the city's whole load through its spine. During outages it stands very still and looks extremely guilty.",
+    "spoiler": false
+  },
+  {
+    "id": "dynamotif",
+    "name": "Dynamotif",
+    "region": "cantorel",
+    "types": [
+      "Volt"
+    ],
+    "base_stats": [
+      60,
+      55,
+      55,
+      63,
+      60,
+      63
+    ],
+    "catch_rate": 140,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "volt_pluck"
+      ],
+      [
+        16,
+        "stun_chord"
+      ],
+      [
+        23,
+        "overtone"
+      ],
+      [
+        31,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": [
+      "dynamaestro",
+      "Level(30)"
+    ],
+    "entry": "It stores the morning shift-change surge and spends it all day as a steady working hum. Voltaccia's grid is, legally speaking, livestock.",
+    "spoiler": false
+  },
+  {
+    "id": "embaritone",
+    "name": "Embaritone",
+    "region": "cantorel",
+    "types": [
+      "Ember"
+    ],
+    "base_stats": [
+      62,
+      69,
+      54,
+      86,
+      62,
+      87
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_ember"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        13,
+        "gale_riff"
+      ],
+      [
+        21,
+        "flare_brass"
+      ],
+      [
+        30,
+        "crescendo"
+      ],
+      [
+        38,
+        "resonate"
+      ],
+      [
+        42,
+        "ash_aria"
+      ]
+    ],
+    "evolves_to": [
+      "maestroar",
+      "Level(34)"
+    ],
+    "entry": "Its voice drops a full octave at evolution and keeps slipping lower for weeks, to its evident embarrassment. The brass plates along its throat warm an entire room while it runs its evening scales.",
+    "spoiler": false
+  },
+  {
+    "id": "emberlith",
+    "name": "Emberlith",
+    "region": "cantorel",
+    "types": [
+      "Ember",
+      "Stone"
+    ],
+    "base_stats": [
+      82,
+      80,
+      84,
+      62,
+      64,
+      46
+    ],
+    "catch_rate": 60,
+    "growth": "MediumSlow",
+    "abilities": [
+      "heat_haze"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        10,
+        "flare_brass"
+      ],
+      [
+        17,
+        "stone_toll"
+      ],
+      [
+        24,
+        "cinder_waltz"
+      ],
+      [
+        32,
+        "boulder_coda"
+      ],
+      [
+        41,
+        "crescendo"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A kiln the mountain forgot to put out. Caravans winter beside it, paying in firewood and gossip; it prefers the gossip.",
+    "spoiler": false
+  },
+  {
+    "id": "fanfyre",
+    "name": "Fanfyre",
+    "region": "cantorel",
+    "types": [
+      "Ember"
+    ],
+    "base_stats": [
+      46,
+      51,
+      40,
+      64,
+      46,
+      63
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_ember"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        13,
+        "gale_riff"
+      ],
+      [
+        19,
+        "flare_brass"
+      ],
+      [
+        28,
+        "crescendo"
+      ],
+      [
+        36,
+        "resonate"
+      ]
+    ],
+    "evolves_to": [
+      "embaritone",
+      "Level(16)"
+    ],
+    "entry": "Its mane flares in quick brass figures when it is excited, and lamplighters in Cantorel's old quarters keep one on their rounds instead of a lantern. A startled Fanfyre blurts the same four-note fanfare its line has opened with for centuries.",
+    "spoiler": false
+  },
+  {
+    "id": "fenadenza",
+    "name": "Fenadenza",
+    "region": "cantorel",
+    "types": [
+      "Venom",
+      "Bloom"
+    ],
+    "base_stats": [
+      65,
+      58,
+      62,
+      78,
+      72,
+      55
+    ],
+    "catch_rate": 90,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thorn_coat"
+    ],
+    "hidden_ability": "keysmith",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        10,
+        "venom_trill"
+      ],
+      [
+        17,
+        "leaf_pick"
+      ],
+      [
+        24,
+        "toxic_toccata"
+      ],
+      [
+        32,
+        "root_chord"
+      ],
+      [
+        40,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its blossom opens only for the swamp's final cadence each dusk, drinking the held chord. Perfumers have died rich trying to bottle it.",
+    "spoiler": false
+  },
+  {
+    "id": "ferrobass",
+    "name": "Ferrobass",
+    "region": "cantorel",
+    "types": [
+      "Alloy",
+      "Tide"
+    ],
+    "base_stats": [
+      84,
+      90,
+      88,
+      58,
+      72,
+      40
+    ],
+    "catch_rate": 60,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        10,
+        "alloy_clang"
+      ],
+      [
+        17,
+        "undertow"
+      ],
+      [
+        24,
+        "anvil_anthem"
+      ],
+      [
+        32,
+        "breaker_beat"
+      ],
+      [
+        41,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A harbor chain that learned the work songs and grew a body to haul with. It moors itself at night to whichever ship sang best.",
+    "spoiler": false
+  },
+  {
+    "id": "fogato",
+    "name": "Fogato",
+    "region": "cantorel",
+    "types": [
+      "Frost",
+      "Phantom"
+    ],
+    "base_stats": [
+      58,
+      44,
+      52,
+      72,
+      66,
+      58
+    ],
+    "catch_rate": 110,
+    "growth": "MediumSlow",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        16,
+        "frost_lull"
+      ],
+      [
+        23,
+        "hail_chorale"
+      ],
+      [
+        31,
+        "phantom_rest"
+      ],
+      [
+        39,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It condenses where the song thins, which on the Quiet Coast is most mornings. Lighthouse keepers log fogato sightings instead of fog.",
+    "spoiler": false
+  },
+  {
+    "id": "forgeling",
+    "name": "Forgeling",
+    "region": "cantorel",
+    "types": [
+      "Alloy",
+      "Ember"
+    ],
+    "base_stats": [
+      70,
+      80,
+      78,
+      56,
+      62,
+      44
+    ],
+    "catch_rate": 100,
+    "growth": "MediumSlow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        13,
+        "flare_brass"
+      ],
+      [
+        17,
+        "alloy_clang"
+      ],
+      [
+        24,
+        "cinder_waltz"
+      ],
+      [
+        31,
+        "anvil_anthem"
+      ],
+      [
+        40,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It sleeps in cooling slag and wakes with the shift bell, already in rhythm. Calando smiths apprentice under one before they touch a hammer.",
+    "spoiler": false
+  },
+  {
+    "id": "frostrel",
+    "name": "Frostrel",
+    "region": "cantorel",
+    "types": [
+      "Frost"
+    ],
+    "base_stats": [
+      54,
+      52,
+      52,
+      60,
+      58,
+      52
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        22,
+        "hail_chorale"
+      ],
+      [
+        29,
+        "hollow_hum"
+      ]
+    ],
+    "evolves_to": [
+      "glacialto",
+      "Level(23)"
+    ],
+    "entry": "It hums fractions of a degree below the air around it, and frost writes the staff lines. Children race to read tomorrow's window-music.",
+    "spoiler": false
+  },
+  {
+    "id": "galegant",
+    "name": "Galegant",
+    "region": "cantorel",
+    "types": [
+      "Gale",
+      "Feral"
+    ],
+    "base_stats": [
+      74,
+      88,
+      68,
+      56,
+      60,
+      90
+    ],
+    "catch_rate": 70,
+    "growth": "MediumSlow",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "wing_beat"
+      ],
+      [
+        23,
+        "downbeat"
+      ],
+      [
+        30,
+        "quick_march"
+      ],
+      [
+        38,
+        "tempest_coda"
+      ],
+      [
+        46,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It charges fences for the sound they make breaking, then apologizes by rebuilding worse. Ranchers bill the wind.",
+    "spoiler": false
+  },
+  {
+    "id": "galliard",
+    "name": "Galliard",
+    "region": "cantorel",
+    "types": [
+      "Gale"
+    ],
+    "base_stats": [
+      55,
+      66,
+      48,
+      50,
+      46,
+      85
+    ],
+    "catch_rate": 150,
+    "growth": "Fast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "quick_step"
+      ],
+      [
+        9,
+        "wing_beat"
+      ],
+      [
+        15,
+        "gale_riff"
+      ],
+      [
+        21,
+        "downbeat"
+      ],
+      [
+        27,
+        "quick_march"
+      ],
+      [
+        35,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It dances its namesake five-step on thermals, kicking off each measure with a wingtip snap. Festival crowds clap along; the Galliard never misses the beat - they do.",
+    "spoiler": false
+  },
+  {
+    "id": "glacialto",
+    "name": "Glacialto",
+    "region": "cantorel",
+    "types": [
+      "Frost",
+      "Stone"
+    ],
+    "base_stats": [
+      76,
+      60,
+      80,
+      84,
+      72,
+      38
+    ],
+    "catch_rate": 80,
+    "growth": "MediumSlow",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        22,
+        "hail_chorale"
+      ],
+      [
+        28,
+        "stone_toll"
+      ],
+      [
+        36,
+        "boulder_coda"
+      ],
+      [
+        44,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A glacier in alto register, it sings one phrase per winter and finishes none of them. The unfinished cadence is the coast's oldest open question.",
+    "spoiler": false
+  },
+  {
+    "id": "glissicle",
+    "name": "Glissicle",
+    "region": "cantorel",
+    "types": [
+      "Frost"
+    ],
+    "base_stats": [
+      50,
+      30,
+      65,
+      80,
+      85,
+      44
+    ],
+    "catch_rate": 140,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": null,
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        5,
+        "sleet_staccato"
+      ],
+      [
+        9,
+        "frost_lull"
+      ],
+      [
+        14,
+        "gale_riff"
+      ],
+      [
+        18,
+        "hail_chorale"
+      ],
+      [
+        24,
+        "crescendo"
+      ],
+      [
+        35,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A rack of hollow icicles that plays a falling scale each time it melts a little, then freezes itself back into tune overnight. In the high passes, a sudden thaw is called losing the choir.",
+    "spoiler": false
+  },
+  {
+    "id": "gravelody",
+    "name": "Gravelody",
+    "region": "cantorel",
+    "types": [
+      "Stone"
+    ],
+    "base_stats": [
+      62,
+      72,
+      70,
+      40,
+      52,
+      44
+    ],
+    "catch_rate": 150,
+    "growth": "MediumFast",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "stone_toll"
+      ],
+      [
+        24,
+        "downbeat"
+      ],
+      [
+        32,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": [
+      "gravoross",
+      "Level(32)"
+    ],
+    "entry": "It rolls scree downslope in measured phrases, resetting the pass's percussion every spring. Roadmenders call the rockfalls 'rehearsals'.",
+    "spoiler": false
+  },
+  {
+    "id": "graviole",
+    "name": "Graviole",
+    "region": "cantorel",
+    "types": [
+      "Stone",
+      "Resonant"
+    ],
+    "base_stats": [
+      88,
+      74,
+      90,
+      70,
+      72,
+      32
+    ],
+    "catch_rate": 55,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "tuning_fork",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        11,
+        "stone_toll"
+      ],
+      [
+        19,
+        "dampen"
+      ],
+      [
+        23,
+        "fermata_guard"
+      ],
+      [
+        35,
+        "boulder_coda"
+      ],
+      [
+        38,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It is, as far as anyone can measure, a boulder that learned the root of the world's chord. Anchor surveyors leave offerings - calibration weights, mostly.",
+    "spoiler": false
+  },
+  {
+    "id": "gravoross",
+    "name": "Gravoross",
+    "region": "cantorel",
+    "types": [
+      "Stone",
+      "Feral"
+    ],
+    "base_stats": [
+      85,
+      96,
+      86,
+      48,
+      64,
+      52
+    ],
+    "catch_rate": 65,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "stone_toll"
+      ],
+      [
+        24,
+        "downbeat"
+      ],
+      [
+        31,
+        "fortissimo_slam"
+      ],
+      [
+        40,
+        "boulder_coda"
+      ],
+      [
+        48,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its shoulders carry the pass's oldest cairn, builders unknown. It reroutes around pilgrim trails without being asked.",
+    "spoiler": false
+  },
+  {
+    "id": "gullegro",
+    "name": "Gullegro",
+    "region": "cantorel",
+    "types": [
+      "Gale",
+      "Tide"
+    ],
+    "base_stats": [
+      58,
+      60,
+      50,
+      52,
+      48,
+      80
+    ],
+    "catch_rate": 170,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "floating",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        8,
+        "wing_beat"
+      ],
+      [
+        14,
+        "gale_riff"
+      ],
+      [
+        20,
+        "undertow"
+      ],
+      [
+        27,
+        "downbeat"
+      ],
+      [
+        34,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It steals sandwiches on the downbeat, always the downbeat. Port Calando's dockers eat in 3/4 time out of spite.",
+    "spoiler": false
+  },
+  {
+    "id": "hummble",
+    "name": "Hummble",
+    "region": "cantorel",
+    "types": [
+      "Resonant",
+      "Gale"
+    ],
+    "base_stats": [
+      52,
+      46,
+      48,
+      62,
+      58,
+      74
+    ],
+    "catch_rate": 160,
+    "growth": "MediumFast",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "tuning_fork",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        14,
+        "gale_riff"
+      ],
+      [
+        20,
+        "sostenuto"
+      ],
+      [
+        34,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its wingbeat sits exactly on the region's root note, and hives of them keep Cantorel's meadows in tune. Beekeepers here are called choirmasters.",
+    "spoiler": false
+  },
+  {
+    "id": "intervallia",
+    "name": "Intervallia",
+    "region": "cantorel",
+    "types": [
+      "Resonant",
+      "Tide"
+    ],
+    "base_stats": [
+      92,
+      70,
+      86,
+      104,
+      98,
+      84
+    ],
+    "catch_rate": 5,
+    "growth": "Slow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        15,
+        "undertow"
+      ],
+      [
+        25,
+        "sostenuto"
+      ],
+      [
+        35,
+        "riptide_finale"
+      ],
+      [
+        45,
+        "resonate"
+      ],
+      [
+        55,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The Triad's falling fifth: the distance between voices, given fins. Tides obey the moon; the moon, fishermen say, checks with her first.",
+    "spoiler": true
+  },
+  {
+    "id": "kelpitan",
+    "name": "Kelpitan",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Tide"
+    ],
+    "base_stats": [
+      74,
+      68,
+      70,
+      52,
+      64,
+      36
+    ],
+    "catch_rate": 120,
+    "growth": "MediumSlow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        9,
+        "leaf_pick"
+      ],
+      [
+        15,
+        "dampen"
+      ],
+      [
+        22,
+        "root_chord"
+      ],
+      [
+        29,
+        "undertow"
+      ],
+      [
+        37,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It anchors whole kelp forests to its shoulders and hums them taut against the current. Divers moor to a Kelpitan with its permission, paid in crabs.",
+    "spoiler": false
+  },
+  {
+    "id": "largotide",
+    "name": "Largotide",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Feral"
+    ],
+    "base_stats": [
+      78,
+      70,
+      62,
+      50,
+      58,
+      88
+    ],
+    "catch_rate": 90,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        13,
+        "breaker_beat"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        25,
+        "downbeat"
+      ],
+      [
+        33,
+        "fortissimo_slam"
+      ],
+      [
+        41,
+        "riptide_finale"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Grown vast and patient, it surfaces exactly once per tide to take one enormous breath. Harbor records note ships rescheduling around it.",
+    "spoiler": false
+  },
+  {
+    "id": "lichenore",
+    "name": "Lichenore",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Stone"
+    ],
+    "base_stats": [
+      75,
+      58,
+      92,
+      60,
+      88,
+      47
+    ],
+    "catch_rate": 90,
+    "growth": "MediumFast",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        6,
+        "dampen"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "root_chord"
+      ],
+      [
+        24,
+        "pebble_beat"
+      ],
+      [
+        30,
+        "stone_toll"
+      ],
+      [
+        38,
+        "boulder_coda"
+      ],
+      [
+        44,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Centuries of moss have mineralized into a singing crust along its back. It moves twice a day, and the forest schedules around it.",
+    "spoiler": false
+  },
+  {
+    "id": "lullaby",
+    "name": "Lullabye",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Resonant"
+    ],
+    "base_stats": [
+      66,
+      40,
+      58,
+      88,
+      84,
+      60
+    ],
+    "catch_rate": 60,
+    "growth": "MediumSlow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        18,
+        "phantom_rest"
+      ],
+      [
+        26,
+        "sostenuto"
+      ],
+      [
+        34,
+        "requiem_swell"
+      ],
+      [
+        42,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It sings the old cradle-song of whatever hears it, in the singer's mother's voice. TACET grunts carry one each; nobody asks where they sleep.",
+    "spoiler": false
+  },
+  {
+    "id": "madrigale",
+    "name": "Madrigale",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Resonant"
+    ],
+    "base_stats": [
+      62,
+      48,
+      56,
+      78,
+      78,
+      66
+    ],
+    "catch_rate": 70,
+    "growth": "MediumSlow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        17,
+        "leaf_pick"
+      ],
+      [
+        24,
+        "root_chord"
+      ],
+      [
+        31,
+        "sostenuto"
+      ],
+      [
+        39,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It sings five-part harmony alone, each petal-mouth carrying a line. Arbor Vale's choir lost its festival title to one and framed the scoresheet.",
+    "spoiler": false
+  },
+  {
+    "id": "maestrina",
+    "name": "Maestrina",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Resonant"
+    ],
+    "base_stats": [
+      78,
+      66,
+      74,
+      94,
+      88,
+      72
+    ],
+    "catch_rate": 50,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        11,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "root_chord"
+      ],
+      [
+        25,
+        "sostenuto"
+      ],
+      [
+        33,
+        "briar_bow"
+      ],
+      [
+        42,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It conducts clearings: birdsong enters on its downbeat or not at all. Arbor Vale's choir director resigned after meeting one. 'Outclassed,' the letter said.",
+    "spoiler": false
+  },
+  {
+    "id": "maestroar",
+    "name": "Maestroar",
+    "region": "cantorel",
+    "types": [
+      "Ember"
+    ],
+    "base_stats": [
+      79,
+      87,
+      68,
+      109,
+      78,
+      109
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_ember"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        13,
+        "gale_riff"
+      ],
+      [
+        21,
+        "flare_brass"
+      ],
+      [
+        30,
+        "crescendo"
+      ],
+      [
+        34,
+        "alloy_clang"
+      ],
+      [
+        38,
+        "resonate"
+      ],
+      [
+        42,
+        "cinder_waltz"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its roar lands like a downbeat: wild Motes within earshot fall into tempo whether they mean to or not. Conservatory ushers swear the flames of its mane rise and fall in strict four-four.",
+    "spoiler": false
+  },
+  {
+    "id": "maridian",
+    "name": "Maridian",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Stone"
+    ],
+    "base_stats": [
+      82,
+      62,
+      88,
+      58,
+      76,
+      30
+    ],
+    "catch_rate": 80,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        17,
+        "stone_toll"
+      ],
+      [
+        24,
+        "undertow"
+      ],
+      [
+        31,
+        "fermata_guard"
+      ],
+      [
+        40,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its tideline shell rings the harbor hours more reliably than the harbor bell. Port Calando sets its clocks to a creature that has never been on time for anything else.",
+    "spoiler": false
+  },
+  {
+    "id": "mirefall",
+    "name": "Mirefall",
+    "region": "cantorel",
+    "types": [
+      "Venom",
+      "Tide"
+    ],
+    "base_stats": [
+      72,
+      64,
+      68,
+      58,
+      66,
+      42
+    ],
+    "catch_rate": 110,
+    "growth": "MediumSlow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        10,
+        "venom_trill"
+      ],
+      [
+        17,
+        "undertow"
+      ],
+      [
+        24,
+        "toxic_toccata"
+      ],
+      [
+        32,
+        "breaker_beat"
+      ],
+      [
+        41,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It sleeps under the fen and surfaces as a slow brown chord when rain rewrites the water table. Hollowfen builds its stilts around known Mirefall beds.",
+    "spoiler": false
+  },
+  {
+    "id": "mossoon",
+    "name": "Mossoon",
+    "region": "cantorel",
+    "types": [
+      "Bloom"
+    ],
+    "base_stats": [
+      50,
+      54,
+      64,
+      56,
+      72,
+      44
+    ],
+    "catch_rate": 200,
+    "growth": "MediumFast",
+    "abilities": [
+      "damper"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        6,
+        "dampen"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "root_chord"
+      ],
+      [
+        22,
+        "da_capo"
+      ],
+      [
+        30,
+        "sostenuto"
+      ],
+      [
+        32,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": [
+      "lichenore",
+      "Level(18)"
+    ],
+    "entry": "It naps under a quilt of moss it hums to itself, one bar at a time. Whole logs go green where a Mossoon family winters.",
+    "spoiler": false
+  },
+  {
+    "id": "mutewing",
+    "name": "Mutewing",
+    "region": "cantorel",
+    "types": [
+      "Venom",
+      "Phantom"
+    ],
+    "base_stats": [
+      58,
+      72,
+      54,
+      48,
+      56,
+      82
+    ],
+    "catch_rate": 90,
+    "growth": "MediumFast",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "grace_note"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "venom_trill"
+      ],
+      [
+        23,
+        "hollow_hum"
+      ],
+      [
+        30,
+        "toxic_toccata"
+      ],
+      [
+        38,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its wings cancel their own sound a half-beat after making it - the silence arrives late, like an echo of nothing. Quiet Coast nets catch only its absence.",
+    "spoiler": false
+  },
+  {
+    "id": "nullavoce",
+    "name": "Nullavoce",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Alloy"
+    ],
+    "base_stats": [
+      74,
+      70,
+      88,
+      80,
+      84,
+      54
+    ],
+    "catch_rate": 45,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        11,
+        "dampen"
+      ],
+      [
+        18,
+        "alloy_clang"
+      ],
+      [
+        25,
+        "phantom_rest"
+      ],
+      [
+        33,
+        "fermata_guard"
+      ],
+      [
+        42,
+        "requiem_swell"
+      ],
+      [
+        50,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Where it stands, sound files a complaint and leaves. The Conservatory's severance lattice was reverse-engineered, quietly, from its hide.",
+    "spoiler": false
+  },
+  {
+    "id": "orchestrios",
+    "name": "Orchestrios",
+    "region": "cantorel",
+    "types": [
+      "Alloy",
+      "Resonant"
+    ],
+    "base_stats": [
+      76,
+      62,
+      84,
+      92,
+      86,
+      50
+    ],
+    "catch_rate": 45,
+    "growth": "Slow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "chorister",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        11,
+        "alloy_clang"
+      ],
+      [
+        18,
+        "sostenuto"
+      ],
+      [
+        25,
+        "anvil_anthem"
+      ],
+      [
+        33,
+        "resonate"
+      ],
+      [
+        42,
+        "anvil_chorus"
+      ],
+      [
+        50,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Eighty brass pipes grew through its body when it slept a century in the old organ loft. It is the loft, mostly, now.",
+    "spoiler": false
+  },
+  {
+    "id": "permafrond",
+    "name": "Permafrond",
+    "region": "cantorel",
+    "types": [
+      "Frost",
+      "Bloom"
+    ],
+    "base_stats": [
+      74,
+      56,
+      72,
+      68,
+      76,
+      34
+    ],
+    "catch_rate": 85,
+    "growth": "MediumSlow",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        10,
+        "frost_lull"
+      ],
+      [
+        17,
+        "leaf_pick"
+      ],
+      [
+        24,
+        "hail_chorale"
+      ],
+      [
+        32,
+        "root_chord"
+      ],
+      [
+        41,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A fern that chose winter and never looked back. Its fronds chime against each other in a key botanists insist plants cannot reach.",
+    "spoiler": false
+  },
+  {
+    "id": "petalune",
+    "name": "Petalune",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Gale"
+    ],
+    "base_stats": [
+      48,
+      46,
+      44,
+      72,
+      56,
+      66
+    ],
+    "catch_rate": 190,
+    "growth": "MediumFast",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        11,
+        "gale_riff"
+      ],
+      [
+        19,
+        "leaf_pick"
+      ],
+      [
+        25,
+        "hollow_hum"
+      ]
+    ],
+    "evolves_to": [
+      "bloomara",
+      "Level(20)"
+    ],
+    "entry": "Its wing-petals shed a chiming pollen that hangs in moonlight. Arbor Vale brides time their processions to the petalune drift.",
+    "spoiler": false
+  },
+  {
+    "id": "pipling",
+    "name": "Pipling",
+    "region": "cantorel",
+    "types": [
+      "Feral",
+      "Gale"
+    ],
+    "base_stats": [
+      49,
+      49,
+      50,
+      55,
+      49,
+      80
+    ],
+    "catch_rate": 255,
+    "growth": "MediumFast",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": null,
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        5,
+        "grace_gust"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        13,
+        "ember_note"
+      ],
+      [
+        18,
+        "gale_riff"
+      ],
+      [
+        23,
+        "crescendo"
+      ],
+      [
+        28,
+        "volt_pluck"
+      ],
+      [
+        35,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": [
+      "soarprano",
+      "Level(16)"
+    ],
+    "entry": "Hatchlings pipe the three notes their parents sang into the egg, badly off-key at first. Walkers on Route 1 set their morning pace to the flocks' practice scales.",
+    "spoiler": false
+  },
+  {
+    "id": "pistonna",
+    "name": "Pistonna",
+    "region": "cantorel",
+    "types": [
+      "Alloy"
+    ],
+    "base_stats": [
+      70,
+      82,
+      74,
+      40,
+      56,
+      48
+    ],
+    "catch_rate": 120,
+    "growth": "MediumSlow",
+    "abilities": [
+      "iron_ear"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        10,
+        "downbeat"
+      ],
+      [
+        17,
+        "alloy_clang"
+      ],
+      [
+        24,
+        "anvil_anthem"
+      ],
+      [
+        32,
+        "fortissimo_slam"
+      ],
+      [
+        41,
+        "anvil_chorus"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its forearms fire in strict alternation, a two-stroke percussion the factories tune themselves against. It refuses to work overtime.",
+    "spoiler": false
+  },
+  {
+    "id": "primavoce",
+    "name": "Primavoce",
+    "region": "cantorel",
+    "types": [
+      "Resonant"
+    ],
+    "base_stats": [
+      96,
+      72,
+      84,
+      116,
+      96,
+      86
+    ],
+    "catch_rate": 3,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "dampen"
+      ],
+      [
+        15,
+        "sostenuto"
+      ],
+      [
+        25,
+        "crescendo"
+      ],
+      [
+        35,
+        "resonate"
+      ],
+      [
+        45,
+        "requiem_swell"
+      ],
+      [
+        55,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The first voice, older than the bells, singing the root the world tunes against. The Roster's first column begins with the trainers who heard it and stayed sane.",
+    "spoiler": true
+  },
+  {
+    "id": "pyrelodie",
+    "name": "Pyrelodie",
+    "region": "cantorel",
+    "types": [
+      "Ember",
+      "Gale"
+    ],
+    "base_stats": [
+      64,
+      78,
+      56,
+      76,
+      58,
+      88
+    ],
+    "catch_rate": 85,
+    "growth": "MediumFast",
+    "abilities": [
+      "heat_haze"
+    ],
+    "hidden_ability": "soloist",
+    "learnset": [
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        14,
+        "flare_brass"
+      ],
+      [
+        21,
+        "cinder_waltz"
+      ],
+      [
+        27,
+        "gale_riff"
+      ],
+      [
+        34,
+        "tempest_coda"
+      ],
+      [
+        42,
+        "crescendo"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its updraft carries its own melody line a beat ahead of it, announcing arrivals it hasn't made yet. Brushfires follow it politely, single file.",
+    "spoiler": false
+  },
+  {
+    "id": "ratchetta",
+    "name": "Ratchetta",
+    "region": "cantorel",
+    "types": [
+      "Feral",
+      "Alloy"
+    ],
+    "base_stats": [
+      55,
+      66,
+      60,
+      40,
+      45,
+      68
+    ],
+    "catch_rate": 160,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        14,
+        "downbeat"
+      ],
+      [
+        21,
+        "quick_march"
+      ],
+      [
+        28,
+        "alloy_clang"
+      ],
+      [
+        36,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It tightens loose bolts compulsively, one click per beat. Maintenance crews follow one around instead of doing inspections.",
+    "spoiler": false
+  },
+  {
+    "id": "rattacca",
+    "name": "Rattacca",
+    "region": "cantorel",
+    "types": [
+      "Feral"
+    ],
+    "base_stats": [
+      62,
+      88,
+      58,
+      40,
+      52,
+      110
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "quick_step"
+      ],
+      [
+        5,
+        "dampen"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        17,
+        "downbeat"
+      ],
+      [
+        22,
+        "quick_march"
+      ],
+      [
+        27,
+        "stone_toll"
+      ],
+      [
+        34,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It strikes without pause, chaining bites so fast that listeners hear a single rolled note. Pausa's bell-keepers pay it in seed to gnaw rust from the carillon wires.",
+    "spoiler": false
+  },
+  {
+    "id": "requiemoth",
+    "name": "Requiemoth",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Frost"
+    ],
+    "base_stats": [
+      72,
+      50,
+      60,
+      90,
+      80,
+      64
+    ],
+    "catch_rate": 50,
+    "growth": "Slow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        11,
+        "dampen"
+      ],
+      [
+        18,
+        "frost_lull"
+      ],
+      [
+        25,
+        "phantom_rest"
+      ],
+      [
+        33,
+        "hail_chorale"
+      ],
+      [
+        41,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It appears where songs end early - closed halls, dead air, the Quiet Coast. Its wings hold the last four bars of whatever wasn't finished.",
+    "spoiler": false
+  },
+  {
+    "id": "rippeggio",
+    "name": "Rippeggio",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      55,
+      30,
+      47,
+      69,
+      64,
+      45
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_tide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        26,
+        "phantom_rest"
+      ],
+      [
+        33,
+        "riptide_finale"
+      ]
+    ],
+    "evolves_to": [
+      "tidalegro",
+      "Level(16)"
+    ],
+    "entry": "It climbs streams by plucking the surface, each hop landing a note higher than the last. Ferry crews judge a pool healthy by how many Rippeggio arpeggios they hear at dusk.",
+    "spoiler": false
+  },
+  {
+    "id": "shiverine",
+    "name": "Shiverine",
+    "region": "cantorel",
+    "types": [
+      "Frost",
+      "Gale"
+    ],
+    "base_stats": [
+      58,
+      52,
+      50,
+      78,
+      64,
+      88
+    ],
+    "catch_rate": 110,
+    "growth": "MediumFast",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "gale_riff"
+      ],
+      [
+        16,
+        "frost_lull"
+      ],
+      [
+        23,
+        "hail_chorale"
+      ],
+      [
+        31,
+        "wing_beat"
+      ],
+      [
+        40,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It skates the windward faces on bladed wingtips, scoring the ice with tomorrow's forecast. Frostine's lift operators read the runes and strike accordingly.",
+    "spoiler": false
+  },
+  {
+    "id": "shrubato",
+    "name": "Shrubato",
+    "region": "cantorel",
+    "types": [
+      "Feral",
+      "Bloom"
+    ],
+    "base_stats": [
+      58,
+      64,
+      52,
+      38,
+      44,
+      58
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        17,
+        "downbeat"
+      ],
+      [
+        23,
+        "quick_march"
+      ],
+      [
+        29,
+        "bramble_reel"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It trims hedges flat with its incisors, always to the same tempo. Untended gardens in Arbor Vale stay suspiciously well-kept.",
+    "spoiler": false
+  },
+  {
+    "id": "sirenetta",
+    "name": "Sirenetta",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Resonant"
+    ],
+    "base_stats": [
+      60,
+      42,
+      54,
+      86,
+      72,
+      68
+    ],
+    "catch_rate": 75,
+    "growth": "MediumSlow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        17,
+        "undertow"
+      ],
+      [
+        24,
+        "sostenuto"
+      ],
+      [
+        32,
+        "resonate"
+      ],
+      [
+        40,
+        "riptide_finale"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Sailors swear its evening phrase names the one who hears it. The Conservatory lists that as folklore; the coast lists the Conservatory as inland.",
+    "spoiler": false
+  },
+  {
+    "id": "smogturne",
+    "name": "Smogturne",
+    "region": "cantorel",
+    "types": [
+      "Venom",
+      "Volt"
+    ],
+    "base_stats": [
+      62,
+      50,
+      56,
+      82,
+      64,
+      72
+    ],
+    "catch_rate": 100,
+    "growth": "MediumFast",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        9,
+        "venom_trill"
+      ],
+      [
+        16,
+        "stun_chord"
+      ],
+      [
+        23,
+        "toxic_toccata"
+      ],
+      [
+        31,
+        "venom_cadenza"
+      ],
+      [
+        39,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It feeds on stack exhaust and exhales it as a low nocturne that corrodes gutters. Voltaccia fines it; it has never paid.",
+    "spoiler": false
+  },
+  {
+    "id": "soarprano",
+    "name": "Soarprano",
+    "region": "cantorel",
+    "types": [
+      "Feral",
+      "Gale"
+    ],
+    "base_stats": [
+      65,
+      60,
+      55,
+      85,
+      55,
+      100
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "grace_gust"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        13,
+        "ember_note"
+      ],
+      [
+        19,
+        "gale_riff"
+      ],
+      [
+        25,
+        "crescendo"
+      ],
+      [
+        31,
+        "volt_pluck"
+      ],
+      [
+        38,
+        "tempest_coda"
+      ],
+      [
+        40,
+        "wing_beat"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It climbs as it sings, holding the highest note at the top of its loop before diving home. Pausa's bells are retuned twice a year to match the dawn aria from the Route 1 hedgerows.",
+    "spoiler": false
+  },
+  {
+    "id": "solfawn",
+    "name": "Solfawn",
+    "region": "cantorel",
+    "types": [
+      "Bloom"
+    ],
+    "base_stats": [
+      44,
+      66,
+      48,
+      38,
+      48,
+      66
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_bloom"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        6,
+        "quick_step"
+      ],
+      [
+        9,
+        "leaf_pick"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        14,
+        "stone_toll"
+      ],
+      [
+        19,
+        "root_chord"
+      ],
+      [
+        25,
+        "frost_lull"
+      ],
+      [
+        33,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": [
+      "vinebrato",
+      "Level(16)"
+    ],
+    "entry": "It learns its scale the way other fawns learn to stand, wobbling up from do to sol by its first week. Herders leave their gates unlatched, since a Solfawn always comes home singing the note it left on.",
+    "spoiler": false
+  },
+  {
+    "id": "sonatler",
+    "name": "Sonatler",
+    "region": "cantorel",
+    "types": [
+      "Bloom"
+    ],
+    "base_stats": [
+      82,
+      104,
+      82,
+      78,
+      82,
+      102
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_bloom"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        6,
+        "quick_step"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        13,
+        "leaf_pick"
+      ],
+      [
+        17,
+        "root_chord"
+      ],
+      [
+        26,
+        "frost_lull"
+      ],
+      [
+        30,
+        "stone_toll"
+      ],
+      [
+        34,
+        "briar_bow"
+      ],
+      [
+        38,
+        "resonate"
+      ],
+      [
+        42,
+        "bramble_reel"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its antlers have grown into a full string section, and it plays one long sonata across its lifetime without repeating a movement. Groves where a Sonatler grazes grow back in straight, evenly spaced rows.",
+    "spoiler": false
+  },
+  {
+    "id": "staccatto",
+    "name": "Staccatto",
+    "region": "cantorel",
+    "types": [
+      "Volt",
+      "Alloy"
+    ],
+    "base_stats": [
+      58,
+      58,
+      62,
+      50,
+      52,
+      62
+    ],
+    "catch_rate": 120,
+    "growth": "MediumFast",
+    "abilities": [
+      "metronome_soul"
+    ],
+    "hidden_ability": "live_wire",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        9,
+        "volt_pluck"
+      ],
+      [
+        16,
+        "quick_step"
+      ],
+      [
+        23,
+        "alloy_clang"
+      ],
+      [
+        30,
+        "stun_chord"
+      ],
+      [
+        38,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Every footfall lands detached and exact, sixteenth after sixteenth. Calando's clock-makers keep one in the shop window instead of a metronome.",
+    "spoiler": false
+  },
+  {
+    "id": "taciturn",
+    "name": "Taciturn",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Stone"
+    ],
+    "base_stats": [
+      104,
+      88,
+      102,
+      72,
+      92,
+      42
+    ],
+    "catch_rate": 5,
+    "growth": "Slow",
+    "abilities": [
+      "damper"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        15,
+        "stone_toll"
+      ],
+      [
+        25,
+        "phantom_rest"
+      ],
+      [
+        35,
+        "fermata_guard"
+      ],
+      [
+        45,
+        "boulder_coda"
+      ],
+      [
+        55,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The Triad's held rest: the silence that gives the song its shape. The Caesura, some keepers whisper, was it turning over in its sleep.",
+    "spoiler": true
+  },
+  {
+    "id": "terracant",
+    "name": "Terracant",
+    "region": "cantorel",
+    "types": [
+      "Stone",
+      "Bloom"
+    ],
+    "base_stats": [
+      84,
+      80,
+      78,
+      46,
+      62,
+      32
+    ],
+    "catch_rate": 75,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        11,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "stone_toll"
+      ],
+      [
+        25,
+        "root_chord"
+      ],
+      [
+        33,
+        "boulder_coda"
+      ],
+      [
+        42,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Terraced gardens grow up its back, tended by families who have never seen it move. Twice a century it stands, apologizes, and lies down somewhere else.",
+    "spoiler": false
+  },
+  {
+    "id": "thornata",
+    "name": "Thornata",
+    "region": "cantorel",
+    "types": [
+      "Bloom",
+      "Venom"
+    ],
+    "base_stats": [
+      70,
+      72,
+      74,
+      60,
+      68,
+      80
+    ],
+    "catch_rate": 75,
+    "growth": "MediumFast",
+    "abilities": [
+      "thorn_coat"
+    ],
+    "hidden_ability": "keysmith",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "venom_trill"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        16,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "root_chord"
+      ],
+      [
+        22,
+        "toxic_toccata"
+      ],
+      [
+        28,
+        "crescendo"
+      ],
+      [
+        34,
+        "briar_bow"
+      ],
+      [
+        40,
+        "venom_cadenza"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its bramble pelt tightens a half-step when threatened, sounding a chord most predators have learned by heart. Conservatory gardeners prune around a Thornata, never near one.",
+    "spoiler": false
+  },
+  {
+    "id": "tidalegro",
+    "name": "Tidalegro",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      75,
+      50,
+      63,
+      83,
+      86,
+      63
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_tide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        21,
+        "undertow"
+      ],
+      [
+        28,
+        "phantom_rest"
+      ],
+      [
+        36,
+        "riptide_finale"
+      ],
+      [
+        40,
+        "da_capo"
+      ]
+    ],
+    "evolves_to": [
+      "cellorca",
+      "Level(34)"
+    ],
+    "entry": "Grown impatient with still water, it bows across harbor swells at a tempo no oarsman can match. Its wake leaves a run of eighth-note eddies that take whole minutes to settle.",
+    "spoiler": false
+  },
+  {
+    "id": "tidempo",
+    "name": "Tidempo",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Volt"
+    ],
+    "base_stats": [
+      60,
+      52,
+      58,
+      78,
+      60,
+      74
+    ],
+    "catch_rate": 110,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        9,
+        "volt_pluck"
+      ],
+      [
+        16,
+        "undertow"
+      ],
+      [
+        23,
+        "stun_chord"
+      ],
+      [
+        30,
+        "breaker_beat"
+      ],
+      [
+        38,
+        "riptide_finale"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Storm tides charge it; calm ones spend it. The harbor master reads its glow like a pressure gauge with opinions.",
+    "spoiler": false
+  },
+  {
+    "id": "timpanite",
+    "name": "Timpanite",
+    "region": "cantorel",
+    "types": [
+      "Stone"
+    ],
+    "base_stats": [
+      75,
+      60,
+      84,
+      35,
+      80,
+      30
+    ],
+    "catch_rate": 190,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        4,
+        "pebble_beat"
+      ],
+      [
+        8,
+        "dampen"
+      ],
+      [
+        11,
+        "leaf_pick"
+      ],
+      [
+        15,
+        "stone_toll"
+      ],
+      [
+        20,
+        "fermata_guard"
+      ],
+      [
+        26,
+        "alloy_clang"
+      ],
+      [
+        33,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its shell is a slab of layered slate stretched tight as a drumhead, and it booms the downbeat for any work-song within earshot. Quarry crews outside Prelude Town pace their hammers to it.",
+    "spoiler": false
+  },
+  {
+    "id": "torrentet",
+    "name": "Torrentet",
+    "region": "cantorel",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      70,
+      58,
+      66,
+      84,
+      80,
+      70
+    ],
+    "catch_rate": 85,
+    "growth": "MediumFast",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "dampen"
+      ],
+      [
+        13,
+        "frost_lull"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        25,
+        "breaker_beat"
+      ],
+      [
+        32,
+        "riptide_finale"
+      ],
+      [
+        40,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Four voices share its throat, and white water is simply their rehearsal space. Bridge pilings near a Torrentet den wear away in chord patterns.",
+    "spoiler": false
+  },
+  {
+    "id": "tremole",
+    "name": "Tremole",
+    "region": "cantorel",
+    "types": [
+      "Feral"
+    ],
+    "base_stats": [
+      42,
+      56,
+      40,
+      30,
+      37,
+      85
+    ],
+    "catch_rate": 255,
+    "growth": "MediumFast",
+    "abilities": [
+      "stage_fright"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        5,
+        "dampen"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        15,
+        "downbeat"
+      ],
+      [
+        19,
+        "quick_march"
+      ],
+      [
+        24,
+        "stone_toll"
+      ],
+      [
+        30,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": [
+      "rattacca",
+      "Level(14)"
+    ],
+    "entry": "Its fur quivers at the pitch of approaching footsteps, and Pausa farmers read their fields by which way the grass trembles. Cornered, it holds one thin note until the danger walks past.",
+    "spoiler": false
+  },
+  {
+    "id": "velvetide",
+    "name": "Velvetide",
+    "region": "cantorel",
+    "types": [
+      "Tide",
+      "Phantom"
+    ],
+    "base_stats": [
+      70,
+      52,
+      66,
+      72,
+      74,
+      68
+    ],
+    "catch_rate": 55,
+    "growth": "Slow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        11,
+        "undertow"
+      ],
+      [
+        18,
+        "phantom_rest"
+      ],
+      [
+        25,
+        "sostenuto"
+      ],
+      [
+        33,
+        "riptide_finale"
+      ],
+      [
+        42,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It swims the midnight layer where pressure mutes every voice but its own. Deep crews report a lullaby through the hull and unusually good sleep.",
+    "spoiler": false
+  },
+  {
+    "id": "vesperbat",
+    "name": "Vesperbat",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Gale"
+    ],
+    "base_stats": [
+      54,
+      58,
+      46,
+      58,
+      56,
+      78
+    ],
+    "catch_rate": 100,
+    "growth": "MediumFast",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        16,
+        "gale_riff"
+      ],
+      [
+        23,
+        "phantom_rest"
+      ],
+      [
+        31,
+        "requiem_swell"
+      ],
+      [
+        39,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It hunts in the evening rests, striking only where the night's music pauses. Vesper-bell ringers consider it a colleague.",
+    "spoiler": false
+  },
+  {
+    "id": "vespernox",
+    "name": "Vespernox",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Venom"
+    ],
+    "base_stats": [
+      68,
+      88,
+      62,
+      74,
+      66,
+      92
+    ],
+    "catch_rate": 50,
+    "growth": "MediumSlow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        10,
+        "grace_note"
+      ],
+      [
+        17,
+        "venom_trill"
+      ],
+      [
+        24,
+        "phantom_rest"
+      ],
+      [
+        31,
+        "toxic_toccata"
+      ],
+      [
+        39,
+        "venom_cadenza"
+      ],
+      [
+        47,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Vesper's own line: bred in the rests between watch-bells, striking on the off-beat nobody guards. TACET's admins carry its grace notes like sidearms.",
+    "spoiler": false
+  },
+  {
+    "id": "vinebrato",
+    "name": "Vinebrato",
+    "region": "cantorel",
+    "types": [
+      "Bloom"
+    ],
+    "base_stats": [
+      65,
+      82,
+      65,
+      62,
+      65,
+      81
+    ],
+    "catch_rate": 45,
+    "growth": "MediumSlow",
+    "abilities": [
+      "crescendo_bloom"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        6,
+        "quick_step"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        13,
+        "leaf_pick"
+      ],
+      [
+        17,
+        "root_chord"
+      ],
+      [
+        26,
+        "frost_lull"
+      ],
+      [
+        29,
+        "stone_toll"
+      ],
+      [
+        36,
+        "briar_bow"
+      ],
+      [
+        40,
+        "grace_note"
+      ]
+    ],
+    "evolves_to": [
+      "sonatler",
+      "Level(34)"
+    ],
+    "entry": "The vines strung along its antlers never stop trembling, holding a vibrato even while it sleeps. Brush cut by its bow-stroke falls in neat, mowed rows.",
+    "spoiler": false
+  },
+  {
+    "id": "voltacelle",
+    "name": "Voltacelle",
+    "region": "cantorel",
+    "types": [
+      "Volt",
+      "Resonant"
+    ],
+    "base_stats": [
+      68,
+      60,
+      62,
+      84,
+      74,
+      82
+    ],
+    "catch_rate": 70,
+    "growth": "MediumSlow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        12,
+        "volt_pluck"
+      ],
+      [
+        14,
+        "quick_step"
+      ],
+      [
+        21,
+        "stun_chord"
+      ],
+      [
+        27,
+        "sostenuto"
+      ],
+      [
+        34,
+        "resonate"
+      ],
+      [
+        42,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Grown into the city's grid, it holds a charge like a held chord and releases both at once. Calando schedules brownouts as concerts.",
+    "spoiler": false
+  },
+  {
+    "id": "voltern",
+    "name": "Voltern",
+    "region": "cantorel",
+    "types": [
+      "Volt",
+      "Gale"
+    ],
+    "base_stats": [
+      52,
+      48,
+      44,
+      74,
+      52,
+      84
+    ],
+    "catch_rate": 140,
+    "growth": "MediumFast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "floating",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "volt_pluck"
+      ],
+      [
+        15,
+        "wing_beat"
+      ],
+      [
+        22,
+        "stun_chord"
+      ],
+      [
+        29,
+        "gale_riff"
+      ],
+      [
+        36,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It nests in harbor cranes and rides their booms like perches, discharging on every swing. Calando's stevedores ground their gloves and their grudges.",
+    "spoiler": false
+  },
+  {
+    "id": "willowisp",
+    "name": "Willowisp",
+    "region": "cantorel",
+    "types": [
+      "Phantom",
+      "Ember"
+    ],
+    "base_stats": [
+      58,
+      44,
+      52,
+      86,
+      72,
+      76
+    ],
+    "catch_rate": 80,
+    "growth": "MediumSlow",
+    "abilities": [
+      "heat_haze"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        10,
+        "dampen"
+      ],
+      [
+        17,
+        "flare_brass"
+      ],
+      [
+        24,
+        "phantom_rest"
+      ],
+      [
+        31,
+        "cinder_waltz"
+      ],
+      [
+        40,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It lights the fen's drowned staff lines, one bar at a time, leading travelers either home or under. It genuinely cannot tell which it did.",
+    "spoiler": false
+  },
+  {
+    "id": "zapresto",
+    "name": "Zapresto",
+    "region": "cantorel",
+    "types": [
+      "Volt"
+    ],
+    "base_stats": [
+      46,
+      50,
+      40,
+      62,
+      52,
+      110
+    ],
+    "catch_rate": 200,
+    "growth": "Fast",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "quick_step"
+      ],
+      [
+        4,
+        "static_strum"
+      ],
+      [
+        9,
+        "dampen"
+      ],
+      [
+        13,
+        "gale_riff"
+      ],
+      [
+        17,
+        "volt_pluck"
+      ],
+      [
+        23,
+        "crescendo"
+      ],
+      [
+        34,
+        "tutti_charge"
+      ],
+      [
+        40,
+        "stun_chord"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It darts along fence-rails so fast that its static crackle arrives a note after it does. Orchard keepers wrap their gate latches in felt so a passing Zapresto cannot arc to the iron.",
+    "spoiler": false
+  },
+  {
+    "id": "zephyrune",
+    "name": "Zephyrune",
+    "region": "cantorel",
+    "types": [
+      "Gale",
+      "Resonant"
+    ],
+    "base_stats": [
+      66,
+      58,
+      60,
+      82,
+      76,
+      96
+    ],
+    "catch_rate": 65,
+    "growth": "MediumSlow",
+    "abilities": [
+      "floating"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        10,
+        "gale_riff"
+      ],
+      [
+        17,
+        "wing_beat"
+      ],
+      [
+        24,
+        "sostenuto"
+      ],
+      [
+        32,
+        "tempest_coda"
+      ],
+      [
+        41,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It writes on high wind in long calligraphic gusts; the letters land days later as weather. Frostine's almanac is just transcription.",
+    "spoiler": false
+  },
+  {
+    "id": "aurorale",
+    "name": "Aurorale",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Resonant"
+    ],
+    "base_stats": [
+      70,
+      56,
+      66,
+      88,
+      80,
+      66
+    ],
+    "catch_rate": 70,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        15,
+        "hail_chorale"
+      ],
+      [
+        23,
+        "sostenuto"
+      ],
+      [
+        31,
+        "frost_lull"
+      ],
+      [
+        39,
+        "resonate"
+      ],
+      [
+        47,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The aurora is the sky remembering the buried verse; Aurorale is the only one who can hum along without forgetting it again.",
+    "spoiler": false
+  },
+  {
+    "id": "barrowmoss",
+    "name": "Barrowmoss",
+    "region": "skalden",
+    "types": [
+      "Bloom",
+      "Phantom"
+    ],
+    "base_stats": [
+      82,
+      60,
+      78,
+      64,
+      72,
+      30
+    ],
+    "catch_rate": 85,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        13,
+        "root_chord"
+      ],
+      [
+        20,
+        "phantom_rest"
+      ],
+      [
+        28,
+        "briar_bow"
+      ],
+      [
+        36,
+        "requiem_swell"
+      ],
+      [
+        44,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A barrow that got up. The verse buried under it got up too, and they have not yet agreed who carries whom.",
+    "spoiler": false
+  },
+  {
+    "id": "bogboar",
+    "name": "Bogboar",
+    "region": "skalden",
+    "types": [
+      "Venom",
+      "Feral"
+    ],
+    "base_stats": [
+      74,
+      80,
+      62,
+      44,
+      52,
+      58
+    ],
+    "catch_rate": 100,
+    "growth": "MediumSlow",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        12,
+        "venom_trill"
+      ],
+      [
+        18,
+        "downbeat"
+      ],
+      [
+        25,
+        "quick_march"
+      ],
+      [
+        32,
+        "toxic_toccata"
+      ],
+      [
+        40,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It charges through the fen on a war-grunt in 6/8. Fenwick's palisade is less a wall than a suggestion.",
+    "spoiler": false
+  },
+  {
+    "id": "brackaw",
+    "name": "Brackaw",
+    "region": "skalden",
+    "types": [
+      "Gale",
+      "Venom"
+    ],
+    "base_stats": [
+      62,
+      70,
+      56,
+      60,
+      54,
+      80
+    ],
+    "catch_rate": 100,
+    "growth": "MediumSlow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        11,
+        "gale_riff"
+      ],
+      [
+        17,
+        "venom_trill"
+      ],
+      [
+        24,
+        "wing_beat"
+      ],
+      [
+        31,
+        "toxic_toccata"
+      ],
+      [
+        39,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its cackle curdles milk and morale alike. Skald sailors swear it learned harmony purely to ruin it.",
+    "spoiler": false
+  },
+  {
+    "id": "brinemare",
+    "name": "Brinemare",
+    "region": "skalden",
+    "types": [
+      "Tide",
+      "Feral"
+    ],
+    "base_stats": [
+      64,
+      68,
+      58,
+      48,
+      52,
+      62
+    ],
+    "catch_rate": 120,
+    "growth": "MediumFast",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        9,
+        "quick_step"
+      ],
+      [
+        15,
+        "downbeat"
+      ],
+      [
+        22,
+        "undertow"
+      ],
+      [
+        29,
+        "quick_march"
+      ],
+      [
+        37,
+        "breaker_beat"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A foam-maned gallop that herds cod the way dogs herd sheep, whistling the work as it goes.",
+    "spoiler": false
+  },
+  {
+    "id": "cobbelt",
+    "name": "Cobbelt",
+    "region": "skalden",
+    "types": [
+      "Stone",
+      "Alloy"
+    ],
+    "base_stats": [
+      58,
+      62,
+      68,
+      40,
+      48,
+      40
+    ],
+    "catch_rate": 170,
+    "growth": "MediumFast",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        9,
+        "stone_toll"
+      ],
+      [
+        16,
+        "alloy_clang"
+      ],
+      [
+        24,
+        "downbeat"
+      ],
+      [
+        32,
+        "anvil_anthem"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Varde's streets are paved with its molted plates. It collects the toll in whistled thirds.",
+    "spoiler": false
+  },
+  {
+    "id": "dirgelk",
+    "name": "Dirgelk",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Phantom"
+    ],
+    "base_stats": [
+      72,
+      66,
+      62,
+      58,
+      64,
+      48
+    ],
+    "catch_rate": 100,
+    "growth": "MediumSlow",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        11,
+        "frost_lull"
+      ],
+      [
+        18,
+        "phantom_rest"
+      ],
+      [
+        26,
+        "hail_chorale"
+      ],
+      [
+        34,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It walks the cairn lines at dusk carrying antlers full of candle-ice. Mourners follow at a grateful distance.",
+    "spoiler": false
+  },
+  {
+    "id": "eiderdun",
+    "name": "Eiderdun",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Gale"
+    ],
+    "base_stats": [
+      60,
+      46,
+      52,
+      58,
+      66,
+      56
+    ],
+    "catch_rate": 150,
+    "growth": "MediumFast",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        9,
+        "gale_riff"
+      ],
+      [
+        16,
+        "frost_lull"
+      ],
+      [
+        23,
+        "wing_beat"
+      ],
+      [
+        31,
+        "hail_chorale"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its down holds the warmth of every song sung near it. Skald cradles are lined with molted verses.",
+    "spoiler": false
+  },
+  {
+    "id": "emberjarl",
+    "name": "Emberjarl",
+    "region": "skalden",
+    "types": [
+      "Ember"
+    ],
+    "base_stats": [
+      62,
+      70,
+      56,
+      64,
+      52,
+      58
+    ],
+    "catch_rate": 120,
+    "growth": "MediumSlow",
+    "abilities": [
+      "heat_haze"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        10,
+        "flare_brass"
+      ],
+      [
+        17,
+        "downbeat"
+      ],
+      [
+        24,
+        "cinder_waltz"
+      ],
+      [
+        32,
+        "crescendo"
+      ],
+      [
+        40,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It keeps the longhouse hearth as a point of honor and duels draughts to the death.",
+    "spoiler": false
+  },
+  {
+    "id": "fiddlefox",
+    "name": "Fiddlefox",
+    "region": "skalden",
+    "types": [
+      "Feral"
+    ],
+    "base_stats": [
+      50,
+      58,
+      44,
+      52,
+      42,
+      72
+    ],
+    "catch_rate": 170,
+    "growth": "MediumFast",
+    "abilities": [
+      "soloist"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "grace_note"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        13,
+        "downbeat"
+      ],
+      [
+        20,
+        "quick_march"
+      ],
+      [
+        28,
+        "crescendo"
+      ]
+    ],
+    "evolves_to": [
+      "reynardeau",
+      "Level(28)"
+    ],
+    "entry": "It dances payment out of market crowds and tips its tail like a hat. Varde pretends to disapprove.",
+    "spoiler": false
+  },
+  {
+    "id": "fjordrake",
+    "name": "Fjordrake",
+    "region": "skalden",
+    "types": [
+      "Tide",
+      "Gale"
+    ],
+    "base_stats": [
+      78,
+      72,
+      68,
+      76,
+      66,
+      72
+    ],
+    "catch_rate": 50,
+    "growth": "Slow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "floating",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        13,
+        "undertow"
+      ],
+      [
+        20,
+        "gale_riff"
+      ],
+      [
+        28,
+        "wing_beat"
+      ],
+      [
+        36,
+        "riptide_finale"
+      ],
+      [
+        45,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It rides the standing wave at the fjord mouth for the joy of the bass line. Ships time their entrances to its verses.",
+    "spoiler": false
+  },
+  {
+    "id": "frostfiddle",
+    "name": "Frostfiddle",
+    "region": "skalden",
+    "types": [
+      "Frost"
+    ],
+    "base_stats": [
+      48,
+      42,
+      46,
+      62,
+      52,
+      58
+    ],
+    "catch_rate": 170,
+    "growth": "MediumFast",
+    "abilities": [
+      "flurry_caller"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "frost_lull"
+      ],
+      [
+        15,
+        "hail_chorale"
+      ],
+      [
+        23,
+        "dampen"
+      ],
+      [
+        31,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": [
+      "aurorale",
+      "Level(30)"
+    ],
+    "entry": "Its ribs bow against the cold like strings. On clear nights the whole flock tunes to the aurora.",
+    "spoiler": false
+  },
+  {
+    "id": "glimmwyrm",
+    "name": "Glimmwyrm",
+    "region": "skalden",
+    "types": [
+      "Resonant",
+      "Tide"
+    ],
+    "base_stats": [
+      70,
+      58,
+      64,
+      82,
+      76,
+      58
+    ],
+    "catch_rate": 75,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "ripple"
+      ],
+      [
+        12,
+        "sostenuto"
+      ],
+      [
+        19,
+        "undertow"
+      ],
+      [
+        27,
+        "crescendo"
+      ],
+      [
+        35,
+        "riptide_finale"
+      ],
+      [
+        43,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It surfaces in the fjord on still nights to rehearse with its own reflection, in canon.",
+    "spoiler": false
+  },
+  {
+    "id": "gullnote",
+    "name": "Gullnote",
+    "region": "skalden",
+    "types": [
+      "Gale"
+    ],
+    "base_stats": [
+      40,
+      42,
+      36,
+      52,
+      40,
+      66
+    ],
+    "catch_rate": 200,
+    "growth": "MediumFast",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "stage_fright",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        6,
+        "quick_step"
+      ],
+      [
+        11,
+        "gale_riff"
+      ],
+      [
+        17,
+        "wing_beat"
+      ],
+      [
+        25,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": [
+      "brackaw",
+      "Level(22)"
+    ],
+    "entry": "It steals refrains instead of chips, repeating them a fourth higher out of pure cheek.",
+    "spoiler": false
+  },
+  {
+    "id": "henge",
+    "name": "Hengelod",
+    "region": "skalden",
+    "types": [
+      "Stone",
+      "Resonant"
+    ],
+    "base_stats": [
+      84,
+      70,
+      86,
+      72,
+      80,
+      28
+    ],
+    "catch_rate": 60,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        15,
+        "stone_toll"
+      ],
+      [
+        23,
+        "sostenuto"
+      ],
+      [
+        31,
+        "fermata_guard"
+      ],
+      [
+        40,
+        "boulder_coda"
+      ],
+      [
+        48,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A standing stone from the verse-circle, still keeping its beat. The other eleven are listening for it.",
+    "spoiler": false
+  },
+  {
+    "id": "hulderbuck",
+    "name": "Hulderbuck",
+    "region": "skalden",
+    "types": [
+      "Bloom",
+      "Phantom"
+    ],
+    "base_stats": [
+      68,
+      72,
+      60,
+      66,
+      62,
+      70
+    ],
+    "catch_rate": 70,
+    "growth": "Slow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        11,
+        "leaf_pick"
+      ],
+      [
+        18,
+        "grace_note"
+      ],
+      [
+        25,
+        "root_chord"
+      ],
+      [
+        33,
+        "phantom_rest"
+      ],
+      [
+        41,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Beautiful from the front, birch-bark hollow from behind. It trades verses for butter and always pays short.",
+    "spoiler": false
+  },
+  {
+    "id": "jokulhorn",
+    "name": "Jokulhorn",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Stone"
+    ],
+    "base_stats": [
+      84,
+      80,
+      84,
+      54,
+      68,
+      32
+    ],
+    "catch_rate": 60,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        12,
+        "hail_chorale"
+      ],
+      [
+        20,
+        "stone_toll"
+      ],
+      [
+        28,
+        "fermata_guard"
+      ],
+      [
+        36,
+        "boulder_coda"
+      ],
+      [
+        45,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A glacier calf with the patience of its parent and the temper of neither.",
+    "spoiler": false
+  },
+  {
+    "id": "kragveld",
+    "name": "Kragveld",
+    "region": "skalden",
+    "types": [
+      "Stone",
+      "Gale"
+    ],
+    "base_stats": [
+      76,
+      82,
+      74,
+      52,
+      58,
+      60
+    ],
+    "catch_rate": 90,
+    "growth": "MediumSlow",
+    "abilities": [
+      "iron_ear"
+    ],
+    "hidden_ability": "floating",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        14,
+        "stone_toll"
+      ],
+      [
+        21,
+        "gale_riff"
+      ],
+      [
+        28,
+        "wing_beat"
+      ],
+      [
+        36,
+        "boulder_coda"
+      ],
+      [
+        44,
+        "tempest_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A scarp with opinions about the weather, most of them downdrafts. The pass closes when it sings flat.",
+    "spoiler": false
+  },
+  {
+    "id": "loomgarde",
+    "name": "Loomgarde",
+    "region": "skalden",
+    "types": [
+      "Alloy",
+      "Bloom"
+    ],
+    "base_stats": [
+      72,
+      64,
+      80,
+      60,
+      70,
+      40
+    ],
+    "catch_rate": 90,
+    "growth": "MediumSlow",
+    "abilities": [
+      "metronome_soul"
+    ],
+    "hidden_ability": "thick_hide",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        14,
+        "alloy_clang"
+      ],
+      [
+        21,
+        "leaf_pick"
+      ],
+      [
+        28,
+        "root_chord"
+      ],
+      [
+        36,
+        "anvil_anthem"
+      ],
+      [
+        44,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its warp threads are wire, its weft is ivy, and the cloth it weaves hums lullabies for a week off the loom.",
+    "spoiler": false
+  },
+  {
+    "id": "mireling",
+    "name": "Mireling",
+    "region": "skalden",
+    "types": [
+      "Venom"
+    ],
+    "base_stats": [
+      44,
+      52,
+      42,
+      48,
+      40,
+      58
+    ],
+    "catch_rate": 200,
+    "growth": "MediumFast",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "sour_note"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        12,
+        "venom_trill"
+      ],
+      [
+        19,
+        "downbeat"
+      ],
+      [
+        27,
+        "toxic_toccata"
+      ]
+    ],
+    "evolves_to": [
+      "bogboar",
+      "Level(25)"
+    ],
+    "entry": "It gargles bog-water to tune itself. The tune is filthy. It is very proud.",
+    "spoiler": false
+  },
+  {
+    "id": "morrowflame",
+    "name": "Morrowflame",
+    "region": "skalden",
+    "types": [
+      "Ember",
+      "Resonant"
+    ],
+    "base_stats": [
+      72,
+      64,
+      66,
+      88,
+      74,
+      68
+    ],
+    "catch_rate": 45,
+    "growth": "Slow",
+    "abilities": [
+      "heat_haze"
+    ],
+    "hidden_ability": "amplify",
+    "learnset": [
+      [
+        1,
+        "ember_note"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        13,
+        "flare_brass"
+      ],
+      [
+        21,
+        "sostenuto"
+      ],
+      [
+        29,
+        "cinder_waltz"
+      ],
+      [
+        37,
+        "crescendo"
+      ],
+      [
+        46,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Lit from the last ember of the verse-circle's last gathering. It has been carried, never owned, for nine hundred years.",
+    "spoiler": false
+  },
+  {
+    "id": "nokkelpie",
+    "name": "Nokkelpie",
+    "region": "skalden",
+    "types": [
+      "Tide",
+      "Phantom"
+    ],
+    "base_stats": [
+      64,
+      54,
+      58,
+      80,
+      72,
+      66
+    ],
+    "catch_rate": 70,
+    "growth": "Slow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        11,
+        "undertow"
+      ],
+      [
+        18,
+        "grace_note"
+      ],
+      [
+        26,
+        "phantom_rest"
+      ],
+      [
+        34,
+        "riptide_finale"
+      ],
+      [
+        42,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It plays the fjord like a glass harp and drowns only critics. So it claims.",
+    "spoiler": false
+  },
+  {
+    "id": "peatling",
+    "name": "Peatling",
+    "region": "skalden",
+    "types": [
+      "Bloom"
+    ],
+    "base_stats": [
+      52,
+      46,
+      54,
+      44,
+      50,
+      38
+    ],
+    "catch_rate": 190,
+    "growth": "MediumFast",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "thorn_coat",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "leaf_pick"
+      ],
+      [
+        13,
+        "dampen"
+      ],
+      [
+        20,
+        "root_chord"
+      ],
+      [
+        28,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": [
+      "barrowmoss",
+      "Level(26)"
+    ],
+    "entry": "Cut it like turf and it regrows whistling. Fenwick hearths burn only what volunteers.",
+    "spoiler": false
+  },
+  {
+    "id": "reynardeau",
+    "name": "Reynardeau",
+    "region": "skalden",
+    "types": [
+      "Feral",
+      "Resonant"
+    ],
+    "base_stats": [
+      68,
+      76,
+      58,
+      70,
+      60,
+      86
+    ],
+    "catch_rate": 85,
+    "growth": "MediumSlow",
+    "abilities": [
+      "soloist"
+    ],
+    "hidden_ability": "perfect_pitch",
+    "learnset": [
+      [
+        1,
+        "tackle"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        13,
+        "downbeat"
+      ],
+      [
+        20,
+        "quick_march"
+      ],
+      [
+        27,
+        "sostenuto"
+      ],
+      [
+        35,
+        "crescendo"
+      ],
+      [
+        43,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The fiddler the dance follows. It has stolen every show in Skalden and returned each one slightly improved.",
+    "spoiler": false
+  },
+  {
+    "id": "rimeram",
+    "name": "Rimeram",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Feral"
+    ],
+    "base_stats": [
+      66,
+      74,
+      60,
+      46,
+      50,
+      64
+    ],
+    "catch_rate": 110,
+    "growth": "MediumSlow",
+    "abilities": [
+      "vigor"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        10,
+        "quick_step"
+      ],
+      [
+        16,
+        "downbeat"
+      ],
+      [
+        24,
+        "hail_chorale"
+      ],
+      [
+        31,
+        "quick_march"
+      ],
+      [
+        39,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It headbutts avalanches into rhythm. Kraghorn's lift system is four of them and a prayer.",
+    "spoiler": false
+  },
+  {
+    "id": "runolf",
+    "name": "Runolf",
+    "region": "skalden",
+    "types": [
+      "Resonant",
+      "Feral"
+    ],
+    "base_stats": [
+      72,
+      80,
+      64,
+      72,
+      62,
+      82
+    ],
+    "catch_rate": 60,
+    "growth": "Slow",
+    "abilities": [
+      "soloist"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "overtone"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        12,
+        "downbeat"
+      ],
+      [
+        19,
+        "sostenuto"
+      ],
+      [
+        26,
+        "quick_march"
+      ],
+      [
+        34,
+        "crescendo"
+      ],
+      [
+        42,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It carries the rune for 'refrain' scarred on its flank - nobody remembers cutting it, least of all Runolf.",
+    "spoiler": false
+  },
+  {
+    "id": "saltlick",
+    "name": "Saltlick",
+    "region": "skalden",
+    "types": [
+      "Tide",
+      "Stone"
+    ],
+    "base_stats": [
+      66,
+      58,
+      72,
+      44,
+      60,
+      36
+    ],
+    "catch_rate": 140,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        10,
+        "undertow"
+      ],
+      [
+        17,
+        "stone_toll"
+      ],
+      [
+        25,
+        "breaker_beat"
+      ],
+      [
+        33,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "A tidepool boulder that learned patience from both teachers. Fjord cattle worship it, lickingly.",
+    "spoiler": false
+  },
+  {
+    "id": "screel",
+    "name": "Screel",
+    "region": "skalden",
+    "types": [
+      "Stone"
+    ],
+    "base_stats": [
+      54,
+      58,
+      62,
+      38,
+      44,
+      44
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "iron_ear",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        14,
+        "stone_toll"
+      ],
+      [
+        21,
+        "downbeat"
+      ],
+      [
+        29,
+        "boulder_coda"
+      ]
+    ],
+    "evolves_to": [
+      "kragveld",
+      "Level(27)"
+    ],
+    "entry": "It sharpens its own edges on the wind. Kraghorn shepherds shear them for whetstones each spring.",
+    "spoiler": false
+  },
+  {
+    "id": "skaldgeir",
+    "name": "Skaldgeir",
+    "region": "skalden",
+    "types": [
+      "Alloy",
+      "Resonant"
+    ],
+    "base_stats": [
+      74,
+      68,
+      82,
+      84,
+      80,
+      48
+    ],
+    "catch_rate": 45,
+    "growth": "Slow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        13,
+        "alloy_clang"
+      ],
+      [
+        21,
+        "sostenuto"
+      ],
+      [
+        29,
+        "anvil_anthem"
+      ],
+      [
+        37,
+        "resonate"
+      ],
+      [
+        46,
+        "shatter_aria"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The verse-circle's tuning spear, still upright where the twelfth stone fell. It answers questions in key signatures.",
+    "spoiler": false
+  },
+  {
+    "id": "skarnbjorn",
+    "name": "Skarnbjorn",
+    "region": "skalden",
+    "types": [
+      "Stone",
+      "Feral"
+    ],
+    "base_stats": [
+      86,
+      90,
+      78,
+      46,
+      58,
+      46
+    ],
+    "catch_rate": 65,
+    "growth": "Slow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "pebble_beat"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        12,
+        "stone_toll"
+      ],
+      [
+        19,
+        "downbeat"
+      ],
+      [
+        26,
+        "quick_march"
+      ],
+      [
+        34,
+        "boulder_coda"
+      ],
+      [
+        42,
+        "fortissimo_slam"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The mountain's foreman. It signs no contracts and honors all of them, shift bell to shift bell.",
+    "spoiler": false
+  },
+  {
+    "id": "skerrald",
+    "name": "Skerrald",
+    "region": "skalden",
+    "types": [
+      "Tide",
+      "Alloy"
+    ],
+    "base_stats": [
+      70,
+      62,
+      76,
+      64,
+      78,
+      42
+    ],
+    "catch_rate": 95,
+    "growth": "MediumSlow",
+    "abilities": [
+      "thick_hide"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        12,
+        "undertow"
+      ],
+      [
+        19,
+        "alloy_clang"
+      ],
+      [
+        26,
+        "breaker_beat"
+      ],
+      [
+        34,
+        "anvil_anthem"
+      ],
+      [
+        42,
+        "fermata_guard"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Its shell is a drowned bell recast by barnacle patience. Harbormasters set the tide-tables to its yawn.",
+    "spoiler": false
+  },
+  {
+    "id": "skerryn",
+    "name": "Skerryn",
+    "region": "skalden",
+    "types": [
+      "Tide"
+    ],
+    "base_stats": [
+      48,
+      44,
+      52,
+      50,
+      56,
+      40
+    ],
+    "catch_rate": 190,
+    "growth": "MediumFast",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "ripple"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        7,
+        "quick_step"
+      ],
+      [
+        12,
+        "undertow"
+      ],
+      [
+        19,
+        "dampen"
+      ],
+      [
+        26,
+        "breaker_beat"
+      ]
+    ],
+    "evolves_to": [
+      "skerrald",
+      "Level(24)"
+    ],
+    "entry": "It naps in net-floats and pays rent in foghorn harmonies. Skald fishers count a boat unlucky without one.",
+    "spoiler": false
+  },
+  {
+    "id": "spindrel",
+    "name": "Spindrel",
+    "region": "skalden",
+    "types": [
+      "Alloy"
+    ],
+    "base_stats": [
+      46,
+      50,
+      56,
+      44,
+      46,
+      52
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "iron_ear"
+    ],
+    "hidden_ability": "metronome_soul",
+    "learnset": [
+      [
+        1,
+        "cymbal_tap"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        8,
+        "quick_step"
+      ],
+      [
+        14,
+        "alloy_clang"
+      ],
+      [
+        22,
+        "downbeat"
+      ],
+      [
+        30,
+        "anvil_anthem"
+      ]
+    ],
+    "evolves_to": [
+      "loomgarde",
+      "Level(26)"
+    ],
+    "entry": "A dropped spindle that kept the rhythm of the wheel. Varde's weavers apprentice them before children.",
+    "spoiler": false
+  },
+  {
+    "id": "tindrelod",
+    "name": "Tindrelod",
+    "region": "skalden",
+    "types": [
+      "Volt",
+      "Resonant"
+    ],
+    "base_stats": [
+      66,
+      60,
+      62,
+      86,
+      72,
+      74
+    ],
+    "catch_rate": 55,
+    "growth": "Slow",
+    "abilities": [
+      "amplify"
+    ],
+    "hidden_ability": "live_wire",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        12,
+        "volt_pluck"
+      ],
+      [
+        19,
+        "sostenuto"
+      ],
+      [
+        27,
+        "stun_chord"
+      ],
+      [
+        35,
+        "crescendo"
+      ],
+      [
+        43,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It rings the aurora down the lightning rods of Kraghorn and bills nobody, which worries the council.",
+    "spoiler": false
+  },
+  {
+    "id": "turfowl",
+    "name": "Turfowl",
+    "region": "skalden",
+    "types": [
+      "Gale",
+      "Bloom"
+    ],
+    "base_stats": [
+      50,
+      44,
+      48,
+      54,
+      52,
+      60
+    ],
+    "catch_rate": 180,
+    "growth": "MediumFast",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "floating",
+    "learnset": [
+      [
+        1,
+        "zephyr_pluck"
+      ],
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        8,
+        "gale_riff"
+      ],
+      [
+        14,
+        "leaf_pick"
+      ],
+      [
+        21,
+        "wing_beat"
+      ],
+      [
+        29,
+        "root_chord"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It nests in sod roofs and pays the household in weather warnings, two hoots flat for rain.",
+    "spoiler": false
+  },
+  {
+    "id": "velkomma",
+    "name": "Velkomma",
+    "region": "skalden",
+    "types": [
+      "Bloom",
+      "Frost"
+    ],
+    "base_stats": [
+      76,
+      60,
+      70,
+      72,
+      78,
+      44
+    ],
+    "catch_rate": 65,
+    "growth": "Slow",
+    "abilities": [
+      "encore_heart"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        12,
+        "leaf_pick"
+      ],
+      [
+        19,
+        "frost_lull"
+      ],
+      [
+        27,
+        "root_chord"
+      ],
+      [
+        35,
+        "hail_chorale"
+      ],
+      [
+        43,
+        "briar_bow"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It blooms exactly once a winter, at the door of whoever most needs proof that spring is real.",
+    "spoiler": false
+  },
+  {
+    "id": "vinterstem",
+    "name": "Vinterstem",
+    "region": "skalden",
+    "types": [
+      "Frost",
+      "Resonant"
+    ],
+    "base_stats": [
+      90,
+      68,
+      80,
+      100,
+      92,
+      70
+    ],
+    "catch_rate": 5,
+    "growth": "Slow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "flurry_caller",
+    "learnset": [
+      [
+        1,
+        "sleet_staccato"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        15,
+        "frost_lull"
+      ],
+      [
+        25,
+        "sostenuto"
+      ],
+      [
+        35,
+        "hail_chorale"
+      ],
+      [
+        45,
+        "resonate"
+      ],
+      [
+        55,
+        "requiem_swell"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "The buried verse itself, wearing winter as a body. When Skalden sings together it stands very still and listens back.",
+    "spoiler": true
+  },
+  {
+    "id": "voltvarg",
+    "name": "Voltvarg",
+    "region": "skalden",
+    "types": [
+      "Volt",
+      "Feral"
+    ],
+    "base_stats": [
+      64,
+      74,
+      56,
+      58,
+      50,
+      78
+    ],
+    "catch_rate": 95,
+    "growth": "MediumSlow",
+    "abilities": [
+      "live_wire"
+    ],
+    "hidden_ability": "vigor",
+    "learnset": [
+      [
+        1,
+        "static_strum"
+      ],
+      [
+        1,
+        "tackle"
+      ],
+      [
+        10,
+        "quick_step"
+      ],
+      [
+        16,
+        "volt_pluck"
+      ],
+      [
+        23,
+        "downbeat"
+      ],
+      [
+        30,
+        "stun_chord"
+      ],
+      [
+        38,
+        "quick_march"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "Storm-pack runner; the howl arrives a half-second after the flash. Kraghorn sets its clocks by the pack.",
+    "spoiler": false
+  },
+  {
+    "id": "waeverin",
+    "name": "Waeverin",
+    "region": "skalden",
+    "types": [
+      "Bloom",
+      "Resonant"
+    ],
+    "base_stats": [
+      58,
+      48,
+      54,
+      74,
+      68,
+      62
+    ],
+    "catch_rate": 110,
+    "growth": "MediumSlow",
+    "abilities": [
+      "perfect_pitch"
+    ],
+    "hidden_ability": "encore_heart",
+    "learnset": [
+      [
+        1,
+        "bud_strum"
+      ],
+      [
+        1,
+        "overtone"
+      ],
+      [
+        10,
+        "leaf_pick"
+      ],
+      [
+        17,
+        "sostenuto"
+      ],
+      [
+        25,
+        "root_chord"
+      ],
+      [
+        33,
+        "crescendo"
+      ],
+      [
+        41,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It weaves hedgerows into staves and plants the year's weather in them as notation.",
+    "spoiler": false
+  },
+  {
+    "id": "willowail",
+    "name": "Willowail",
+    "region": "skalden",
+    "types": [
+      "Phantom"
+    ],
+    "base_stats": [
+      56,
+      42,
+      48,
+      72,
+      64,
+      60
+    ],
+    "catch_rate": 110,
+    "growth": "MediumSlow",
+    "abilities": [
+      "keysmith"
+    ],
+    "hidden_ability": "damper",
+    "learnset": [
+      [
+        1,
+        "hollow_hum"
+      ],
+      [
+        1,
+        "dampen"
+      ],
+      [
+        10,
+        "grace_note"
+      ],
+      [
+        17,
+        "phantom_rest"
+      ],
+      [
+        25,
+        "requiem_swell"
+      ],
+      [
+        33,
+        "resonate"
+      ]
+    ],
+    "evolves_to": null,
+    "entry": "It mourns professionally - hired by villages that lost their own verse and need one carried in.",
+    "spoiler": false
+  }
+]

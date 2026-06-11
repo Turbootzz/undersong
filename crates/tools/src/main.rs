@@ -17,6 +17,7 @@ mod sigils;
 mod sim;
 mod sprites;
 mod stars;
+mod wiki;
 
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -31,7 +32,8 @@ const USAGE: &str = "usage:
   tools importmap --in <project.ldtk> --out <maps dir>
   tools assets    --region <id> [--content <dir>] [--out <dir>]
   tools music     [--out <dir>]
-  tools sprites   [--content <dir>] [--out <dir>]";
+  tools sprites   [--content <dir>] [--out <dir>]
+  tools wiki      [--content <dir>] [--out <dir>]";
 
 fn main() -> ExitCode {
     match run() {
@@ -159,6 +161,40 @@ fn run() -> Result<bool> {
             let content = PathBuf::from(value("--content", "content"));
             let out = PathBuf::from(value("--out", "assets"));
             generate_assets(&content, &region, &out)
+        }
+        Some("wiki") => {
+            let rest: Vec<String> = args.collect();
+            let value = |flag: &str, default: &str| -> String {
+                rest.iter()
+                    .position(|a| a == flag)
+                    .and_then(|i| rest.get(i + 1))
+                    .cloned()
+                    .unwrap_or_else(|| default.to_string())
+            };
+            let content = PathBuf::from(value("--content", "content"));
+            let out = PathBuf::from(value("--out", "wiki/src/data"));
+            let n = wiki::export(&content, &out)?;
+            // sprites for the site (icons + fronts)
+            let imgdir = PathBuf::from("wiki/public/sprites");
+            std::fs::create_dir_all(&imgdir)?;
+            let mut copied = 0u32;
+            for region in ["cantorel", "skalden"] {
+                let src = PathBuf::from("assets/sprites/monsters").join(region);
+                let dst = imgdir.join(region);
+                std::fs::create_dir_all(&dst)?;
+                if let Ok(entries) = std::fs::read_dir(&src) {
+                    for entry in entries.filter_map(Result::ok) {
+                        let name = entry.file_name();
+                        let n = name.to_string_lossy();
+                        if n.ends_with(".front.png") || n.ends_with(".icon.png") {
+                            std::fs::copy(entry.path(), dst.join(&name)).ok();
+                            copied += 1;
+                        }
+                    }
+                }
+            }
+            println!("wiki: {n} species exported, {copied} sprites copied");
+            Ok(true)
         }
         Some("sprites") => {
             let rest: Vec<String> = args.collect();

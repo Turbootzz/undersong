@@ -1,0 +1,562 @@
+[
+  {
+    "id": "alloy_clang",
+    "name": "Alloy Clang",
+    "type": "Alloy",
+    "category": "Physical",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": true
+  },
+  {
+    "id": "anvil_anthem",
+    "name": "Anvil Anthem",
+    "type": "Alloy",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 0,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "anvil_chorus",
+    "name": "Anvil Chorus",
+    "type": "Alloy",
+    "category": "Special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": true
+  },
+  {
+    "id": "ash_aria",
+    "name": "Ash Aria",
+    "type": "Ember",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 75,
+    "pp": 15,
+    "sound": true
+  },
+  {
+    "id": "boulder_coda",
+    "name": "Boulder Coda",
+    "type": "Stone",
+    "category": "Physical",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "bramble_reel",
+    "name": "Bramble Reel",
+    "type": "Bloom",
+    "category": "Physical",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "breaker_beat",
+    "name": "Breaker Beat",
+    "type": "Tide",
+    "category": "Physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "briar_bow",
+    "name": "Briar Bow",
+    "type": "Bloom",
+    "category": "Physical",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "bud_strum",
+    "name": "Bud Strum",
+    "type": "Bloom",
+    "category": "Physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": false
+  },
+  {
+    "id": "chime_peal",
+    "name": "Chime Peal",
+    "type": "Alloy",
+    "category": "Special",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": true
+  },
+  {
+    "id": "cinder_waltz",
+    "name": "Cinder Waltz",
+    "type": "Ember",
+    "category": "Physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "crescendo",
+    "name": "Crescendo",
+    "type": "Resonant",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 0,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "cymbal_tap",
+    "name": "Cymbal Tap",
+    "type": "Alloy",
+    "category": "Physical",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": true
+  },
+  {
+    "id": "da_capo",
+    "name": "Da Capo",
+    "type": "Resonant",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 0,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "dampen",
+    "name": "Dampen",
+    "type": "Feral",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "downbeat",
+    "name": "Downbeat",
+    "type": "Feral",
+    "category": "Physical",
+    "power": 70,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "ember_note",
+    "name": "Ember Note",
+    "type": "Ember",
+    "category": "Special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": true
+  },
+  {
+    "id": "fermata_guard",
+    "name": "Fermata Guard",
+    "type": "Stone",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 0,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "flare_brass",
+    "name": "Flare Brass",
+    "type": "Ember",
+    "category": "Special",
+    "power": 90,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": true
+  },
+  {
+    "id": "fortissimo_slam",
+    "name": "Fortissimo Slam",
+    "type": "Feral",
+    "category": "Physical",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "frost_lull",
+    "name": "Frost Lull",
+    "type": "Frost",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 75,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "gale_riff",
+    "name": "Gale Riff",
+    "type": "Gale",
+    "category": "Special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "grace_gust",
+    "name": "Grace Gust",
+    "type": "Gale",
+    "category": "Special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": true
+  },
+  {
+    "id": "grace_note",
+    "name": "Grace Note",
+    "type": "Phantom",
+    "category": "Physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "hail_chorale",
+    "name": "Hail Chorale",
+    "type": "Frost",
+    "category": "Special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "hollow_hum",
+    "name": "Hollow Hum",
+    "type": "Phantom",
+    "category": "Special",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": true
+  },
+  {
+    "id": "hour_toll",
+    "name": "Hour Toll",
+    "type": "Alloy",
+    "category": "Special",
+    "power": 95,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "leaf_pick",
+    "name": "Leaf Pick",
+    "type": "Bloom",
+    "category": "Physical",
+    "power": 55,
+    "accuracy": 95,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "overtone",
+    "name": "Overtone",
+    "type": "Resonant",
+    "category": "Special",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "pebble_beat",
+    "name": "Pebble Beat",
+    "type": "Stone",
+    "category": "Physical",
+    "power": 50,
+    "accuracy": 95,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "phantom_rest",
+    "name": "Phantom Rest",
+    "type": "Phantom",
+    "category": "Special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "quick_march",
+    "name": "Quick March",
+    "type": "Feral",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 0,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "quick_step",
+    "name": "Quick Step",
+    "type": "Feral",
+    "category": "Physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": false
+  },
+  {
+    "id": "quill_pizzicato",
+    "name": "Quill Pizzicato",
+    "type": "Venom",
+    "category": "Physical",
+    "power": 20,
+    "accuracy": 95,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "requiem_swell",
+    "name": "Requiem Swell",
+    "type": "Phantom",
+    "category": "Special",
+    "power": 100,
+    "accuracy": 80,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "resonate",
+    "name": "Resonate",
+    "type": "Resonant",
+    "category": "Special",
+    "power": 85,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "ripple",
+    "name": "Ripple",
+    "type": "Tide",
+    "category": "Special",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "riptide_finale",
+    "name": "Riptide Finale",
+    "type": "Tide",
+    "category": "Special",
+    "power": 100,
+    "accuracy": 85,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "root_chord",
+    "name": "Root Chord",
+    "type": "Bloom",
+    "category": "Special",
+    "power": 75,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "shatter_aria",
+    "name": "Shatter Aria",
+    "type": "Frost",
+    "category": "Special",
+    "power": 95,
+    "accuracy": 85,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "sleet_staccato",
+    "name": "Sleet Staccato",
+    "type": "Frost",
+    "category": "Special",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": true
+  },
+  {
+    "id": "sostenuto",
+    "name": "Sostenuto",
+    "type": "Resonant",
+    "category": "Special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "sour_note",
+    "name": "Sour Note",
+    "type": "Venom",
+    "category": "Special",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": true
+  },
+  {
+    "id": "static_strum",
+    "name": "Static Strum",
+    "type": "Volt",
+    "category": "Special",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "stone_toll",
+    "name": "Stone Toll",
+    "type": "Stone",
+    "category": "Physical",
+    "power": 75,
+    "accuracy": 90,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "stun_chord",
+    "name": "Stun Chord",
+    "type": "Volt",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 75,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "tackle",
+    "name": "Tackle",
+    "type": "Feral",
+    "category": "Physical",
+    "power": 40,
+    "accuracy": 100,
+    "pp": 35,
+    "sound": false
+  },
+  {
+    "id": "tempest_coda",
+    "name": "Tempest Coda",
+    "type": "Gale",
+    "category": "Special",
+    "power": 95,
+    "accuracy": 85,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "toxic_toccata",
+    "name": "Toxic Toccata",
+    "type": "Venom",
+    "category": "Status",
+    "power": 0,
+    "accuracy": 90,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "tutti_charge",
+    "name": "Tutti Charge",
+    "type": "Volt",
+    "category": "Special",
+    "power": 100,
+    "accuracy": 100,
+    "pp": 10,
+    "sound": false
+  },
+  {
+    "id": "undertow",
+    "name": "Undertow",
+    "type": "Tide",
+    "category": "Special",
+    "power": 80,
+    "accuracy": 100,
+    "pp": 15,
+    "sound": false
+  },
+  {
+    "id": "venom_cadenza",
+    "name": "Venom Cadenza",
+    "type": "Venom",
+    "category": "Special",
+    "power": 95,
+    "accuracy": 85,
+    "pp": 10,
+    "sound": true
+  },
+  {
+    "id": "venom_trill",
+    "name": "Venom Trill",
+    "type": "Venom",
+    "category": "Special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": true
+  },
+  {
+    "id": "volt_pluck",
+    "name": "Volt Pluck",
+    "type": "Volt",
+    "category": "Special",
+    "power": 65,
+    "accuracy": 100,
+    "pp": 20,
+    "sound": false
+  },
+  {
+    "id": "wing_beat",
+    "name": "Wing Beat",
+    "type": "Gale",
+    "category": "Physical",
+    "power": 60,
+    "accuracy": 100,
+    "pp": 25,
+    "sound": false
+  },
+  {
+    "id": "zephyr_pluck",
+    "name": "Zephyr Pluck",
+    "type": "Gale",
+    "category": "Physical",
+    "power": 45,
+    "accuracy": 100,
+    "pp": 30,
+    "sound": false
+  }
+]

@@ -14,6 +14,7 @@ battle = { path = "../battle" }
 script = { path = "../script" }
 data = { workspace = true }
 anyhow = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 ron = { workspace = true }
 fundsp = { workspace = true }
