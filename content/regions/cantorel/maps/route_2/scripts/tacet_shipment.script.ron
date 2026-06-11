@@ -1,0 +1,14 @@
+// Beat 3: a stolen shipment of Fermatas. First TACET fight.
+[
+    If(flag: "story.tacet.shipment", then: [End], else: []),
+    Say(who: "tacet_grunt_a", key: "tacet.shipment.1"),
+    Say(who: "tacet_grunt_a", key: "tacet.shipment.2"),
+    StartBattle(trainer: "tacet_grunt_r2"),
+    If(flag: "trainer.tacet_grunt_r2.defeated",
+       then: [
+            SetFlag(flag: "story.tacet.shipment"),
+            Say(who: "tacet_grunt_a", key: "tacet.shipment.flee"),
+       ],
+       else: []),
+    End,
+]

@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall2_pruner", class: "HallAide", name_key: "npc.hall2_pruner",
+    ai_tier: 1, payout_base: 22,
+    party: [(species: "petalune", level: 13), (species: "mossoon", level: 13)],
+    defeat_flag: "trainer.hall2_pruner.defeated",
+    intro_key: "hall2.pruner.intro", defeat_key: "hall2.pruner.defeat",
+)

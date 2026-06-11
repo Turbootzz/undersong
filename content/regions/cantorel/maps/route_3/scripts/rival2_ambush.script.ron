@@ -1,0 +1,12 @@
+// Rival 2: post-badge-2 check-in. Cade's notebook has OPINIONS.
+[
+    If(flag: "story.rival2.defeated", then: [End], else: []),
+    If(flag: "badge.2", then: [], else: [End]),
+    Say(who: "cade", key: "rival2.cade.intro"),
+    If(flag: "starter.fanfyre",
+       then: [StartBattle(trainer: "rival2_vs_fanfyre")],
+       else: [If(flag: "starter.rippeggio",
+                 then: [StartBattle(trainer: "rival2_vs_rippeggio")],
+                 else: [StartBattle(trainer: "rival2_vs_solfawn")])]),
+    End,
+]

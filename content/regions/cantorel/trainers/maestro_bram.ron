@@ -1,0 +1,15 @@
+// Hall 3 Maestro: the first doubles maestro (beat 5), volt/alloy.
+Trainer(
+    id: "maestro_bram", class: "Maestro", name_key: "npc.bram",
+    ai_tier: 3, payout_base: 80, double_battle: true,
+    party: [
+        (species: "clockerel", level: 20),
+        (species: "voltacelle", level: 22,
+         moves: Some(["static_strum", "stun_chord", "volt_pluck", "quick_step"]),
+         held_item: Some("oran_chime")),
+        (species: "forgeling", level: 20),
+    ],
+    defeat_flag: "hall.3.cleared",
+    reward_items: [("tm04", 1)],
+    intro_key: "hall3.bram.intro", defeat_key: "hall3.bram.defeat",
+)

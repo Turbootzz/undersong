@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt4_signaler", class: "Signaler", name_key: "npc.rt4_signaler",
+    ai_tier: 1, payout_base: 22,
+    party: [(species: "voltern", level: 17)],
+    defeat_flag: "trainer.rt4_signaler.defeated",
+    intro_key: "rt4.signaler.intro", defeat_key: "rt4.signaler.defeat",
+)

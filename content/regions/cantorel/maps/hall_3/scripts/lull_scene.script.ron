@@ -1,0 +1,11 @@
+// Beat 5: Lull. She doesn't fight to win; she fights to talk.
+[
+    If(flag: "badge.3", then: [], else: [End]),
+    Say(who: "lull", key: "lull.1"),
+    Say(who: "lull", key: "lull.2"),
+    StartBattle(trainer: "admin_lull"),
+    Say(who: "lull", key: "lull.3"),
+    Say(who: "lull", key: "lull.4"),
+    SetFlag(flag: "story.lull.done"),
+    End,
+]

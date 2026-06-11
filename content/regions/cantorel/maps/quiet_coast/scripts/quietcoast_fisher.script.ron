@@ -1,0 +1,7 @@
+// Beat 4: dead air. (doc 01 §5; the recontext pair lands in Act 2.)
+[
+    Say(who: "fisher_old", key: "quietcoast.fisher.1"),
+    Say(who: "fisher_old", key: "quietcoast.fisher.2"),
+    SetFlag(flag: "met.fisher_old"),
+    End,
+]

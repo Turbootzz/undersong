@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt3_chorister.defeated",
+       then: [Say(who: "rt3_chorister", key: "rt3.chorister.after"), End],
+       else: []),
+    Say(who: "rt3_chorister", key: "rt3.chorister.intro"),
+    StartBattle(trainer: "rt3_chorister"),
+    End,
+]

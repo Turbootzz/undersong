@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall2_arranger", class: "HallSenior", name_key: "npc.hall2_arranger",
+    ai_tier: 2, payout_base: 24,
+    party: [(species: "shrubato", level: 14), (species: "hummble", level: 14)],
+    defeat_flag: "trainer.hall2_arranger.defeated",
+    intro_key: "hall2.arranger.intro", defeat_key: "hall2.arranger.defeat",
+)

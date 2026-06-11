@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt4_stoker.defeated",
+       then: [Say(who: "rt4_stoker", key: "rt4.stoker.after"), End],
+       else: []),
+    Say(who: "rt4_stoker", key: "rt4.stoker.intro"),
+    StartBattle(trainer: "rt4_stoker"),
+    End,
+]

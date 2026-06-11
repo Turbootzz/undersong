@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall3_duo_a", class: "HallAide", name_key: "npc.hall3_duo_a",
+    ai_tier: 2, payout_base: 26, double_battle: true,
+    party: [(species: "staccatto", level: 18), (species: "clockerel", level: 18)],
+    defeat_flag: "trainer.hall3_duo_a.defeated",
+    intro_key: "hall3.duo_a.intro", defeat_key: "hall3.duo_a.defeat",
+)

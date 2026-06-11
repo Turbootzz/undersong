@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt2_courier", class: "Courier", name_key: "npc.rt2_courier",
+    ai_tier: 1, payout_base: 18,
+    party: [(species: "galliard", level: 11)],
+    defeat_flag: "trainer.rt2_courier.defeated",
+    intro_key: "rt2.courier.intro", defeat_key: "rt2.courier.defeat",
+)

@@ -1,0 +1,16 @@
+[
+    If(flag: "hall.2.cleared",
+       then: [Say(who: "mirelle", key: "hall2.mirelle.after"), End],
+       else: []),
+    Say(who: "mirelle", key: "hall2.mirelle.intro"),
+    StartBattle(trainer: "maestro_mirelle"),
+    If(flag: "hall.2.cleared",
+       then: [
+            Say(who: "mirelle", key: "hall2.mirelle.badge"),
+            SetFlag(flag: "badge.2"),
+            SetFlag(flag: "performance.clearing_chord"),
+            Say(who: "mirelle", key: "hall2.mirelle.clearing"),
+       ],
+       else: []),
+    End,
+]

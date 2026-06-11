@@ -1,0 +1,6 @@
+[
+    If(flag: "hall.3.cleared",
+       then: [Say(who: "harbor_master", key: "calando.harbor.after")],
+       else: [Say(who: "harbor_master", key: "calando.harbor.hint")]),
+    End,
+]

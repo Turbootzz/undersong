@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt2_gardener", class: "Gardener", name_key: "npc.rt2_gardener",
+    ai_tier: 1, payout_base: 18,
+    party: [(species: "mossoon", level: 9), (species: "shrubato", level: 10)],
+    defeat_flag: "trainer.rt2_gardener.defeated",
+    intro_key: "rt2.gardener.intro", defeat_key: "rt2.gardener.defeat",
+)

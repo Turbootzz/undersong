@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt3_drover", class: "Drover", name_key: "npc.rt3_drover",
+    ai_tier: 1, payout_base: 20,
+    party: [(species: "brasshorn", level: 15)],
+    defeat_flag: "trainer.rt3_drover.defeated",
+    intro_key: "rt3.drover.intro", defeat_key: "rt3.drover.defeat",
+)

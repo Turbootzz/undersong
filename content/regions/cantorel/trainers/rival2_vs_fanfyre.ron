@@ -1,0 +1,10 @@
+Trainer(
+    id: "rival2_vs_fanfyre", class: "Rival", name_key: "npc.cade",
+    ai_tier: 2, payout_base: 36,
+    party: [
+        (species: "galliard", level: 14),
+        (species: "tidalegro", level: 17),
+    ],
+    defeat_flag: "story.rival2.defeated",
+    intro_key: "rival2.cade.intro", defeat_key: "rival2.cade.defeat",
+)

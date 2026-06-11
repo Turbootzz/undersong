@@ -51,6 +51,7 @@ MapDef(
     ],
     triggers: [
         (at: (4, 2), kind: Script(path: "lab_enter.script.ron"), once_flag: Some("story.intro.lab_seen")),
+        (at: (3, 2), kind: Script(path: "theft_scene.script.ron")),
         (at: (4, 0), kind: Warp(map: "pausa_village", to: (6, 8), facing: Down)),
     ],
     npcs: [

@@ -1,0 +1,11 @@
+// Beat 1 payoff: that night, TACET stole the third starter.
+[
+    If(flag: "story.theft.seen", then: [End], else: []),
+    If(flag: "badge.1", then: [], else: [End]),
+    Say(who: "reed", key: "theft.reed.1"),
+    Say(who: "reed", key: "theft.reed.2"),
+    Say(who: "cade", key: "theft.cade.1"),
+    Say(who: "reed", key: "theft.reed.3"),
+    SetFlag(flag: "story.theft.seen"),
+    End,
+]

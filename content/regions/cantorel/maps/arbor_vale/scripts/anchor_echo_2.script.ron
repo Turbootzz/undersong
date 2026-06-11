@@ -1,0 +1,15 @@
+// Anchor Echo 2 (Arbor Vale): unlocks after Badge 2.
+[
+    If(flag: "anchor_echo.2", then: [Say(who: "echo_keeper_1", key: "echo2.done"), End], else: []),
+    If(flag: "badge.2", then: [], else: [Say(who: "echo_keeper_1", key: "echo2.locked"), End]),
+    Say(who: "echo_keeper_1", key: "echo2.ask"),
+    Say(who: "echo_keeper_1", key: "echo2.story"),
+    StartBattle(trainer: "echo2_warden"),
+    If(flag: "trainer.echo2_warden.defeated",
+       then: [
+            SetFlag(flag: "anchor_echo.2"),
+            Say(who: "echo_keeper_1", key: "echo2.grant"),
+       ],
+       else: []),
+    End,
+]

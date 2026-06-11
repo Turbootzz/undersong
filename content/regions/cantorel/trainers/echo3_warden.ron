@@ -1,0 +1,7 @@
+Trainer(
+    id: "echo3_warden", class: "EchoWarden", name_key: "npc.echo_warden",
+    ai_tier: 2, payout_base: 40,
+    party: [(species: "maridian", level: 21)],
+    defeat_flag: "trainer.echo3_warden.defeated",
+    intro_key: "echo3.ask", defeat_key: "echo3.grant",
+)

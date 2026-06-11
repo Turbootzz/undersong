@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt3_chorister", class: "Chorister", name_key: "npc.rt3_chorister",
+    ai_tier: 1, payout_base: 20,
+    party: [(species: "hummble", level: 14), (species: "madrigale", level: 15)],
+    defeat_flag: "trainer.rt3_chorister.defeated",
+    intro_key: "rt3.chorister.intro", defeat_key: "rt3.chorister.defeat",
+)

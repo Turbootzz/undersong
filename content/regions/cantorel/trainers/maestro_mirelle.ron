@@ -1,0 +1,15 @@
+// Hall 2 Maestro (doc 04 §2 lineage): bloom, patient, T3.
+Trainer(
+    id: "maestro_mirelle", class: "Maestro", name_key: "npc.mirelle",
+    ai_tier: 3, payout_base: 70,
+    party: [
+        (species: "solfawn", level: 14, moves: Some(["leaf_pick", "dampen", "quick_step"])),
+        (species: "thornata", level: 17,
+         ivs: Some((hp: 31, atk: 20, def: 25, spa: 31, spd: 25, spe: 31)),
+         moves: Some(["bud_strum", "venom_trill", "leaf_pick", "dampen"]),
+         held_item: Some("oran_chime")),
+    ],
+    defeat_flag: "hall.2.cleared",
+    reward_items: [("tm05", 1)],
+    intro_key: "hall2.mirelle.intro", defeat_key: "hall2.mirelle.defeat",
+)

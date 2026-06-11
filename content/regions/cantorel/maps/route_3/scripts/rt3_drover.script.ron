@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt3_drover.defeated",
+       then: [Say(who: "rt3_drover", key: "rt3.drover.after"), End],
+       else: []),
+    Say(who: "rt3_drover", key: "rt3.drover.intro"),
+    StartBattle(trainer: "rt3_drover"),
+    End,
+]

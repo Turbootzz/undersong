@@ -1,0 +1,11 @@
+// First DOUBLES fight in the campaign (beat 3b).
+Trainer(
+    id: "tacet_pair_r4", class: "TacetGrunt", name_key: "npc.tacet_grunt",
+    ai_tier: 2, payout_base: 30, double_battle: true,
+    party: [
+        (species: "mutewing", level: 17),
+        (species: "lullaby", level: 16),
+    ],
+    defeat_flag: "trainer.tacet_pair_r4.defeated",
+    intro_key: "tacet.yard.1", defeat_key: "tacet.yard.flee",
+)

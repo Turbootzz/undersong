@@ -1,0 +1,15 @@
+// Anchor Echo 3 (Quiet Coast): unlocks after Badge 3.
+[
+    If(flag: "anchor_echo.3", then: [Say(who: "echo_keeper_3", key: "echo3.done"), End], else: []),
+    If(flag: "badge.3", then: [], else: [Say(who: "echo_keeper_3", key: "echo3.locked"), End]),
+    Say(who: "echo_keeper_3", key: "echo3.ask"),
+    Say(who: "echo_keeper_3", key: "echo3.story"),
+    StartBattle(trainer: "echo3_warden"),
+    If(flag: "trainer.echo3_warden.defeated",
+       then: [
+            SetFlag(flag: "anchor_echo.3"),
+            Say(who: "echo_keeper_3", key: "echo3.grant"),
+       ],
+       else: []),
+    End,
+]

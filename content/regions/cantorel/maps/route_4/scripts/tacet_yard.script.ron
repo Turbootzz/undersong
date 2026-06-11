@@ -1,0 +1,14 @@
+// Beat 3b: the raided tuning yard — a DOUBLES grunt pair.
+[
+    If(flag: "story.tacet.yard", then: [End], else: []),
+    Say(who: "tacet_grunt_b", key: "tacet.yard.1"),
+    Say(who: "tacet_grunt_b", key: "tacet.yard.2"),
+    StartBattle(trainer: "tacet_pair_r4"),
+    If(flag: "trainer.tacet_pair_r4.defeated",
+       then: [
+            SetFlag(flag: "story.tacet.yard"),
+            Say(who: "tacet_grunt_b", key: "tacet.yard.flee"),
+       ],
+       else: []),
+    End,
+]

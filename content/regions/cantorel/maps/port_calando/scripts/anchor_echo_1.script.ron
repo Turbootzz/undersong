@@ -1,0 +1,16 @@
+// Anchor Echo 1 (visiting Pausa's keeper, stationed at the port office):
+// unlocks after Badge 1.
+[
+    If(flag: "anchor_echo.1", then: [Say(who: "echo_keeper_pausa", key: "echo1.done"), End], else: []),
+    If(flag: "badge.1", then: [], else: [Say(who: "echo_keeper_pausa", key: "echo1.locked"), End]),
+    Say(who: "echo_keeper_pausa", key: "echo1.ask"),
+    Say(who: "echo_keeper_pausa", key: "echo1.story"),
+    StartBattle(trainer: "echo1_warden"),
+    If(flag: "trainer.echo1_warden.defeated",
+       then: [
+            SetFlag(flag: "anchor_echo.1"),
+            Say(who: "echo_keeper_pausa", key: "echo1.grant"),
+       ],
+       else: []),
+    End,
+]

@@ -1,0 +1,7 @@
+Trainer(
+    id: "hall3_duo_b", class: "HallSenior", name_key: "npc.hall3_duo_b",
+    ai_tier: 2, payout_base: 28, double_battle: true,
+    party: [(species: "ampurr", level: 19), (species: "tidempo", level: 19)],
+    defeat_flag: "trainer.hall3_duo_b.defeated",
+    intro_key: "hall3.duo_b.intro", defeat_key: "hall3.duo_b.defeat",
+)

@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt2_courier.defeated",
+       then: [Say(who: "rt2_courier", key: "rt2.courier.after"), End],
+       else: []),
+    Say(who: "rt2_courier", key: "rt2.courier.intro"),
+    StartBattle(trainer: "rt2_courier"),
+    End,
+]

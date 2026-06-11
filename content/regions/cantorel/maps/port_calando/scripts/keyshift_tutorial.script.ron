@@ -1,0 +1,12 @@
+// The Keyshift tutorial moment (beat 2 rumor paid off): a collector
+// shows off a keyshifted Mote.
+[
+    If(flag: "story.keyshift.seen",
+       then: [Say(who: "keyshift_buff", key: "keyshift.again"), End],
+       else: []),
+    Say(who: "keyshift_buff", key: "keyshift.1"),
+    Say(who: "keyshift_buff", key: "keyshift.2"),
+    Say(who: "keyshift_buff", key: "keyshift.3"),
+    SetFlag(flag: "story.keyshift.seen"),
+    End,
+]

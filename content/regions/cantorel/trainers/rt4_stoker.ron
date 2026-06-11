@@ -1,0 +1,7 @@
+Trainer(
+    id: "rt4_stoker", class: "Stoker", name_key: "npc.rt4_stoker",
+    ai_tier: 1, payout_base: 22,
+    party: [(species: "cinderle", level: 16), (species: "forgeling", level: 17)],
+    defeat_flag: "trainer.rt4_stoker.defeated",
+    intro_key: "rt4.stoker.intro", defeat_key: "rt4.stoker.defeat",
+)

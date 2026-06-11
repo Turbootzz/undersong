@@ -1,0 +1,8 @@
+[
+    If(flag: "trainer.rt2_gardener.defeated",
+       then: [Say(who: "rt2_gardener", key: "rt2.gardener.after"), End],
+       else: []),
+    Say(who: "rt2_gardener", key: "rt2.gardener.intro"),
+    StartBattle(trainer: "rt2_gardener"),
+    End,
+]
