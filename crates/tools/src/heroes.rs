@@ -402,6 +402,37 @@ fn mirror(grid: &[&str]) -> Vec<String> {
         .collect()
 }
 
+/// Mirrors about the FIGURE's axis, not the canvas's. The hero grids
+/// sit off-center (cols 4..=21), so a plain canvas mirror lurches the
+/// body ~6px sideways — fine when a whole direction set is mirrored
+/// (left → right), wrong when one mirrored frame joins three
+/// unmirrored ones (the down/up alternate strides).
+fn mirror_in_place(grid: &[&str]) -> Vec<String> {
+    let (mut min, mut max) = (31usize, 0usize);
+    for row in grid {
+        for (x, ch) in row.chars().enumerate().take(32) {
+            if ch != '.' && ch != ' ' {
+                min = min.min(x);
+                max = max.max(x);
+            }
+        }
+    }
+    let axis = min + max; // x → axis - x keeps the bounding box fixed
+    grid.iter()
+        .map(|row| {
+            let chars: Vec<char> = row.chars().collect();
+            (0..32)
+                .map(|x| {
+                    axis.checked_sub(x)
+                        .and_then(|src| chars.get(src).copied())
+                        .filter(|ch| *ch != ' ')
+                        .unwrap_or('.')
+                })
+                .collect()
+        })
+        .collect()
+}
+
 fn refs(rows: &[String]) -> Vec<&str> {
     rows.iter().map(String::as_str).collect()
 }
@@ -417,12 +448,14 @@ pub fn render_heroes(out: &Path) -> Result<usize> {
     // from the P13 variant sheet. Four frames per direction (P18 walk
     // v2): 0 stand, 1 stride, 2 stand, 3 the opposite stride — the
     // renderer alternates strides per tile so the gait reads two-step.
-    let down3 = mirror(A_DOWN_1);
+    // The alternate strides mirror in place (the figure axis) so the
+    // body holds still while the legs swap.
+    let down3 = mirror_in_place(A_DOWN_1);
     let up1 = up_stride();
     let up1_refs = refs(&up1);
     let up3 = {
         let owned: Vec<&str> = refs(&up1);
-        mirror(&owned)
+        mirror_in_place(&owned)
     };
     save(&paint(A_DOWN_0, &a), "player.down.0")?;
     save(&paint(A_DOWN_1, &a), "player.down.1")?;

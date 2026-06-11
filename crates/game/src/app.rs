@@ -92,6 +92,7 @@ impl Plugin for UndersongPlugin {
                 OnExit(AppState::Overworld),
                 (
                     cleanup_wipe,
+                    clear_overworld_fx,
                     despawn_tagged::<DialogueUi>,
                     despawn_tagged::<ToastUi>,
                     despawn_tagged::<WeatherFx>,
@@ -698,7 +699,15 @@ fn handle_events(
                 // spotted_tick system plays the cue and holds input.
                 spotted.0 = Some((npc.clone(), 0.9, false));
             }
-            WorldEvent::Stepped { to } if world.0.map().is_patch(to.0, to.1) => {
+            // A step that warps never rustles: the Stepped coords
+            // belong to the source map, but world.0.map() is already
+            // the arrival map by the time events land here.
+            WorldEvent::Stepped { to }
+                if !events
+                    .iter()
+                    .any(|e| matches!(e, WorldEvent::Warped { .. }))
+                    && world.0.map().is_patch(to.0, to.1) =>
+            {
                 fxq.rustles.push(*to);
             }
             _ => {}
@@ -882,6 +891,17 @@ fn animate_player_frame(
 
 // ----- P18 overworld feel systems ---------------------------------------
 
+/// Leaving the overworld clears the transient feel-state: a spotted
+/// beat must not outlive its scene (it would gate input forever —
+/// spotted_tick only runs in Overworld), and queued rustles/door
+/// flashes must not replay at stale coordinates after a battle or
+/// whiteout.
+fn clear_overworld_fx(mut spotted: ResMut<Spotted>, mut fxq: ResMut<FxQueue>) {
+    spotted.0 = None;
+    fxq.rustles.clear();
+    fxq.door = None;
+}
+
 /// Spotted! — plays the alert, pops the "!" bubble over the trainer's
 /// head, and counts the beat of pause (player_input holds meanwhile).
 fn spotted_tick(
@@ -1022,7 +1042,10 @@ fn weather_fx(
     use undersong_core::moves::WeatherKind;
     let weather = world.0.map().weather;
     let key = Some((world.0.current_map.clone(), weather.is_some()));
-    if *shown == key {
+    // The cache alone is not enough: OnExit(Overworld) despawns the
+    // overlay on every battle/menu — respawn when it should exist but
+    // doesn't.
+    if *shown == key && (weather.is_none() || !existing.is_empty()) {
         return;
     }
     *shown = key;
@@ -1042,6 +1065,7 @@ fn weather_fx(
             commands.spawn((
                 WeatherFx,
                 vignette,
+                GlobalZIndex(-2), // weather sits under the dialogue box
                 Node {
                     position_type: PositionType::Absolute,
                     left: Val::Px(0.0),
@@ -1062,6 +1086,7 @@ fn weather_fx(
                 commands.spawn((
                     WeatherFx,
                     FlurrySpeck(seed),
+                    GlobalZIndex(-2),
                     Node {
                         position_type: PositionType::Absolute,
                         left: Val::Px(0.0),
@@ -1768,7 +1793,10 @@ fn boot_map_rig(
     let mut spot = (1, 1);
     'scan: for y in 1..map.height.saturating_sub(1) {
         for x in 1..map.width.saturating_sub(1) {
-            if !map.is_solid(x, y) {
+            // Walkable AND dry — water is non-solid (surf) but no
+            // place to stand a screenshot rig.
+            let ground = map.ground[map.index(x, y)];
+            if !map.is_solid(x, y) && ground != 3 && ground != 5 {
                 spot = (x, y);
                 break 'scan;
             }
@@ -1904,7 +1932,12 @@ fn walk_demo_rig(
     if rig.since_act > 0.35 && anim.0.is_none() {
         rig.since_act = 0.0;
         let Some(ch) = pattern.chars().nth(rig.step) else {
-            exit.write(AppExit::Success); // pattern done, battle never came
+            // Pattern done: linger so a pattern-final warp's door
+            // flash still lands on film, then exit.
+            let done = *rig.battle_at.get_or_insert(time.elapsed_secs());
+            if time.elapsed_secs() - done > 1.5 {
+                exit.write(AppExit::Success);
+            }
             return;
         };
         rig.step += 1;
@@ -2099,16 +2132,14 @@ fn visual_replay(
     mut player: Query<&mut Transform, With<PlayerSprite>>,
     mut theater: ResMut<crate::battle_ui::Theater>,
     mut spotted: ResMut<Spotted>,
+    mut parity: ResMut<StepParity>,
+    mut fxq: ResMut<FxQueue>,
     mut rig: Local<VisualReplay>,
 ) {
     use bevy::render::view::screenshot::{Screenshot, save_to_disk};
     let Some(path) = std::env::var_os("UNDERSONG_VISUAL_REPLAY") else {
         return;
     };
-    // The spotted beat holds the replay too — films get the pause.
-    if spotted.0.is_some() {
-        return;
-    }
     if time.elapsed_secs() < 2.0 {
         return;
     }
@@ -2156,10 +2187,12 @@ fn visual_replay(
         // Pace: a small slice per frame keeps motion watchable.
         // UNDERSONG_REPLAY_SLOW=1 drops the overworld to ~walking speed
         // (one input every 8 frames) so steps, rustles, doors, and the
-        // spotted beat land on film.
+        // spotted beat land on film. The spotted beat holds the FEED
+        // only — the camera keeps shooting so the bubble lands on film.
         let slow = std::env::var_os("UNDERSONG_REPLAY_SLOW").is_some();
         rig.slow_gate = (rig.slow_gate + 1) % 8;
-        let hold = slow && !in_battle_scene && rig.slow_gate != 0;
+        let hold =
+            spotted.0.is_some() || (slow && !in_battle_scene && rig.slow_gate != 0);
         let per_frame = if hold {
             0
         } else if in_battle_scene || slow {
@@ -2171,6 +2204,7 @@ fn visual_replay(
         let battle_now = world.0.battle.is_some();
         for i in rig.index..end {
             let _ = finished;
+            let from = world.0.player;
             let input = rig.inputs.as_ref().expect("loaded")[i].clone();
             let events = world.0.apply(input);
             let battle_after = world.0.battle.is_some();
@@ -2182,19 +2216,62 @@ fn visual_replay(
             if battle_now || in_battle_scene {
                 crate::battle_ui::stage_battle_events(&mut theater, &world.0, &events);
             }
+            let warped = events
+                .iter()
+                .any(|e| matches!(e, WorldEvent::Warped { .. }));
             for event in &events {
-                if matches!(event, WorldEvent::Warped { .. }) {
-                    rendered.0 = None;
-                    anim.0 = None;
-                    if let Ok(mut transform) = player.single_mut() {
-                        let (x, y) = world.0.player;
-                        transform.translation =
-                            Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+                match event {
+                    WorldEvent::Warped { to, .. } => {
+                        rendered.0 = None;
+                        anim.0 = None;
+                        if let Ok(mut transform) = player.single_mut() {
+                            let (x, y) = world.0.player;
+                            transform.translation =
+                                Vec3::new(x as f32 * TILE + TILE / 2.0, y as f32 * TILE, 2.0);
+                        }
+                        if slow {
+                            // The arrival-door flash, as in real play.
+                            let map = world.0.map();
+                            let (dx, dy) = world.0.facing.delta();
+                            let behind = to
+                                .0
+                                .checked_add_signed(-dx)
+                                .zip(to.1.checked_add_signed(-dy));
+                            for spot in [Some(*to), behind].into_iter().flatten() {
+                                if spot.0 < map.width
+                                    && spot.1 < map.height
+                                    && map.decor.get(map.index(spot.0, spot.1)) == Some(&12)
+                                {
+                                    fxq.door = Some(spot);
+                                    break;
+                                }
+                            }
+                        }
                     }
-                }
-                if let WorldEvent::Engaged { npc } = event {
-                    // Spotted! plays in films exactly like real play.
-                    spotted.0 = Some((npc.clone(), 0.9, false));
+                    WorldEvent::Engaged { npc } => {
+                        // Spotted! plays in films exactly like real play.
+                        spotted.0 = Some((npc.clone(), 0.9, false));
+                    }
+                    WorldEvent::Stepped { to } if slow && !warped => {
+                        // Slow films walk for real: slide + gait + rustle.
+                        let to_world = *to;
+                        anim.0 = Some((
+                            Vec2::new(
+                                from.0 as f32 * TILE + TILE / 2.0,
+                                from.1 as f32 * TILE,
+                            ),
+                            Vec2::new(
+                                to_world.0 as f32 * TILE + TILE / 2.0,
+                                to_world.1 as f32 * TILE,
+                            ),
+                            0.0,
+                        ));
+                        parity.0 = !parity.0;
+                        if world.0.map().is_patch(to_world.0, to_world.1) {
+                            fxq.rustles.push(to_world);
+                        }
+                    }
+                    _ => {}
                 }
             }
             if battle_after && !battle_now {

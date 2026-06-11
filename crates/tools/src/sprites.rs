@@ -1585,7 +1585,10 @@ pub fn render_tiles(out: &Path) -> Result<usize> {
         "wall_indoor",
     ];
     for kind in kinds {
-        let mut rng = BattleRng::from_seed(0x711e ^ (kind.len() as u64 * 7919));
+        // door_open shares door's seed: the wall speckle around the
+        // doorway must not re-roll when the arrival flash swaps tiles.
+        let seed_kind = if kind == "door_open" { "door" } else { kind };
+        let mut rng = BattleRng::from_seed(0x711e ^ (seed_kind.len() as u64 * 7919));
         tile(kind, &mut rng)
             .save(out.join(format!("{kind}.png")))
             .with_context(|| format!("writing {kind}"))?;
