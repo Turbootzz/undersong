@@ -199,6 +199,9 @@ pub struct WorldState {
     /// Set when an encounter triggers; consumed by the battle bridge
     /// when a registry is present, by the placeholder scene otherwise.
     pub pending_encounter: Option<(SpeciesId, u8)>,
+    /// The primary region's dex order (the Score's denominator — other
+    /// packs' species are bonus verses, not requirements).
+    pub primary_dex: Vec<SpeciesId>,
     /// Content registry; None in the registry-less dev world (P2 tests).
     pub registry: Option<Registry>,
     pub party: Vec<Individual>,
@@ -273,6 +276,7 @@ impl WorldState {
             world_seed,
             steps: 0,
             pending_encounter: None,
+            primary_dex: Vec::new(),
             registry: None,
             party: Vec::new(),
             boxes: Vec::new(),
@@ -409,11 +413,20 @@ impl WorldState {
         // Anchor Echoes. Reed tracks it; the Vault branch reads it.
         if !self.vars.flags.contains("chorus.ready") {
             let echoes = (1..=8u8).all(|n| self.vars.flags.contains(&format!("anchor_echo.{n}")));
-            if echoes && let Some(registry) = &self.registry {
-                let dex_total = registry.species.len().max(1);
-                let caught = registry
-                    .species
-                    .keys()
+            if echoes {
+                // The Score is the PRIMARY region's dex (doc 01 §6):
+                // other packs' species are bonus verses, not homework.
+                let dex: Vec<&SpeciesId> = if self.primary_dex.is_empty() {
+                    self.registry
+                        .as_ref()
+                        .map(|r| r.species.keys().collect())
+                        .unwrap_or_default()
+                } else {
+                    self.primary_dex.iter().collect()
+                };
+                let dex_total = dex.len().max(1);
+                let caught = dex
+                    .iter()
                     .filter(|s| self.vars.flags.contains(&format!("dex.caught.{s}")))
                     .count();
                 if caught * 100 >= dex_total * 60 {
@@ -1949,6 +1962,7 @@ pub fn load_game_world(content_root: &std::path::Path, seed: u64) -> Result<Worl
     );
     world.strings = merged_strings.into();
     world.region_id = primary_pack.def.id.clone();
+    world.primary_dex = primary_pack.def.dex.clone();
     world.registry = registry;
     Ok(world)
 }

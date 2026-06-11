@@ -36,7 +36,7 @@ fn dev_maps_load_and_validate_clean() {
     assert!(maps.contains_key(&"debug_rehearsal".into()));
     assert!(maps.contains_key(&"debug_annex".into()));
     let pool = load_species_pool(&content_root().join("dev/testbed.ron")).expect("pool");
-    let findings = validate_maps(&maps, &pool, &script_exists);
+    let findings = validate_maps(&maps, &pool, &script_exists, &Default::default());
     assert!(
         findings.is_empty(),
         "{}",
@@ -96,7 +96,7 @@ fn broken_warp_targets_are_flagged() {
         *to = (0, 0); // annex (0,0) is solid wall
     }
     let pool = load_species_pool(&content_root().join("dev/testbed.ron")).expect("pool");
-    let findings = validate_maps(&maps, &pool, &script_exists);
+    let findings = validate_maps(&maps, &pool, &script_exists, &Default::default());
     assert!(
         findings
             .iter()

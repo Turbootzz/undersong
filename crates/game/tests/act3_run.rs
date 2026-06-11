@@ -1342,6 +1342,18 @@ fn ending_chorus_reaches_credits() {
 }
 
 #[test]
+fn chorus_replay_plays_back() {
+    if std::env::var_os("UPDATE_REPLAYS").is_some() {
+        return;
+    }
+    let path = content_root().join("../tests/replays/ending_chorus.ron");
+    if !path.exists() {
+        panic!("missing ending_chorus.ron — record with UPDATE_REPLAYS=1");
+    }
+    game::replay::run_replay_file(&content_root(), &path).expect("chorus replays");
+}
+
+#[test]
 fn dacapo_replay_plays_back() {
     if std::env::var_os("UPDATE_REPLAYS").is_some() {
         return;

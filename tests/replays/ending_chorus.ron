@@ -1,5 +1,5 @@
 // P6 gate replay — recorded by act3_run.rs (UPDATE_REPLAYS=1).
-// 109535 inputs; do not hand-edit.
+// 109540 inputs; do not hand-edit.
 (
     seed: 11301292,
     world: Game,
@@ -88866,8 +88866,11 @@
         Step(Right),
         Step(Right),
         Step(Right),
+        Interact,
         Step(Right),
+        Interact,
         Step(Right),
+        Interact,
         Step(Right),
         Step(Right),
         Step(Right),
@@ -89350,6 +89353,7 @@
         Step(Down),
         Step(Down),
         Step(Down),
+        Interact,
         Step(Down),
         Step(Down),
         Step(Down),
@@ -89377,6 +89381,7 @@
         Step(Up),
         Step(Up),
         Step(Up),
+        Interact,
         Step(Up),
         Step(Up),
         Step(Right),
@@ -117877,7 +117882,7 @@
             "chorus.ready",
             "credits.chorus",
         ],
-        min_dialogue_lines: 417,
+        min_dialogue_lines: 422,
         warped: true,
         party_levels: Some([
             49,
