@@ -191,21 +191,21 @@ Tamburra/Neonata are then "just content."
 
 Source: the 2026-06-11 playtest (the user's first hands-on session).
 
-- [ ] **Tile-skip fix**: held/tapped movement sometimes steps two tiles, making
+- [x] **Tile-skip fix**: held/tapped movement sometimes steps two tiles, making
       it hard to stop facing an NPC. Grid walk gets a per-tile cadence with
       buffered input; tap = one step, tap-to-turn preserved.
-- [ ] **Geography audit**: exiting a map through its west edge must land you on
+- [x] **Geography audit**: exiting a map through its west edge must land you on
       the destination's *east* edge still facing west (reported: left exit →
       left-side arrival). One coherent region compass table in `scripts/mapgen.py`,
       every door pair fixed, plus a validator rule (`map.door_direction`) so it
       can't regress. Replays re-recorded, driver paths updated.
-- [ ] **Battle text pacing**: its own Options entry (separate from dialogue text
+- [x] **Battle text pacing**: its own Options entry (separate from dialogue text
       speed) + hold-Z fast-forward. Default slower than today.
-- [ ] **SFX wiring**: menu cursor/confirm/cancel everywhere (title, screens hub,
+- [x] **SFX wiring**: menu cursor/confirm/cancel everywhere (title, screens hub,
       battle menu, shop), dialogue text blips. The cue WAVs already exist.
-- [ ] **Facing affordance**: a visible indicator for the tile the player faces
+- [x] **Facing affordance**: a visible indicator for the tile the player faces
       (presenter-only), so "am I looking at the NPC?" answers itself.
-- [ ] **Phase review** over `git diff p9-start..HEAD`; STATUS updated.
+- [x] **Phase review** over `git diff p9-start..HEAD`; STATUS updated.
 
 **Gate P9:** both reported bugs unreproducible; `map.door_direction` rule green;
 all six replays re-recorded and passing; battle-text setting demonstrably changes
@@ -277,6 +277,32 @@ builds all release artifacts in CI.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P9 complete (feel & correctness)
+
+**Built:** the walk buffer is gone — a tap inside the slide window once
+queued a second step (the playtest's "I skip one square"); a held key
+now continues the walk the frame the tile lands (doc 03 rule updated).
+A door census found 12 direction violations; Pausa's route_2 gate moved
+to its east edge, Voltaccia's fen exit east, Cadenza's route_6 exit
+south; maps gained an `indoor` flag (16 interiors) and the validator
+gained `map.door_direction` (merged into the warp-target arm after the
+phase review caught it shadowing the solid-landing check). Battle
+messages ride their own setting (relaxed/standard/brisk, default
+relaxed) with hold-Z 4× fast-forward, saved per-save with a serde
+default for old files. The P5 cue WAVs finally play — cursor/confirm/
+cancel across pause menu, screens hub, shop, battle menu; dialogue
+blips; buys ring. A soft gilt dot marks the faced tile.
+
+**Gate P9:** both reported bugs unreproducible by construction (buffer
+deleted; door rule green over 105 doors); all six replays re-recorded
+— the retry-driver architecture absorbed the geography flip without a
+single new stuck; 192 tests; validate 0/0; clippy clean; windowed boot
+clean.
+
+**Next:** P10 — `git tag p10-start`; the sprite pipeline (640×360,
+32px, generated + `assets/custom/` override).
+
 
 ### 2026-06-11 — P8 complete (the Skalden proof) — ALL PHASES DONE
 
