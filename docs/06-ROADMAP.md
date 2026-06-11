@@ -268,19 +268,19 @@ Source: the 2026-06-11 second playtest. Decisions: hero = "surprise me"
 (variants screenshotted, user picks); monsters = generator v2 PLUS
 hand-authored stars (starter lines + legendaries).
 
-- [ ] **Creature grammar v2**: true drawn back views (the cropped-front
+- [x] **Creature grammar v2**: true drawn back views (the cropped-front
       fake was the "my monster looks weird" bug), three-tone shading with
       dither, per-seed feature kits (ears/horns/crests/fins/tail shapes),
       stronger silhouette variety, eye styles. All 130 regenerate.
-- [ ] **Hand-authored stars**: the three starter lines + the four
+- [x] **Hand-authored stars**: the three starter lines + the four
       legendaries (+ Vinterstem) as deliberate pixel art (char-grid
       format in `tools`, front + back), overriding the generator for
       those ids.
-- [ ] **Anime-proportioned characters**: hand-authored 32×44 player
+- [x] **Anime-proportioned characters**: hand-authored 32×44 player
       (4 dir × 2 frames, bottom-anchored so heads overflow the tile) and
       the NPC archetype set; three hero design variants screenshotted to
       `docs/playtests/` for the user's pick.
-- [ ] **Phase review**; STATUS with before/after screenshots.
+- [x] **Phase review**; STATUS with before/after screenshots.
 
 **Gate P13:** back views are real drawings; stars are hand-authored;
 characters read anime-proportioned at battle of 1280×720; replays
@@ -355,6 +355,27 @@ opening RON files; a harness run produces a reviewable frame series.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P13 complete (art v2)
+
+**Built:** grammar v2 (three-tone dithered shading, feature kits, real
+drawn backs — the cropped-front fake was the "weird back" bug);
+fourteen hand-authored stars in char-grid pixel art (both starter-line
+triples + the five legendaries) overriding the generator; the 32×44
+anime-proportioned Conductor with a 4-direction 2-frame set, three
+hero palette variants in docs/playtests/ awaiting the user's pick;
+procedural NPCs share the proportions; bottom-center anchoring lets
+heads overflow tiles.
+
+**Evidence:** docs/screenshots/p13-battle.png (hand-authored
+embaritone back — ears, brass ruff, flame tail — vs a shaded moth).
+193 tests; replays untouched; clippy clean.
+
+**Open for the user:** pick hero A (gilt conductor) / B (teal
+wayfarer) / C (violet chorister) from docs/playtests/.
+
+**Next:** P14 — `git tag p14-start`; world color & building anatomy.
+
 
 ### 2026-06-11 — P12 complete — THE PLAYTEST PHASES (P9–P12) ALL DONE
 
