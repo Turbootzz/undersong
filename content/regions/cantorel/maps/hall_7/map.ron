@@ -99,7 +99,7 @@ MapDef(
     ],
     npcs: [
         (id: "hall7_skater", at: (3, 4), facing: Right, sprite: "npc.trainer", script: Some("hall7_skater.script.ron"), behavior: Static, sight_range: 2),
-        (id: "hall7_carver", at: (8, 8), facing: Left, sprite: "npc.trainer", script: Some("hall7_carver.script.ron"), behavior: Static, sight_range: 2),
+        (id: "hall7_carver", at: (7, 8), facing: Right, sprite: "npc.trainer", script: Some("hall7_carver.script.ron"), behavior: Static, sight_range: 2),
         (id: "ilva", at: (6, 14), facing: Down, sprite: "npc.dario", script: Some("ilva.script.ron"), behavior: Static, sight_range: 0),
     ],
     weather: Some(Flurry),

@@ -35,7 +35,7 @@ impl Driver {
 
     /// Battle policy: potion under 40%, otherwise T1's pick; doubles
     /// declare per position with choose_doubles. Deterministic.
-    fn battle_policy(&mut self) {
+    pub fn battle_policy(&mut self) {
         let Some(session) = &self.world.battle else {
             self.battle_turns = 0;
             return;
@@ -107,14 +107,38 @@ impl Driver {
         // Critical with an empty bag in a WILD fight: flee — a faint
         // costs half the wallet, a flight costs nothing.
         let critical = u32::from(active.hp) * 4 < u32::from(active.max_hp());
-        let no_backup = self.world.party.iter().filter(|m| m.hp != Some(0)).count() <= 1;
         if critical
             && !has_potion
-            && no_backup
             && matches!(session.context, game::session::BattleContext::Wild { .. })
         {
             self.input(Input::Battle(BattleCmd::Run));
             return;
+        }
+        // Damper walls: if the active mote's every attacking move is
+        // blanked by the foe's ability, no tier of move-picking helps —
+        // switch to a teammate who can actually touch it.
+        let foe_ability = session.state.sides[1].active_mote().ability;
+        let blanked = |mote: &battle::BattleMote| {
+            mote.moves.iter().all(|m| {
+                m.spec.power == 0
+                    || (foe_ability == battle::abilities::Ability::Damper && m.spec.flags.sound)
+                    || (foe_ability == battle::abilities::Ability::Floating
+                        && m.spec.r#type == undersong_core::types::Type::Stone)
+            })
+        };
+        let our_side = &session.state.sides[0];
+        if blanked(our_side.active_mote()) {
+            let bench = our_side.party.iter().enumerate().find(|(i, m)| {
+                *i != usize::from(our_side.positions[0].party_index)
+                    && !m.is_fainted()
+                    && !blanked(m)
+            });
+            if let Some((to, _)) = bench {
+                self.input(Input::Battle(BattleCmd::Switch {
+                    to: u8::try_from(to).unwrap_or(0),
+                }));
+                return;
+            }
         }
         let mut probe = undersong_core::rng::BattleRng::from_seed(0);
         let action = battle::ai::choose(battle::ai::AiTier::T3, &session.state, 0, &mut probe);
@@ -141,7 +165,30 @@ impl Driver {
                 continue;
             }
             if !self.world.pending_learn_queue.is_empty() {
-                self.input(Input::Learn { replace: None });
+                // Keep kits current: replace the weakest current move
+                // (status moves first), never skip — frozen movesets
+                // walk into damper walls with four sound moves.
+                let replace = self
+                    .world
+                    .pending_learn_queue
+                    .first()
+                    .and_then(|(party_index, _)| self.world.party.get(usize::from(*party_index)))
+                    .map(|member| {
+                        let power = |id: &undersong_core::ids::MoveId| {
+                            self.world
+                                .registry
+                                .as_ref()
+                                .and_then(|r| r.moves.get(id))
+                                .map_or(0, |spec| spec.power)
+                        };
+                        member
+                            .moves
+                            .iter()
+                            .enumerate()
+                            .min_by_key(|(_, m)| power(&m.id))
+                            .map_or(0, |(i, _)| u8::try_from(i).unwrap_or(0))
+                    });
+                self.input(Input::Learn { replace });
                 continue;
             }
             if self.world.dialogue.is_some() {
@@ -286,6 +333,24 @@ impl Driver {
         }
     }
 
+    /// Buys best affordable potions, walking down tiers until either
+    /// `count` landed or even small ones beyond wallet. Shop must be open.
+    pub fn buy_potions(&mut self, count: u32) {
+        let mut bought = 0;
+        for tier in ["potion_x", "potion_l", "potion_m", "potion_s"] {
+            while bought < count {
+                let before: u32 = self.world.bag.get(&tier.into()).copied().unwrap_or(0);
+                self.buy(tier, 1);
+                let after: u32 = self.world.bag.get(&tier.into()).copied().unwrap_or(0);
+                if after > before {
+                    bought += 1;
+                } else {
+                    break; // can't afford this tier — drop down
+                }
+            }
+        }
+    }
+
     pub fn close_shop(&mut self) {
         if self.world.shop.is_some() {
             self.input(Input::ShopClose);
@@ -331,6 +396,21 @@ impl Driver {
             }
             attempt(self);
             self.drain();
+            if !self.world.vars.flags.contains(flag) && std::env::var_os("DRIVER_DEBUG").is_some() {
+                eprintln!(
+                    "  try {attempt_no} failed for {flag}: map {} at {:?} party {:?} bag potions l{:?} x{:?} money {}",
+                    self.world.current_map,
+                    self.world.player,
+                    self.world
+                        .party
+                        .iter()
+                        .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+                        .collect::<Vec<_>>(),
+                    self.world.bag.get(&"potion_l".into()),
+                    self.world.bag.get(&"potion_x".into()),
+                    self.world.money,
+                );
+            }
         }
         assert!(
             self.world.vars.flags.contains(flag),
@@ -353,7 +433,16 @@ impl Driver {
     /// reaches `level`; recovers to (x, y) after whiteouts via the
     /// caller-provided retrek closure.
     pub fn grind_until(&mut self, level: u8, mut retrek: impl FnMut(&mut Driver)) {
-        for _ in 0..4000 {
+        for iteration in 0..12000 {
+            if iteration % 2000 == 1999 && std::env::var_os("DRIVER_DEBUG").is_some() {
+                eprintln!(
+                    "  grind[{iteration}] target {level}: lead L{} map {} at {:?} clock {}",
+                    self.world.party.first().map(|p| p.level).unwrap_or(0),
+                    self.world.current_map,
+                    self.world.player,
+                    self.world.clock_ticks,
+                );
+            }
             if self.world.party.first().map(|p| p.level).unwrap_or(0) >= level {
                 return;
             }
@@ -378,4 +467,925 @@ impl Driver {
         }
         panic!("grind_until({level}) did not finish");
     }
+}
+
+pub const ACT_SEED: u64 = 0x00AC_71AC;
+
+pub fn content_root() -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../content")
+}
+
+#[expect(clippy::too_many_lines, reason = "one continuous scripted run")]
+pub fn run_act1() -> Driver {
+    let world = game::world::load_game_world(&crate::common::content_root(), ACT_SEED)
+        .expect("game world loads");
+    let mut driver = Driver::new(world);
+
+    // ---- Badge 1 (the P3 route, adaptive) --------------------------------
+    driver.walk(&[(Left, 2)]); // (6,4)
+    driver.go_y(9); // lab door → pausa_lab (4,1)
+    assert_eq!(driver.world.current_map.as_str(), "pausa_lab");
+    driver.go_y(3); // intro fires at (4,2)
+    driver.interact(); // starter choice → fanfyre
+    assert!(driver.has_flag("starter.fanfyre"));
+    driver.go_y(0); // exit → pausa (6,8)
+    driver.go_x(9);
+    driver.go_y(13); // → route_1 (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "route_1");
+    driver.go_y(13); // tuner + busker engage en route
+    driver.walk(&[(Up, 1), (Left, 2)]); // (4,14) patch field
+    // Catch a teammate, then grind to 11 for Hall 1.
+    for _ in 0..400 {
+        if driver.world.party.len() >= 2 {
+            break;
+        }
+        if driver.world.battle.is_some() {
+            if driver
+                .world
+                .bag
+                .get(&"fermata".into())
+                .copied()
+                .unwrap_or(0)
+                > 0
+            {
+                driver.input(Input::Battle(game::session::BattleCmd::Bell));
+            } else {
+                driver.drain();
+            }
+            continue;
+        }
+        if driver.world.dialogue.is_some()
+            || !driver.world.pending_learn_queue.is_empty()
+            || !driver.world.pending_evolutions.is_empty()
+        {
+            driver.drain();
+            continue;
+        }
+        let dir = if driver.world.player.1.is_multiple_of(2) {
+            Up
+        } else {
+            Down
+        };
+        driver.face(dir);
+        driver.input(Input::Step(dir));
+    }
+    assert!(driver.world.party.len() >= 2, "teammate attuned");
+    driver.grind_until(13, |d| {
+        if d.world.current_map.as_str() == "pausa_village" {
+            // whiteout recovery: pausa spawn → route_1 patch field
+            d.go_x(9);
+            d.go_y(13); // gate → route_1 (6,1)
+            d.go_y(14);
+            d.go_x(4);
+        } else if d.world.current_map.as_str() == "route_1"
+            && !((2..=4).contains(&d.world.player.0) && (14..=18).contains(&d.world.player.1))
+        {
+            let x = d.world.player.0;
+            if (5..=8).contains(&x) {
+                d.go_y(14);
+                d.go_x(4);
+            }
+        }
+    });
+    driver.go_x(6);
+    driver.go_y(28); // percussionist, choirboy, rival1 en route
+    assert!(driver.has_flag("story.rival1.defeated"));
+    driver.go_y(29); // → prelude (10,1)
+    driver.go_y(7); // rest stop heals
+    driver.go_x(16);
+    driver.go_y(8); // hall_1 (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "hall_1");
+    driver.go_y(5);
+    driver.walk(&[(Left, 1), (Down, 1)]); // aide sight
+    driver.walk(&[(Up, 1), (Right, 4), (Up, 3)]); // (9,8)
+    driver.walk(&[(Left, 2), (Down, 1)]); // senior sight
+    // Duck out to the rest stop before the Maestro — the grind and the
+    // hall pair leave nothing in the tank.
+    driver.walk(&[(Up, 1)]); // back to (7,8)
+    driver.go_x(9);
+    driver.go_y(5);
+    driver.go_x(6);
+    driver.go_y(0); // hall door → prelude (16,7)
+    driver.go_x(10); // rest stop heals at (10,7)
+    driver.go_x(16);
+    driver.go_y(8); // → hall_1 (6,1)
+    driver.go_y(5);
+    driver.go_x(9); // aide/senior already beaten — clean S-path
+    driver.go_y(8);
+    driver.go_x(2);
+    driver.go_y(10);
+    driver.go_x(6);
+    driver.go_y(12);
+    driver.interact(); // Dario → badge.1
+    assert!(
+        driver.has_flag("badge.1"),
+        "badge1: map {} at {:?} aide {} senior {} party {:?}",
+        driver.world.current_map,
+        driver.world.player,
+        driver.has_flag("trainer.hall_aide.defeated"),
+        driver.has_flag("trainer.hall_senior.defeated"),
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>(),
+    );
+
+    // ---- Beat 1: the theft, back at the lab ------------------------------
+    // Reverse the hall_1 S-path: (6,12) → left corridor → bottom door.
+    driver.walk(&[(Down, 2)]);
+    driver.go_x(2);
+    driver.go_y(8);
+    driver.go_x(9);
+    driver.go_y(5);
+    driver.go_x(6);
+    driver.go_y(0); // hall → prelude (16,7)
+    driver.go_x(10);
+    driver.go_y(0); // → route_1 (6,28)
+    driver.go_y(0); // walk south the whole route → pausa (9,12)
+    driver.go_y(8); // descend beside the lab block
+    driver.go_x(6);
+    driver.go_y(9); // lab door from below → lab (4,1)
+    assert_eq!(driver.world.current_map.as_str(), "pausa_lab");
+    driver.walk(&[(Up, 1), (Left, 1), (Up, 1)]); // (3,2): theft trigger
+    driver.drain();
+    assert!(driver.has_flag("story.theft.seen"), "theft scene fired");
+    driver.go_x(4); // the lab exit door sits on x4
+    driver.go_y(0); // back out to pausa (6,8)
+
+    // ---- Route 2 → Arbor Vale (beat 3 shipment, hall 2) -------------------
+    driver.go_y(6);
+    driver.go_x(0); // west gate → route_2 (1,6)
+    assert_eq!(driver.world.current_map.as_str(), "route_2");
+
+    // Grind to 17 on the west field FIRST — the shipment grunts and
+    // Mirelle's T3 both expect a real party.
+    driver.go_x(6);
+    driver.go_y(3); // into the patch field (4..8 × 2..4)
+    driver.grind_until(17, |d| {
+        if d.world.current_map.as_str() == "prelude_town" {
+            // whiteout → prelude rest point: walk back west.
+            d.go_x(10);
+            d.go_y(0); // → route_1 (6,28)
+            d.go_y(0); // south → pausa (9,12)
+            d.go_y(6);
+            d.go_x(0); // west gate → route_2 (1,6)
+            d.go_x(6);
+            d.go_y(3);
+        } else if d.world.current_map.as_str() == "pausa_village" {
+            d.go_y(6);
+            d.go_x(0);
+            d.go_x(6);
+            d.go_y(3);
+        } else if d.world.current_map.as_str() == "route_2"
+            && !((4..=8).contains(&d.world.player.0) && (2..=4).contains(&d.world.player.1))
+        {
+            d.go_y(6);
+            d.go_x(6);
+            d.go_y(3);
+        }
+    });
+    // The grind may end on a whiteout — normalize back to route_2.
+    for _ in 0..3 {
+        match driver.world.current_map.as_str() {
+            "prelude_town" => {
+                driver.go_x(10);
+                driver.go_y(0);
+                driver.go_y(0);
+                driver.go_y(6);
+                driver.go_x(0);
+            }
+            "pausa_village" => {
+                driver.go_y(6);
+                driver.go_x(0);
+            }
+            _ => break,
+        }
+    }
+    assert_eq!(driver.world.current_map.as_str(), "route_2");
+    // Rest at Mom's doorstep before the gauntlet — the grind drains PP
+    // and Last-Resort recoil loses winnable fights.
+    driver.go_y(6);
+    driver.go_x(1);
+    driver.go_x(0); // hop the west gate back → pausa (1,6)
+    if driver.world.current_map.as_str() == "pausa_village" {
+        driver.go_x(13);
+        driver.go_y(8); // home_rest doorstep heals party + PP
+        driver.go_y(6);
+        driver.go_x(0); // back west → route_2 (1,6)
+    }
+    assert_eq!(driver.world.current_map.as_str(), "route_2");
+    driver.go_y(7);
+    driver.go_x(10); // pass behind the gardener on y7
+    driver.go_y(6); // step into his sight line at (10,6)
+    driver.drain();
+    assert!(
+        driver.has_flag("trainer.rt2_gardener.defeated"),
+        "gardener: map {} at {:?} party {:?}",
+        driver.world.current_map,
+        driver.world.player,
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>(),
+    );
+    driver.go_x(12); // TACET shipment row (y5..8)
+    driver.drain();
+    assert!(
+        driver.has_flag("story.tacet.shipment"),
+        "shipment: map {} at {:?}, party {:?}, fought {}",
+        driver.world.current_map,
+        driver.world.player,
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>(),
+        driver.has_flag("trainer.tacet_grunt_r2.defeated"),
+    );
+    driver.go_y(7);
+    driver.go_x(16);
+    driver.go_x(19); // courier sight (17..19,7)
+    driver.drain();
+    driver.go_y(6); // around the courier's tile
+    driver.go_x(29); // east door → arbor_vale (1,7)
+    assert_eq!(driver.world.current_map.as_str(), "arbor_vale");
+
+    driver.go_x(10);
+    driver.go_y(9); // rest stop doorstep heals
+    driver.go_x(17);
+    driver.go_y(10); // hall_2 door → (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "hall_2");
+    driver.go_y(4);
+    driver.walk(&[(Left, 1)]); // (5,4): pruner sight (4,4),(5,4)
+    assert!(driver.has_flag("trainer.hall2_pruner.defeated"));
+    driver.go_x(7);
+    driver.go_y(7); // (7,7): arranger sight
+    assert!(driver.has_flag("trainer.hall2_arranger.defeated"));
+    // Rest in town before the Maestro (attrition discipline).
+    driver.go_y(1);
+    driver.go_x(6);
+    driver.go_y(0); // → arbor (17,9)
+    driver.go_x(10); // rest doorstep heals
+    driver.go_x(17);
+    driver.go_y(10); // → hall_2 (6,1)
+    driver.go_y(5);
+    driver.go_x(7);
+    driver.go_y(8);
+    driver.go_x(3);
+    driver.go_y(10);
+    driver.go_x(6);
+    driver.go_y(12);
+    driver.interact(); // Mirelle (T3)
+    assert!(
+        driver.has_flag("badge.2"),
+        "Mirelle beaten; party {:?}",
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>()
+    );
+    assert!(driver.has_flag("performance.clearing_chord"));
+
+    // ---- Route 3 (rival 2) → Route 4 (TACET doubles) → Calando ------------
+    // Reverse the hall_2 maze: (6,12) → x3 → y8 → x7 → bottom door.
+    driver.go_x(3);
+    driver.go_y(8);
+    driver.go_x(7);
+    driver.go_y(1);
+    driver.go_x(6);
+    driver.go_y(0); // hall → arbor (17,9)
+    driver.go_x(13); // free lane between rest stop and hall
+    driver.go_y(14);
+    driver.go_x(12);
+    driver.go_y(15); // north gate → route_3 (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "route_3");
+
+    // Train the second slot: bench the lead, grind the partner to 16 on
+    // route_3's west field, then bring the lead back (it returns to the
+    // rear slot — the trained partner now leads).
+    driver.input(Input::BoxDeposit { party_index: 0 });
+    driver.go_y(5);
+    driver.go_x(3); // patch field (2..4 × 4..8)
+    driver.grind_until(16, |d| {
+        if d.world.current_map.as_str() == "arbor_vale" {
+            d.go_x(13);
+            d.go_y(14);
+            d.go_x(12);
+            d.go_y(15); // → route_3
+            d.go_y(5);
+            d.go_x(3);
+        } else if d.world.current_map.as_str() == "route_3"
+            && !((2..=4).contains(&d.world.player.0) && (4..=8).contains(&d.world.player.1))
+        {
+            d.go_x(6);
+            d.go_y(5);
+            d.go_x(3);
+        }
+    });
+    driver.input(Input::BoxWithdraw { box_index: 0 });
+    assert_eq!(driver.world.party.len(), 2);
+    for _ in 0..3 {
+        match driver.world.current_map.as_str() {
+            "arbor_vale" => {
+                driver.go_x(13);
+                driver.go_y(14);
+                driver.go_x(12);
+                driver.go_y(15);
+            }
+            _ => break,
+        }
+    }
+    assert_eq!(driver.world.current_map.as_str(), "route_3");
+    // Flip the order: the L21 lead takes Cade's counter-pair head-on.
+    driver.input(Input::BoxDeposit { party_index: 0 });
+    driver.input(Input::BoxWithdraw {
+        box_index: u32::try_from(driver.world.boxes.len() - 1).unwrap_or(0),
+    });
+
+    // Recovery: from wherever a loss dumped us, rest+restock in Arbor
+    // and stand back on route_3.
+    fn back_to_route3(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "arbor_vale" => {
+                    d.go_x(13);
+                    d.go_y(9);
+                    d.go_x(10); // rest heals
+                    d.open_shop_at(5, 9);
+                    d.buy_potions(3);
+                    d.close_shop();
+                    d.go_y(8);
+                    d.go_x(13);
+                    d.go_y(14);
+                    d.go_x(12);
+                    d.go_y(15); // → route_3
+                }
+                "prelude_town" => {
+                    d.go_x(10);
+                    d.go_y(0);
+                    d.go_y(0);
+                    d.go_y(6);
+                    d.go_x(0); // → route_2 (long way home)
+                    d.go_y(6);
+                    d.go_x(29); // → arbor
+                }
+                "route_3" => {
+                    d.go_x(6);
+                    return;
+                }
+                _ => return,
+            }
+        }
+    }
+
+    driver.until_flag(
+        "trainer.rt3_chorister.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_3" {
+                d.go_x(6);
+                d.go_y(15); // drover (y6) engages en route; stop level
+                if !d.has_flag("trainer.rt3_chorister.defeated") {
+                    // Sight engages once only — re-challenges are direct.
+                    d.go_x(8);
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route3,
+    );
+    driver.until_flag(
+        "story.rival2.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_3" {
+                d.go_x(6);
+                d.go_y(20); // the rival row
+            }
+        },
+        back_to_route3,
+    );
+    back_to_route3(&mut driver);
+    driver.go_y(25); // → route_4 (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "route_4");
+
+    // Route 4's fields run L14–18 — attune a third voice, then train
+    // to 21 before the gauntlet.
+    driver.go_y(6);
+    driver.go_x(10); // patch field (9..11 × 5..9)
+    if driver
+        .world
+        .bag
+        .get(&"fermata".into())
+        .copied()
+        .unwrap_or(0)
+        == 0
+    {
+        // No bells left — detour through the arbor mart (the recovery
+        // path buys them) before hunting the third voice.
+        back_to_route4(&mut driver);
+        driver.go_y(6);
+        driver.go_x(10);
+    }
+    let catch_start_bells: u32 = driver
+        .world
+        .bag
+        .get(&"fermata".into())
+        .copied()
+        .unwrap_or(0);
+    // The hunt survives whiteouts: re-enter the field and keep ringing.
+    'hunt: for _hunt_round in 0..4 {
+        if driver.world.party.len() >= 3 {
+            break;
+        }
+        if driver.world.current_map.as_str() != "route_4" {
+            back_to_route4(&mut driver);
+            if driver.world.current_map.as_str() != "route_4" {
+                break;
+            }
+            driver.go_y(6);
+            driver.go_x(10);
+        }
+        for _ in 0..400 {
+            if driver.world.party.len() >= 3 {
+                break 'hunt;
+            }
+            if driver.world.battle.is_some() {
+                let bells = driver
+                    .world
+                    .bag
+                    .get(&"fermata".into())
+                    .copied()
+                    .unwrap_or(0);
+                let foe_weak = driver.world.battle.as_ref().is_some_and(|session| {
+                    let foe = session.state.sides[1].active_mote();
+                    u32::from(foe.hp) * 3 <= u32::from(foe.max_hp())
+                });
+                if bells > 0 && foe_weak {
+                    driver.input(Input::Battle(game::session::BattleCmd::Bell));
+                } else if bells > 0 {
+                    driver.battle_policy(); // soften it up first
+                } else {
+                    driver.drain();
+                }
+                continue;
+            }
+            if driver.world.dialogue.is_some()
+                || !driver.world.pending_learn_queue.is_empty()
+                || !driver.world.pending_evolutions.is_empty()
+            {
+                driver.drain();
+                continue;
+            }
+            if driver.world.current_map.as_str() != "route_4" {
+                continue 'hunt; // whiteout — recover and re-enter
+            }
+            let dir = if driver.world.player.1.is_multiple_of(2) {
+                Up
+            } else {
+                Down
+            };
+            driver.face(dir);
+            driver.input(Input::Step(dir));
+        }
+    }
+    if std::env::var_os("DRIVER_DEBUG").is_some() {
+        eprintln!(
+            "catch exit: party {} bells {}→{} map {} at {:?} money {}",
+            driver.world.party.len(),
+            catch_start_bells,
+            driver
+                .world
+                .bag
+                .get(&"fermata".into())
+                .copied()
+                .unwrap_or(0),
+            driver.world.current_map,
+            driver.world.player,
+            driver.world.money,
+        );
+    }
+    driver.grind_until(23, |d| {
+        if d.world.current_map.as_str() == "arbor_vale" {
+            d.go_x(13);
+            d.go_y(14);
+            d.go_x(12);
+            d.go_y(15); // → route_3
+            d.go_x(6);
+            d.go_y(25); // → route_4
+            d.go_y(6);
+            d.go_x(10);
+        } else if d.world.current_map.as_str() == "route_4"
+            && !((9..=11).contains(&d.world.player.0) && (5..=9).contains(&d.world.player.1))
+        {
+            d.go_x(6);
+            d.go_y(6);
+            d.go_x(10);
+        }
+    });
+    // Recovery for the route_4 gauntlet: rest+restock in Arbor, walk
+    // back north (rival/chorister rows are inert once beaten).
+    fn back_to_route4(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "arbor_vale" => {
+                    d.go_x(13);
+                    d.go_y(9);
+                    d.go_x(10); // rest heals
+                    d.open_shop_at(5, 9);
+                    d.buy_potions(4);
+                    if d.world.bag.get(&"fermata".into()).copied().unwrap_or(0) < 2 {
+                        d.buy("fermata", 3); // the catch detour needs bells
+                    }
+                    d.close_shop();
+                    d.go_y(8);
+                    d.go_x(13);
+                    d.go_y(14);
+                    d.go_x(12);
+                    d.go_y(15); // → route_3
+                    d.go_x(6);
+                    d.go_y(25); // → route_4
+                }
+                "prelude_town" => {
+                    d.go_x(10);
+                    d.go_y(0);
+                    d.go_y(0);
+                    d.go_y(6);
+                    d.go_x(0);
+                    d.go_y(6);
+                    d.go_x(29); // → arbor
+                }
+                "route_3" => {
+                    d.go_x(6);
+                    d.go_y(25);
+                }
+                "route_4" => {
+                    d.go_x(6);
+                    return;
+                }
+                _ => return,
+            }
+        }
+    }
+
+    back_to_route4(&mut driver);
+    assert_eq!(driver.world.current_map.as_str(), "route_4");
+    driver.until_flag(
+        "trainer.rt4_stoker.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(8); // stoker sight (5..7,8)
+                if !d.has_flag("trainer.rt4_stoker.defeated") {
+                    d.go_x(5);
+                    d.face(Left);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route4,
+    );
+    driver.until_flag(
+        "trainer.rt4_signaler.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(12); // signaler sight (6..8,12)
+                if !d.has_flag("trainer.rt4_signaler.defeated") {
+                    d.go_x(8);
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_route4,
+    );
+    driver.until_flag(
+        "story.tacet.yard",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "route_4" {
+                d.go_x(6);
+                d.go_y(18); // the yard row refires until won
+                d.drain();
+            }
+        },
+        back_to_route4,
+    );
+    driver.go_y(21); // → port_calando (11,1)
+    assert_eq!(driver.world.current_map.as_str(), "port_calando");
+
+    // Rest, keyshift scene, stock up, hall 3.
+    driver.go_y(11);
+    driver.go_x(9); // rest doorstep
+    driver.go_x(4); // mart doorstep → shop opens via dialogue
+    driver.drain();
+    // Buy potions for Bram (stock is sorted; find potion_m adaptively).
+    driver.input(Input::Step(Down));
+    driver.input(Input::Step(Down));
+    driver.input(Input::Step(Up));
+    driver.input(Input::Step(Up));
+    while driver.world.dialogue.is_some() {
+        driver.input(Input::Interact);
+    }
+    if driver.world.shop.is_some() {
+        let stock: Vec<String> = driver
+            .world
+            .shop
+            .as_ref()
+            .map(|(items, _)| items.iter().map(ToString::to_string).collect())
+            .unwrap_or_default();
+        if let Some(target) = stock.iter().position(|s| s == "potion_m") {
+            loop {
+                let cursor = driver.world.shop.as_ref().map(|(_, c)| *c).unwrap_or(0);
+                match cursor.cmp(&target) {
+                    std::cmp::Ordering::Less => driver.input(Input::ShopCursor(1)),
+                    std::cmp::Ordering::Greater => driver.input(Input::ShopCursor(-1)),
+                    std::cmp::Ordering::Equal => break,
+                };
+            }
+            for _ in 0..4 {
+                driver.input(Input::ShopBuy);
+            }
+        }
+        driver.input(Input::ShopClose);
+    }
+    driver.go_y(6);
+    driver.go_x(19);
+    driver.face(Right);
+    driver.interact(); // keyshift collector at (20,6)
+    assert!(driver.has_flag("story.keyshift.seen"));
+
+    // One more training pass on route_4's field before the doubles
+    // hall — Stelt's maridian tanks underleveled pairs all day.
+    driver.go_x(11);
+    driver.go_y(0); // south doors → route_4 (6,20)
+    if driver.world.current_map.as_str() == "route_4" {
+        driver.go_y(7);
+        driver.go_x(10);
+        // The doubles hall judges the PAIR: bench the lead and train
+        // the partner on this field first.
+        driver.input(Input::BoxDeposit { party_index: 0 });
+        driver.grind_until(25, |d| {
+            if d.world.current_map.as_str() == "port_calando" {
+                d.go_y(11);
+                d.go_x(11);
+                d.go_y(0);
+                d.go_y(7);
+                d.go_x(10);
+            } else if d.world.current_map.as_str() == "arbor_vale" {
+                d.go_x(13);
+                d.go_y(14);
+                d.go_x(12);
+                d.go_y(15);
+                d.go_x(6);
+                d.go_y(25);
+                d.go_y(7);
+                d.go_x(10);
+            } else if d.world.current_map.as_str() == "route_4"
+                && !((9..=11).contains(&d.world.player.0) && (5..=9).contains(&d.world.player.1))
+            {
+                d.go_x(6);
+                d.go_y(7);
+                d.go_x(10);
+            }
+        });
+        if driver.world.party.len() > 1 {
+            driver.input(Input::BoxDeposit { party_index: 1 }); // bench the third
+        }
+        let boxes = u32::try_from(driver.world.boxes.len()).unwrap_or(1);
+        driver.input(Input::BoxWithdraw {
+            box_index: boxes.saturating_sub(2), // the old lead
+        });
+        let boxes = u32::try_from(driver.world.boxes.len()).unwrap_or(1);
+        driver.input(Input::BoxWithdraw {
+            box_index: boxes.saturating_sub(1), // the third voice
+        });
+        driver.grind_until(29, |d| {
+            if d.world.current_map.as_str() == "port_calando" {
+                d.go_y(11);
+                d.go_x(11);
+                d.go_y(0); // → route_4
+                d.go_y(7);
+                d.go_x(10);
+            } else if d.world.current_map.as_str() == "arbor_vale" {
+                d.go_x(13);
+                d.go_y(14);
+                d.go_x(12);
+                d.go_y(15);
+                d.go_x(6);
+                d.go_y(25);
+                d.go_y(7);
+                d.go_x(10);
+            } else if d.world.current_map.as_str() == "route_4"
+                && !((9..=11).contains(&d.world.player.0) && (5..=9).contains(&d.world.player.1))
+            {
+                d.go_x(6);
+                d.go_y(7);
+                d.go_x(10);
+            }
+        });
+        if driver.world.current_map.as_str() == "route_4" {
+            driver.go_x(6);
+            driver.go_y(21); // back → calando (11,1)
+        }
+    }
+    for _ in 0..3 {
+        match driver.world.current_map.as_str() {
+            "arbor_vale" => {
+                driver.go_x(13);
+                driver.go_y(14);
+                driver.go_x(12);
+                driver.go_y(15);
+                driver.go_x(6);
+                driver.go_y(25);
+                driver.go_y(21);
+            }
+            "route_4" => {
+                driver.go_x(6);
+                driver.go_y(21);
+            }
+            _ => break,
+        }
+    }
+    assert_eq!(driver.world.current_map.as_str(), "port_calando");
+    driver.go_y(11);
+    driver.go_x(9); // rest + bank the grind survivor's wallet
+    driver.open_shop_at(4, 11);
+    if std::env::var_os("DRIVER_DEBUG").is_some() {
+        eprintln!(
+            "  calando bank: map {} at {:?} shop {} money {}",
+            driver.world.current_map,
+            driver.world.player,
+            driver.world.shop.is_some(),
+            driver.world.money,
+        );
+    }
+    driver.buy_potions(4);
+    driver.close_shop();
+    driver.go_y(11);
+    driver.go_x(19);
+    driver.go_y(12); // hall_3 door → (6,1)
+    assert_eq!(driver.world.current_map.as_str(), "hall_3");
+
+    // Hall 3: the doubles gauntlet, retry-structured.
+    /// From anywhere inside hall_3, return to the (6,5) staging tile
+    /// (walls at y7 x2..8 and y11 x5..11 dictate the channels).
+    fn hall3_stage(d: &mut Driver) {
+        if d.world.current_map.as_str() != "hall_3" {
+            return;
+        }
+        if d.world.player.1 > 10 {
+            d.go_x(3);
+            d.go_y(10);
+        }
+        if d.world.player.1 > 6 {
+            d.go_x(9);
+            d.go_y(5);
+        }
+        d.go_x(6);
+        d.go_y(5);
+    }
+
+    fn back_to_hall3(d: &mut Driver) {
+        for _ in 0..4 {
+            match d.world.current_map.as_str() {
+                "port_calando" => {
+                    d.go_y(11);
+                    d.go_x(9); // rest doorstep heals
+                    d.open_shop_at(4, 11);
+                    d.buy_potions(4);
+                    d.close_shop();
+                    d.go_y(11);
+                    d.go_x(19);
+                    d.go_y(12); // → hall_3 (6,1)
+                }
+                "hall_3" => return,
+                _ => return,
+            }
+        }
+    }
+
+    driver.until_flag(
+        "trainer.hall3_duo_a.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(5); // duo_a sight (4,5),(5,5)
+                if !d.has_flag("trainer.hall3_duo_a.defeated") {
+                    d.go_x(4);
+                    d.face(Left);
+                    d.interact();
+                }
+            }
+        },
+        back_to_hall3,
+    );
+    back_to_hall3(&mut driver);
+    driver.until_flag(
+        "trainer.hall3_duo_b.defeated",
+        4,
+        |d| {
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(9);
+                d.go_y(9); // duo_b sight (8,9),(9,9)
+                if !d.has_flag("trainer.hall3_duo_b.defeated") {
+                    d.face(Right);
+                    d.interact();
+                }
+            }
+        },
+        back_to_hall3,
+    );
+    back_to_hall3(&mut driver);
+    driver.until_flag(
+        "badge.3",
+        5,
+        |d| {
+            // Spend the duo payouts before the maestro: if the bag is
+            // dry and the wallet isn't, duck out to the mart first.
+            let dry = ["potion_x", "potion_l", "potion_m", "potion_s"]
+                .iter()
+                .all(|t| d.world.bag.get(&(*t).into()).copied().unwrap_or(0) == 0);
+            if d.world.current_map.as_str() == "hall_3" && dry && d.world.money >= 200 {
+                hall3_stage(d);
+                if d.world.current_map.as_str() == "hall_3" {
+                    d.go_y(0); // → calando (19,11)
+                }
+            }
+            if d.world.current_map.as_str() == "port_calando" {
+                d.go_y(11);
+                d.go_x(9); // rest
+                d.open_shop_at(4, 11);
+                d.buy_potions(4);
+                d.close_shop();
+                d.go_y(11);
+                d.go_x(19);
+                d.go_y(12); // → hall_3
+            }
+            if d.world.current_map.as_str() == "hall_3" {
+                hall3_stage(d);
+                d.go_x(9);
+                d.go_y(10);
+                d.go_x(3);
+                d.go_y(12);
+                d.go_x(7);
+                d.go_y(14);
+                if std::env::var_os("DRIVER_DEBUG").is_some() {
+                    eprintln!(
+                        "  stelt attempt: party {:?} potions m{:?} s{:?} money {}",
+                        d.world
+                            .party
+                            .iter()
+                            .map(|p| format!(
+                                "{} L{} hp{:?} pp{:?}",
+                                p.species,
+                                p.level,
+                                p.hp,
+                                p.moves.iter().map(|m| m.pp).collect::<Vec<_>>()
+                            ))
+                            .collect::<Vec<_>>(),
+                        d.world.bag.get(&"potion_m".into()),
+                        d.world.bag.get(&"potion_s".into()),
+                        d.world.money,
+                    );
+                }
+                d.interact(); // Maestro Stelt (doubles, T3)
+            }
+        },
+        back_to_hall3,
+    );
+
+    // ---- Beat 5: Lull, on the way out (reverse the gauntlet maze) ---------
+    hall3_stage(&mut driver);
+    driver.go_y(2); // the lull_scene trigger
+    driver.drain();
+    assert!(
+        driver.has_flag("story.lull.done"),
+        "lull: map {} at {:?} fought {} party {:?}",
+        driver.world.current_map,
+        driver.world.player,
+        driver.has_flag("story.lull.defeated"),
+        driver
+            .world
+            .party
+            .iter()
+            .map(|p| format!("{} L{} hp{:?}", p.species, p.level, p.hp))
+            .collect::<Vec<_>>(),
+    );
+
+    driver.input(Input::Save);
+    driver
 }

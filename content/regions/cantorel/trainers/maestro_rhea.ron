@@ -8,6 +8,6 @@ Trainer(
         (species: "dynamaestro", level: 31, held_item: Some("oran_chime")),
     ],
     defeat_flag: "hall.4.cleared",
-    reward_items: [("tm01", 1)],
+    reward_items: [("tm01", 1), ("exp_share", 1)],
     intro_key: "hall4.rhea.intro", defeat_key: "hall4.rhea.defeat",
 )

@@ -4,7 +4,7 @@ Trainer(
     ai_tier: 3, payout_base: 100,
     party: [
         (species: "fogato", level: 33),
-        (species: "lullaby", level: 33),
+        (species: "vesperbat", level: 33),
         (species: "requiemoth", level: 36, held_item: Some("oran_chime")),
     ],
     defeat_flag: "hall.5.cleared",

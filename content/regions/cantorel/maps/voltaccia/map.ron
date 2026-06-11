@@ -98,8 +98,8 @@ MapDef(
         (at: (4, 9), kind: Script(path: "mart.script.ron")),
         (at: (9, 9), kind: Script(path: "rest_stop.script.ron")),
         (at: (16, 10), kind: Warp(map: "hall_4", to: (6, 1), facing: Up)),
-        (at: (11, 15), kind: Warp(map: "route_5b", to: (6, 1), facing: Up)),
-        (at: (12, 15), kind: Warp(map: "route_5b", to: (7, 1), facing: Up)),
+        (at: (11, 15), kind: Warp(map: "route_5b", to: (1, 6), facing: Right)),
+        (at: (12, 15), kind: Warp(map: "route_5b", to: (1, 7), facing: Right)),
     ],
     npcs: [
         (id: "echo_keeper_4", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_4.script.ron"), behavior: Static, sight_range: 0),

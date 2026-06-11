@@ -110,7 +110,7 @@ MapDef(
     ],
     npcs: [
         (id: "hall4_winder", at: (3, 4), facing: Right, sprite: "npc.trainer", script: Some("hall4_winder.script.ron"), behavior: Static, sight_range: 2),
-        (id: "hall4_coiler", at: (8, 8), facing: Left, sprite: "npc.trainer", script: Some("hall4_coiler.script.ron"), behavior: Static, sight_range: 2),
+        (id: "hall4_coiler", at: (7, 8), facing: Right, sprite: "npc.trainer", script: Some("hall4_coiler.script.ron"), behavior: Static, sight_range: 2),
         (id: "rhea", at: (6, 15), facing: Down, sprite: "npc.dario", script: Some("rhea.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_calando"),
