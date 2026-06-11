@@ -53,6 +53,13 @@ pub enum Input {
     Shift(Option<u8>),
     /// Fly to a visited town (Skybridge Aria, badge 6 + performer.sky).
     FlyTo(MapId),
+    /// Repertoire moves (pure — the Box screen routes through these).
+    BoxDeposit {
+        party_index: u8,
+    },
+    BoxWithdraw {
+        box_index: u32,
+    },
 }
 
 /// What happened during one input application; the Bevy layer turns
@@ -368,6 +375,24 @@ impl WorldState {
             Input::Save => events.push(WorldEvent::Saved),
             Input::UseItem { item, target, slot } => {
                 self.use_item(&item, target, slot, &mut events);
+            }
+            Input::BoxDeposit { party_index } => {
+                let index = usize::from(party_index);
+                let conscious = self.party.iter().filter(|m| m.hp != Some(0)).count();
+                if index < self.party.len()
+                    && self.party.len() > 1
+                    && (self.party[index].hp == Some(0) || conscious > 1)
+                {
+                    let member = self.party.remove(index);
+                    self.boxes.push(member);
+                }
+            }
+            Input::BoxWithdraw { box_index } => {
+                let index = usize::try_from(box_index).unwrap_or(usize::MAX);
+                if index < self.boxes.len() && self.party.len() < 6 {
+                    let member = self.boxes.remove(index);
+                    self.party.push(member);
+                }
             }
             Input::FlyTo(destination) => {
                 self.fly_to(&destination, &mut events);
@@ -1538,6 +1563,18 @@ impl WorldState {
                 self.mute_steps = 200;
                 consumed = true;
                 message = "ui.item.mute_charm".into();
+            }
+            data::ItemKind::Held => {
+                // Equip: bag → held slot; any current held item returns
+                // to the bag (era swap).
+                if let Some(member) = self.party.get_mut(target_index) {
+                    let previous = member.held_item.replace(item.clone());
+                    consumed = true;
+                    if let Some(previous) = previous {
+                        *self.bag.entry(previous).or_insert(0) += 1;
+                    }
+                    message = "ui.item.held".into();
+                }
             }
             data::ItemKind::Key => {
                 // Duet Stone & friends: item-method evolutions (doc 02 §9).

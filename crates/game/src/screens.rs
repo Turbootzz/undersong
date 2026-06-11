@@ -234,20 +234,16 @@ fn screens_input(
                 state.cursor -= 1;
             }
             if confirm && total > 0 {
+                // All mutations route through pure inputs (replayable).
                 if state.cursor < party_len {
-                    // Deposit (never the last conscious member).
-                    let conscious = world.0.party.iter().filter(|m| m.hp != Some(0)).count();
-                    let target = &world.0.party[state.cursor];
-                    if world.0.party.len() > 1 && (target.hp == Some(0) || conscious > 1) {
-                        let member = world.0.party.remove(state.cursor);
-                        world.0.boxes.push(member);
-                        state.cursor = 0;
-                    }
-                } else if let Some(&box_index) = residents.get(state.cursor - party_len)
-                    && world.0.party.len() < 6
-                {
-                    let member = world.0.boxes.remove(box_index);
-                    world.0.party.push(member);
+                    world.0.apply(WorldInput::BoxDeposit {
+                        party_index: u8::try_from(state.cursor).unwrap_or(0),
+                    });
+                    state.cursor = 0;
+                } else if let Some(&box_index) = residents.get(state.cursor - party_len) {
+                    world.0.apply(WorldInput::BoxWithdraw {
+                        box_index: u32::try_from(box_index).unwrap_or(u32::MAX),
+                    });
                     state.cursor = 0;
                 }
             }

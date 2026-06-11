@@ -263,6 +263,15 @@ fn expected_damage_at(
     if spec.power == 0 || matches!(spec.category, MoveCategory::Status) {
         return 0;
     }
+    // Ability immunities blank the move (doc 02 §10): the AI must not
+    // spam into damper/floating walls (turn-limit-draw pathology).
+    let defender_ability = defender_side.mote_at(target).ability;
+    if (defender_ability == crate::abilities::Ability::Damper && spec.flags.sound)
+        || (defender_ability == crate::abilities::Ability::Floating
+            && spec.r#type == undersong_core::types::Type::Stone)
+    {
+        return 0;
+    }
     let context = DamageContext {
         attacker: attacker_side.mote_at(position),
         defender: defender_side.mote_at(target),

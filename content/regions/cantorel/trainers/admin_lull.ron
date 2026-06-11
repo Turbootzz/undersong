@@ -3,8 +3,8 @@ Trainer(
     id: "admin_lull", class: "TacetAdmin", name_key: "npc.lull",
     ai_tier: 2, payout_base: 50,
     party: [
-        (species: "lullaby", level: 21),
-        (species: "requiemoth", level: 22),
+        (species: "lullaby", level: 17),
+        (species: "requiemoth", level: 18),
     ],
     defeat_flag: "story.lull.defeated",
     intro_key: "lull.1", defeat_key: "lull.3",

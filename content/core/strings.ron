@@ -60,4 +60,7 @@
     "ui.perform.skybridge_aria": "Skybridge Aria!",
     "ui.perform.tunneling_bass": "Tunneling Bass! The rock crumbles.",
     "ui.reject.run_trainer": "No slipping out of a scored performance!",
+    "ui.item.held": "It holds the item close.",
+    "ui.item.heal": "Its voice steadies.",
+    "ui.item.status_heal": "The dissonance clears.",
 }

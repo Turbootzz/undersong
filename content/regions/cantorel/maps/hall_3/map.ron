@@ -105,7 +105,7 @@ MapDef(
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ],
     triggers: [
-        (at: (6, 2), kind: Script(path: "lull_scene.script.ron"), once_flag: Some("story.lull.met")),
+        (at: (6, 2), kind: Script(path: "lull_scene.script.ron")),
         (at: (6, 0), kind: Warp(map: "port_calando", to: (19, 11), facing: Down)),
     ],
     npcs: [

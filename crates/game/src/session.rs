@@ -419,7 +419,20 @@ impl BattleSession {
         heal: Option<u16>,
         rng: &mut BattleRng,
     ) -> Vec<battle::BattleEvent> {
-        let position = u8::from(self.pending_declaration.is_some());
+        // Declare for ALIVE positions only — after a faint, the survivor
+        // must still act (the engine treats missing declarations as a
+        // pass, which read as a soft-lock from the player's seat).
+        let alive: Vec<u8> = (0..self.state.sides[0].positions.len() as u8)
+            .filter(|&p| {
+                let index = self.state.sides[0].positions[usize::from(p)].party_index;
+                !self.state.sides[0].party[usize::from(index)].is_fainted()
+            })
+            .collect();
+        let position = if self.pending_declaration.is_some() {
+            alive.get(1).copied().unwrap_or_else(|| alive[0])
+        } else {
+            alive.first().copied().unwrap_or(0)
+        };
         let (action, target) = match command {
             BattleCmd::Move { slot } => (Action::Move { slot }, 0),
             BattleCmd::MoveAt { slot, target } => (Action::Move { slot }, target),
@@ -443,12 +456,7 @@ impl BattleSession {
             action,
             target_position: target,
         };
-        let player_alive_positions = self.state.sides[0]
-            .positions
-            .iter()
-            .filter(|p| !self.state.sides[0].party[usize::from(p.party_index)].is_fainted())
-            .count();
-        if position == 0 && player_alive_positions > 1 {
+        if self.pending_declaration.is_none() && alive.len() > 1 {
             self.pending_declaration = Some(declaration);
             return Vec::new();
         }

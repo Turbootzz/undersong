@@ -1,11 +1,13 @@
-// Beat 5: Lull. She doesn't fight to win; she fights to talk.
+// Beat 5: Lull. She doesn't fight to win; she fights to talk — the
+// scene counts however the match ends (her questions stick anyway).
 [
+    If(flag: "story.lull.done", then: [End], else: []),
     If(flag: "badge.3", then: [], else: [End]),
     Say(who: "lull", key: "lull.1"),
     Say(who: "lull", key: "lull.2"),
+    SetFlag(flag: "story.lull.done"),
     StartBattle(trainer: "admin_lull"),
     Say(who: "lull", key: "lull.3"),
     Say(who: "lull", key: "lull.4"),
-    SetFlag(flag: "story.lull.done"),
     End,
 ]
