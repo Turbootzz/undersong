@@ -278,13 +278,22 @@ pub fn render_sfx(out_dir: &Path) -> Result<()> {
         wave
     };
     std::fs::create_dir_all(out_dir).with_context(|| format!("creating {}", out_dir.display()))?;
-    let cues: [(&str, &[(u8, f64)]); 6] = [
+    let cues: [(&str, &[(u8, f64)]); 13] = [
         ("cursor", &[(76, 0.05)]),
         ("confirm", &[(72, 0.06), (79, 0.10)]),
         ("cancel", &[(67, 0.06), (60, 0.10)]),
         ("buy", &[(72, 0.05), (76, 0.05), (79, 0.12)]),
         ("heal", &[(64, 0.12), (67, 0.12), (72, 0.25)]),
         ("badge", &[(60, 0.10), (64, 0.10), (67, 0.10), (72, 0.35)]),
+        // P17 battle theater (doc 06): capture, faint, typewriter.
+        ("bell", &[(88, 0.20), (95, 0.35)]),
+        ("wobble", &[(55, 0.14)]),
+        ("settle", &[(84, 0.07), (88, 0.07), (91, 0.22)]),
+        ("breakout", &[(70, 0.06), (58, 0.16)]),
+        ("faint", &[(48, 0.10), (41, 0.28)]),
+        ("blip", &[(81, 0.025)]),
+        // P18 "spotted!" — generated now so the asset exists.
+        ("alert", &[(76, 0.07), (83, 0.12)]),
     ];
     for (name, notes) in cues {
         let wave = cue(notes);

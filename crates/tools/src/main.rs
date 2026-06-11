@@ -8,6 +8,7 @@
 
 mod asset_tests;
 mod cries;
+mod effects;
 mod heroes;
 mod importmap;
 mod melody;
@@ -210,6 +211,7 @@ fn run() -> Result<bool> {
             let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
             let chars = sprites::render_characters(&out.join("sprites/chars"))?;
             sprites::render_platform(&out.join("sprites/battle"))?;
+            let fx = effects::render_effects(&out.join("sprites/fx"))?;
             heroes::render_heroes(&out.join("sprites/chars"))?;
             let mut creatures = 0;
             let regions_root = content.join("regions");
@@ -230,7 +232,7 @@ fn run() -> Result<bool> {
             }
             let stars = stars::render_stars(&out.join("sprites/monsters"))?;
             println!(
-                "sprites: {tiles} tiles, {chars} character frames, {creatures} creatures ({stars} hand-authored) → {}",
+                "sprites: {tiles} tiles, {chars} character frames, {fx} fx frames, {creatures} creatures ({stars} hand-authored) → {}",
                 out.display()
             );
             Ok(true)
@@ -281,7 +283,7 @@ fn run() -> Result<bool> {
                 music::render_track(id, seed, mood, mode, &tracks)?;
             }
             music::render_sfx(&out.join("sfx"))?;
-            println!("music: 13 tracks + 6 cues → {}", out.display());
+            println!("music: 13 tracks + 13 cues → {}", out.display());
             Ok(true)
         }
         Some("importmap") => {
