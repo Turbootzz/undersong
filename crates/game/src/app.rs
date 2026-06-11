@@ -74,6 +74,7 @@ impl Plugin for UndersongPlugin {
                 Update,
                 (
                     audio_unlock,
+                    pixel_font_swap,
                     music_director,
                     credits_watch,
                     screenshot_key,
@@ -256,11 +257,55 @@ struct FlurrySpeck(u32);
 #[derive(Resource)]
 struct PreloadedArt(#[expect(dead_code, reason = "held to pin the assets")] Vec<Handle<Image>>);
 
+/// The vendored monogram pixel font (P19, CC0 — see
+/// assets/fonts/LICENSE-monogram.txt). It replaces Bevy's default
+/// font asset, so every `TextFont::from_font_size` in the codebase
+/// picks it up with no per-site plumbing. Native swaps synchronously
+/// in boot_load; wasm (no fs) swaps via this handle as soon as the
+/// asset lands — early enough, since wasm boots into the title.
+#[derive(Resource)]
+struct PixelFontHandle(Handle<Font>);
+
+fn pixel_font_swap(
+    handle: Option<Res<PixelFontHandle>>,
+    mut fonts: ResMut<Assets<Font>>,
+    mut done: Local<bool>,
+) {
+    if *done {
+        return;
+    }
+    let Some(handle) = handle else { return };
+    let Some(font) = fonts.get(&handle.0).cloned() else {
+        return;
+    };
+    if fonts.insert(&TextFont::default().font, font).is_err() {
+        bevy::log::warn!("pixel font: default-font swap failed");
+    }
+    *done = true;
+}
+
 fn boot_load(
     mut commands: Commands,
     assets: Res<AssetServer>,
+    mut fonts: ResMut<Assets<Font>>,
     mut next: ResMut<NextState<AppState>>,
 ) {
+    // The pixel font must own the default-font handle BEFORE any text
+    // spawns — glyph atlases are cached per font id, so a later swap
+    // never repaints text that already rendered once.
+    #[cfg(not(target_arch = "wasm32"))]
+    match std::fs::read("assets/fonts/monogram.ttf") {
+        Ok(bytes) => match Font::try_from_bytes(bytes) {
+            Ok(font) => {
+                let _ = fonts.insert(&TextFont::default().font, font);
+            }
+            Err(error) => bevy::log::warn!("pixel font parse failed: {error:?}"),
+        },
+        Err(error) => bevy::log::warn!("pixel font read failed: {error}"),
+    }
+    #[cfg(target_arch = "wasm32")]
+    commands.insert_resource(PixelFontHandle(assets.load("fonts/monogram.ttf")));
+
     let content = std::path::Path::new("content");
     let palette = data::load_palette(content).expect("palette.ron must load");
     let world = load_game_world(content, 0x00D0_5EED).expect("game world must load");
@@ -1255,7 +1300,7 @@ fn dialogue_ui(
                     DialogueUi,
                     NameTagText,
                     Text::new(speaker.clone()),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.parchment)),
                     Node {
                         position_type: PositionType::Absolute,
@@ -1311,7 +1356,7 @@ fn dialogue_ui(
                                 panel.spawn((
                                     DialogueText,
                                     Text::new(line.clone()),
-                                    TextFont::from_font_size(8.0),
+                                    TextFont::from_font_size(9.0),
                                     TextColor(theme.color(&theme.palette.ink)),
                                 ));
                             });
@@ -1432,7 +1477,7 @@ fn shop_ui(
             .with_child((
                 ShopText,
                 Text::new(body),
-                TextFont::from_font_size(8.0),
+                TextFont::from_font_size(9.0),
                 TextColor(theme.color(&theme.palette.ink)),
             ));
     } else if let Ok(mut existing_text) = text.single_mut()
@@ -1518,7 +1563,7 @@ fn menu_open(mut commands: Commands, theme: Res<Theme>, mut cursor: ResMut<MenuC
                     ))
                     .with_child((
                         Text::new(*label),
-                        TextFont::from_font_size(8.0),
+                        TextFont::from_font_size(9.0),
                         TextColor(theme.color(&theme.palette.ink)),
                     ));
             }
@@ -2438,12 +2483,12 @@ the cost, posted later",
             .with_children(|root| {
                 root.spawn((
                     Text::new(title),
-                    TextFont::from_font_size(24.0),
+                    TextFont::from_font_size(27.0),
                     TextColor(theme.color(&theme.palette.gilt)),
                 ));
                 root.spawn((
                     Text::new(lines),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.parchment)),
                 ));
             });
@@ -2496,7 +2541,7 @@ fn toast_ui(
             commands.spawn((
                 ToastUi,
                 Text::new(line),
-                TextFont::from_font_size(8.0),
+                TextFont::from_font_size(9.0),
                 TextColor(theme.color(&theme.palette.parchment)),
                 Node {
                     position_type: PositionType::Absolute,
@@ -2653,12 +2698,12 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
             }
             root.spawn((
                 Text::new("U N D E R S O N G"),
-                TextFont::from_font_size(24.0),
+                TextFont::from_font_size(27.0),
                 TextColor(theme.color(&theme.palette.gilt)),
             ));
             root.spawn((
                 Text::new("the song holds, for now"),
-                TextFont::from_font_size(8.0),
+                TextFont::from_font_size(9.0),
                 TextColor(theme.color(&theme.palette.parchment_dim)),
             ));
             // Save select: continue (slot 1) when a save exists, else new.
@@ -2680,7 +2725,7 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
                 root.spawn((
                     TitleSlotRow,
                     Text::new(label.clone()),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.parchment)),
                 ));
             }

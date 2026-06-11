@@ -102,7 +102,7 @@ fn screens_open(mut commands: Commands, theme: Res<Theme>, mut state: ResMut<Scr
                 children![(
                     ScreenText,
                     Text::new(""),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.ink)),
                 )],
             ));
@@ -727,7 +727,7 @@ fn screens_visual(
                 let label = commands
                     .spawn((
                         Text::new(format!("{}  L{}", member.species, member.level)),
-                        TextFont::from_font_size(8.0),
+                        TextFont::from_font_size(9.0),
                         TextColor(theme.color(&theme.palette.ink)),
                         Node {
                             width: Val::Px(110.0),
@@ -758,7 +758,7 @@ fn screens_visual(
                 let hp_text = commands
                     .spawn((
                         Text::new(format!("{hp}/{max}")),
-                        TextFont::from_font_size(7.0),
+                        TextFont::from_font_size(6.75),
                         TextColor(theme.color(&theme.palette.ink_soft)),
                     ))
                     .id();
@@ -787,7 +787,7 @@ fn screens_visual(
                 let unknown = commands
                     .spawn((
                         Text::new("- unheard -"),
-                        TextFont::from_font_size(10.0),
+                        TextFont::from_font_size(11.25),
                         TextColor(theme.color(&theme.palette.ink_soft)),
                     ))
                     .id();
@@ -833,7 +833,7 @@ fn screens_visual(
                 let type_row = commands
                     .spawn((
                         Text::new(types),
-                        TextFont::from_font_size(8.0),
+                        TextFont::from_font_size(9.0),
                         TextColor(theme.color(&theme.palette.gilt)),
                     ))
                     .id();
@@ -859,7 +859,7 @@ fn screens_visual(
                         let tag = commands
                             .spawn((
                                 Text::new(label),
-                                TextFont::from_font_size(7.0),
+                                TextFont::from_font_size(6.75),
                                 TextColor(theme.color(&theme.palette.ink_soft)),
                                 Node {
                                     width: Val::Px(26.0),
@@ -897,7 +897,7 @@ fn screens_visual(
                 let entry = commands
                     .spawn((
                         Text::new(world.text(&format!("dex.{species}")).to_string()),
-                        TextFont::from_font_size(7.0),
+                        TextFont::from_font_size(6.75),
                         TextColor(theme.color(&theme.palette.ink)),
                     ))
                     .id();

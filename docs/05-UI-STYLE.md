@@ -35,9 +35,15 @@ Night palette: multiply overworld by `#9aa0c8` at 60% (data-driven curve per hou
 
 ## 3. Typography
 
-- Pixel font, CC0/OFL: **m5x7** for body (5×7-ish, compact) and **m6x11** for
-  headings/numbers — both by Daniel Linssen, OFL; ship the licenses in `assets/fonts/`.
-- Body text 1× scale, headings 1× of the larger face; never scale fonts non-integer.
+- Pixel font (P19, shipped): **monogram** by datagoblin, CC0 — one
+  monospace 6×9 face for everything (`assets/fonts/monogram.ttf`,
+  license vendored alongside). It replaces Bevy's default-font handle
+  at boot, so all text is pixel type with no per-site plumbing.
+  (m5x7/m6x11 were the original plan; monogram won on glyph coverage —
+  577 glyphs incl. em-dash, cedi, ellipsis, arrows — and CC0.)
+- Sizes ride the pixel grid: with UiScale 8/3, crisp sizes are
+  multiples of 2.25 — **9.0 body**, 6.75 fine print, 11.25 headings,
+  27.0 title. Never scale fonts off-grid.
 - Text speed: instant per-character reveal at 30/60/instant chars-per-tick (Settings);
   default fast. A/confirm dumps the full page (era convention).
 

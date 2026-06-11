@@ -851,7 +851,7 @@ fn battle_enter(
                 plate.spawn((
                     FoePlateText,
                     Text::new(""),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.ink)),
                 ));
                 plate
@@ -894,7 +894,7 @@ fn battle_enter(
                 plate.spawn((
                     PlayerPlateText,
                     Text::new(""),
-                    TextFont::from_font_size(8.0),
+                    TextFont::from_font_size(9.0),
                     TextColor(theme.color(&theme.palette.ink)),
                 ));
                 plate
@@ -963,7 +963,7 @@ fn battle_enter(
                     ))
                     .with_child((
                         Text::new(*label),
-                        TextFont::from_font_size(8.0),
+                        TextFont::from_font_size(9.0),
                         TextColor(theme.color(&theme.palette.ink)),
                     ));
                 }
@@ -984,7 +984,7 @@ fn battle_enter(
             .with_child((
                 MessageText,
                 Text::new(""),
-                TextFont::from_font_size(8.0),
+                TextFont::from_font_size(9.0),
                 TextColor(theme.color(&theme.palette.ink)),
             ));
         });

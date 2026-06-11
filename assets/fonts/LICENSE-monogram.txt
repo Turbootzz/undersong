@@ -1,0 +1,13 @@
+monogram — a free monospace pixel font
+by Vinícius Menézio (datagoblin)
+https://datagoblin.itch.io/monogram
+
+Version 1.1.0, vendored 2026-06-12 (the font's embedded license
+string reads "Creative Commons Zero v1.0 Universal").
+
+License: CC0 1.0 Universal (public domain dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The author dedicates this font to the public domain. Attribution is
+appreciated but not required. Undersong gratefully credits monogram
+in this file and in docs/03-ARCHITECTURE.md §7.
