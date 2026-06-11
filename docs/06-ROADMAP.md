@@ -288,13 +288,13 @@ untouched.
 
 ## P14 — World color & buildings
 
-- [ ] **Building anatomy**: roof tiles (per-town palettes), visible door
+- [x] **Building anatomy**: roof tiles (per-town palettes), visible door
       tiles on the warp tiles, windows; the mapgen building helper paints
       them as decor (zero logic diffs — replays safe).
-- [ ] **Color pass**: saturated grass/water ramps, flower/fence/lamp
+- [x] **Color pass**: saturated grass/water ramps, flower/fence/lamp
       decor sprinkles in towns, water shore edges, region color identity
       (doc 05 update).
-- [ ] **Phase review**; STATUS with screenshots.
+- [x] **Phase review**; STATUS with screenshots.
 
 **Gate P14:** towns no longer read "light brown everywhere"; houses have
 doors; replays green without re-recording.
@@ -355,6 +355,19 @@ opening RON files; a harness run produces a reviewable frame series.
 ---
 
 ## STATUS
+
+### 2026-06-11 — P14 complete (world color & buildings)
+
+**Built:** eight new tiles (roofs ×3 palettes, doors, lit windows,
+flowers, fences, lamps, interior wainscot) painted by a decor-only
+mapgen dressing pass (roof tops, walls' windows, door art on carved
+warp tiles, flowers on town grass) — replay-safe by construction, and
+indeed all six replays passed without re-recording. Juicier grass and
+water hues; per-town roof color by map id; interiors finally show
+their walls. Evidence: docs/screenshots/p14-pausa.png.
+
+**Next:** P15 — `git tag p15-start`; UI overhaul + the Score-dex.
+
 
 ### 2026-06-11 — P13 complete (art v2)
 
