@@ -50,7 +50,8 @@ impl Plugin for UndersongPlugin {
             .insert_resource(Toast::default())
             .insert_resource(CurrentMusic::default())
             .insert_resource(CreditsState::default())
-            .add_systems(Update, (music_director, credits_watch))
+            .insert_resource(AudioUnlocked::default())
+            .add_systems(Update, (audio_unlock, music_director, credits_watch))
             .add_systems(
                 Update,
                 (toast_ui, night_tint).run_if(in_state(AppState::Overworld)),
@@ -836,7 +837,7 @@ fn menu_input(
                 // Manual save → slot 1 (slot picker arrives with the P3
                 // save-select screen). Playtime is the session clock;
                 // created stays 0 until the title flow stamps it.
-                match save::FsBackend::platform_default() {
+                match platform_backend() {
                     Some(mut backend) => {
                         let mut snapshot = world.0.to_save("dev", time.elapsed_secs() as u64, 0);
                         snapshot.player.settings = settings.0.clone();
@@ -923,6 +924,18 @@ struct MusicPlayer;
 
 /// One looping track at a time: map track in the overworld, the battle
 /// scene's override elsewhere. Quiet Coast has None — dead air.
+/// Browsers refuse autoplay until a user gesture: on wasm the director
+/// stays silent until the first keypress (the title screen's "press
+/// anything" doubles as the audio unlock).
+#[derive(Resource, Default)]
+pub struct AudioUnlocked(pub bool);
+
+fn audio_unlock(keys: Res<ButtonInput<KeyCode>>, mut unlocked: ResMut<AudioUnlocked>) {
+    if !unlocked.0 && keys.get_just_pressed().next().is_some() {
+        unlocked.0 = true;
+    }
+}
+
 fn music_director(
     mut commands: Commands,
     world: Res<WorldRes>,
@@ -930,7 +943,11 @@ fn music_director(
     assets: Res<AssetServer>,
     mut current: ResMut<CurrentMusic>,
     players: Query<Entity, With<MusicPlayer>>,
-) {
+    unlocked: Res<AudioUnlocked>,) {
+    if cfg!(target_arch = "wasm32") && !unlocked.0 {
+        return; // autoplay gate: wait for the first gesture
+    }
+
     let desired = current
         .override_track
         .clone()
@@ -951,6 +968,19 @@ fn music_director(
         ));
     }
     current.playing = desired;
+}
+
+
+/// The platform's save backend: filesystem natively, localStorage on
+/// the web (doc 03 §4).
+#[cfg(not(target_arch = "wasm32"))]
+fn platform_backend() -> Option<save::FsBackend> {
+    save::FsBackend::platform_default()
+}
+
+#[cfg(target_arch = "wasm32")]
+fn platform_backend() -> Option<save::LocalStorageBackend> {
+    Some(save::LocalStorageBackend)
 }
 
 /// Ending credits (doc 06 P6): full-screen roll per ending; the Da
@@ -1165,7 +1195,7 @@ fn night_tint(
 
 /// Writes the rotating autosave (doc 03 §4: map change & post-battle).
 pub fn autosave(world: &WorldState) {
-    let Some(mut backend) = save::FsBackend::platform_default() else {
+    let Some(mut backend) = platform_backend() else {
         bevy::log::warn!("no platform save directory; autosave skipped");
         return;
     };
@@ -1232,7 +1262,7 @@ fn title_open(mut commands: Commands, theme: Res<Theme>) {
                 TextColor(theme.color(&theme.palette.parchment_dim)),
             ));
             // Save select: continue (slot 1) when a save exists, else new.
-            let has_save = save::FsBackend::platform_default()
+            let has_save = platform_backend()
                 .and_then(|backend| save::peek_header(&backend, save::SlotId::Slot1).ok())
                 .flatten();
             let rows: Vec<String> = match &has_save {
@@ -1269,7 +1299,7 @@ fn title_input(
         return;
     }
     if load
-        && let Some(backend) = save::FsBackend::platform_default()
+        && let Some(backend) = platform_backend()
         && let Ok(Some(file)) = save::load(&backend, save::SlotId::Slot1)
     {
         settings.0 = file.player.settings.clone();

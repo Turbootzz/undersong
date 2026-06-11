@@ -193,6 +193,7 @@ CI: GitHub Actions — `fmt --check`, `clippy -D warnings`, `test --workspace`,
 | directories | 6 | save paths |
 | proptest | 1.11 | property tests (dev-dep) |
 | fundsp | 0.23 | offline cry/jingle synthesis in `tools` only |
+| web-sys (wasm32 only) | 0.3 | save | localStorage backend for the browser build (Window+Storage features only) |
 | anyhow / thiserror | 1 / 2 | tools ergonomics / library errors |
 | image | latest 0.25.x | `tools sigils` + atlas packing (tools only) |
 | serde_json | 1 | `tools importmap` parses LDtk's JSON export (tools only; the engine never reads JSON) |

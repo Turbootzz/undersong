@@ -11,6 +11,8 @@ pub mod backend;
 pub mod model;
 
 pub use backend::{FsBackend, MemBackend, SaveBackend};
+#[cfg(target_arch = "wasm32")]
+pub use backend::LocalStorageBackend;
 pub use model::{
     Facing, Position, SAVE_VERSION, SaveError, SaveFile, SaveHeader, Settings, SlotId,
 };

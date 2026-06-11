@@ -5059,6 +5059,7 @@ dependencies = [
  "serde",
  "thiserror 2.0.18",
  "undersong-core",
+ "web-sys",
 ]
 
 [[package]]

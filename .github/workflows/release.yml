@@ -1,0 +1,49 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  native:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: undersong-linux
+            path: target/release/game
+          - os: windows-latest
+            artifact: undersong-windows
+            path: target/release/game.exe
+          - os: macos-latest
+            artifact: undersong-macos
+            path: target/release/game
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev
+      - run: cargo build -p game --release
+      - run: cargo run -p tools --release -- validate
+      - name: Bundle
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.artifact }}
+          cp ${{ matrix.path }} dist/${{ matrix.artifact }}/
+          cp -R assets content dist/${{ matrix.artifact }}/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - run: cargo install wasm-bindgen-cli --locked
+      - run: tools-web/web-deploy.sh dist/web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: undersong-web
+          path: dist/undersong-web.zip

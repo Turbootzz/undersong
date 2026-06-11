@@ -74,3 +74,30 @@ impl SaveBackend for MemBackend {
         Ok(self.files.get(name).cloned())
     }
 }
+
+/// Browser backend: one `localStorage` key per save file, namespaced
+/// `undersong.<name>` (doc 03 §4; P7 WASM target). Compiled only for
+/// wasm32 — the native build never links web-sys.
+#[cfg(target_arch = "wasm32")]
+pub struct LocalStorageBackend;
+
+#[cfg(target_arch = "wasm32")]
+impl SaveBackend for LocalStorageBackend {
+    fn write(&mut self, name: &str, contents: &str) -> Result<(), SaveError> {
+        let storage = web_sys::window()
+            .and_then(|w| w.local_storage().ok().flatten())
+            .ok_or_else(|| SaveError::Io("localStorage unavailable".into()))?;
+        storage
+            .set_item(&format!("undersong.{name}"), contents)
+            .map_err(|_| SaveError::Io("localStorage write failed (quota?)".into()))
+    }
+
+    fn read(&self, name: &str) -> Result<Option<String>, SaveError> {
+        let storage = web_sys::window()
+            .and_then(|w| w.local_storage().ok().flatten())
+            .ok_or_else(|| SaveError::Io("localStorage unavailable".into()))?;
+        storage
+            .get_item(&format!("undersong.{name}"))
+            .map_err(|_| SaveError::Io("localStorage read failed".into()))
+    }
+}
