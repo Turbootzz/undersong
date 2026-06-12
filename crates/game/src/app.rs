@@ -63,6 +63,7 @@ impl Plugin for UndersongPlugin {
                     window_glow,
                     weather_fx,
                     flurry_drift,
+                    badge_jingle,
                 )
                     .run_if(in_state(AppState::Overworld)),
             )
@@ -1018,6 +1019,30 @@ fn animate_player_frame(
     sprite.image = assets.load(art(&format!("sprites/chars/player.{dir}.{frame}.png")));
 }
 
+/// Badge get (P20): the flags are the source of truth — when the count
+/// rises during play, the flourish sounds. The first observation only
+/// records a baseline (boot, Continue, post-battle return).
+fn badge_jingle(
+    mut commands: Commands,
+    assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
+    world: Res<WorldRes>,
+    mut last: Local<Option<u8>>,
+) {
+    let count = (1..=8u8)
+        .filter(|n| world.0.vars.flags.contains(&format!("badge.{n}")))
+        .count() as u8;
+    match *last {
+        Some(old) if count > old => {
+            play_cue(&mut commands, &assets, &settings.0, "jingle_badge");
+            *last = Some(count);
+        }
+        Some(old) if count < old => *last = Some(count), // new/loaded save
+        None => *last = Some(count),
+        _ => {}
+    }
+}
+
 // ----- P18 overworld feel systems ---------------------------------------
 
 /// Leaving the overworld clears the transient feel-state: a spotted
@@ -1351,9 +1376,18 @@ fn dialogue_ui(
                 let before = reveal.shown as usize;
                 reveal.shown =
                     (reveal.shown + speed * time.delta_secs()).min(reveal.chars as f32);
-                // A soft blip every third character.
+                // A soft blip every third character; the speaker's
+                // name hashes to a pitch, the narrator stays a hush.
                 if reveal.shown as usize / 3 > before / 3 {
-                    play_cue_volume(&mut commands, &assets, &settings.0, "blip", 0.5);
+                    if who == "narrator" {
+                        play_cue_volume(&mut commands, &assets, &settings.0, "blip", 0.2);
+                    } else {
+                        let hash = who
+                            .bytes()
+                            .fold(0u32, |h, b| h.wrapping_mul(31).wrapping_add(u32::from(b)));
+                        let speed = 0.85 + (hash % 9) as f32 * 0.05; // 0.85..1.25
+                        play_cue_pitched(&mut commands, &assets, &settings.0, "blip", 0.5, speed);
+                    }
                 }
             }
             let line: String = full_line.chars().take(reveal.shown as usize).collect();
@@ -1824,13 +1858,28 @@ pub fn play_cue_volume(
     name: &str,
     gain: f32,
 ) {
+    play_cue_pitched(commands, assets, settings, name, gain, 1.0);
+}
+
+/// A cue with gain AND playback speed — per-speaker typewriter blips
+/// get their pitch from the speaker's name (P20).
+pub fn play_cue_pitched(
+    commands: &mut Commands,
+    assets: &AssetServer,
+    settings: &save::Settings,
+    name: &str,
+    gain: f32,
+    speed: f32,
+) {
     if settings.volume_sfx == 0 {
         return;
     }
     let volume = f32::from(settings.volume_sfx) / 100.0 * 0.8 * gain;
     commands.spawn((
         AudioPlayer::new(assets.load(format!("sfx/{name}.wav"))),
-        PlaybackSettings::DESPAWN.with_volume(bevy::audio::Volume::Linear(volume)),
+        PlaybackSettings::DESPAWN
+            .with_volume(bevy::audio::Volume::Linear(volume))
+            .with_speed(speed),
     ));
 }
 
@@ -2498,6 +2547,7 @@ pub struct CreditsState {
 #[derive(Component)]
 struct CreditsUi;
 
+#[expect(clippy::too_many_arguments, reason = "bevy system parameters")]
 fn credits_watch(
     mut commands: Commands,
     time: Res<Time>,
@@ -2505,6 +2555,7 @@ fn credits_watch(
     theme: Option<Res<Theme>>,
     world: Res<WorldRes>,
     mut state: ResMut<CreditsState>,
+    mut music: ResMut<CurrentMusic>,
     existing: Query<Entity, With<CreditsUi>>,
 ) {
     let Some(theme) = theme else { return };
@@ -2515,6 +2566,9 @@ fn credits_watch(
 
     if !state.shown {
         state.shown = true;
+        // Each ending carries its own arrangement of the main theme
+        // (P20): full band, slower, or one lone voice.
+        music.override_track = Some(format!("credits_{ending}"));
         state.dead_input = if ending == "dacapo" { 30.0 } else { 0.0 };
         let (title, lines) = match ending {
             "chorus" => (

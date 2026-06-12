@@ -169,6 +169,9 @@ pub enum Anim {
     Capture { rings: u8, caught: bool },
     /// The dedicated overlay scene; X fast-forwards to the resolve.
     Evolve { from: SpeciesId, into: SpeciesId },
+    /// Swaps the looping music override at its narrative moment (the
+    /// victory jingle after the final faint resolves).
+    Jingle { track: String },
 }
 
 struct ActiveAnim {
@@ -568,6 +571,13 @@ pub fn stage_battle_events(
                                 if *side == 0 { "your" } else { "the foe's" }
                             ));
                         }
+                        E::BattleEnded { outcome } => {
+                            if matches!(outcome, battle::Outcome::Won { winner: 0 }) {
+                                theater.push_anim(Anim::Jingle {
+                                    track: "jingle_victory".into(),
+                                });
+                            }
+                        }
                         E::SwitchedIn {
                             side,
                             slot,
@@ -635,19 +645,25 @@ pub fn stage_battle_events(
                 ));
             }
             WorldEvent::EvolutionPrompt { from, into } => {
-                theater.push_line(format!(
-                    "{}'s phrase is shifting toward {}... (Z: let it / X: hold it back)",
-                    name(from),
-                    name(into)
-                ));
+                theater.push_line(
+                    world
+                        .text("ui.evolve.prompt")
+                        .replace("{0}", &name(from))
+                        .replace("{1}", &name(into)),
+                );
             }
             WorldEvent::Evolved { from, into } => {
-                theater.push_line(format!("what? {} is evolving!", name(from)));
+                theater.push_line(world.text("ui.evolve.shifting").replace("{0}", &name(from)));
                 theater.push_anim(Anim::Evolve {
                     from: from.clone(),
                     into: into.clone(),
                 });
-                theater.push_line(format!("{} became {}!", name(from), name(into)));
+                theater.push_line(
+                    world
+                        .text("ui.evolve.became")
+                        .replace("{0}", &name(from))
+                        .replace("{1}", &name(into)),
+                );
             }
             WorldEvent::Whiteout => {
                 theater.push_line("your motes fall silent... (half your coin lost)".into());
@@ -707,18 +723,25 @@ fn battle_enter(
         // the hall theme.
         music.override_track = Some(match &session.context {
             game::session::BattleContext::Wild { .. } => "battle_wild".to_string(),
-            game::session::BattleContext::Trainer { id } => {
-                let weighty = world.0.registry.as_ref().is_some_and(|r| {
-                    r.trainers
-                        .get(id)
-                        .is_some_and(|t| t.class == "Maestro" || t.class == "TacetAdmin")
-                });
-                if weighty {
-                    "battle_hall".to_string()
-                } else {
-                    "battle_trainer".to_string()
+            game::session::BattleContext::Trainer { id } => match id.as_str() {
+                // Story themes (P20): the named beats carry their own
+                // stems.
+                "admin_lull" => "lull_theme".to_string(),
+                "vesper_epilogue" => "vesper_theme".to_string(),
+                "maestro_ilva" | "maestro_calder" => "hall_final".to_string(),
+                _ => {
+                    let weighty = world.0.registry.as_ref().is_some_and(|r| {
+                        r.trainers
+                            .get(id)
+                            .is_some_and(|t| t.class == "Maestro" || t.class == "TacetAdmin")
+                    });
+                    if weighty {
+                        "battle_hall".to_string()
+                    } else {
+                        "battle_trainer".to_string()
+                    }
                 }
-            }
+            },
         });
     }
     let Some(session) = &world.0.battle else {
@@ -1058,6 +1081,7 @@ fn theater_tick(
     mut theater: ResMut<Theater>,
     mut fx: ResMut<FxState>,
     mut disp: ResMut<DisplayedHp>,
+    mut music: ResMut<crate::app::CurrentMusic>,
     mut message: Query<&mut Text, With<MessageText>>,
     mut stage: StageQueries,
 ) {
@@ -1089,12 +1113,12 @@ fn theater_tick(
                 let anim = active.as_mut().expect("still active");
                 tick_anim(
                     anim, dt, animate, &region, &mut commands, &assets, &settings.0, &mut fx,
-                    &mut disp, &mut stage,
+                    &mut disp, &mut music, &mut stage,
                 )
             } else {
                 tick_anim(
                     anim, dt, animate, &region, &mut commands, &assets, &settings.0, &mut fx,
-                    &mut disp, &mut stage,
+                    &mut disp, &mut music, &mut stage,
                 )
             }
         };
@@ -1102,7 +1126,8 @@ fn theater_tick(
             && let Some(anim) = theater.active.take()
         {
             finish_anim(
-                &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut stage,
+                &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut music,
+                &mut stage,
             );
         }
         // A Z/X landing on an animation frame (including its last) must
@@ -1194,19 +1219,20 @@ fn theater_tick(
                 // First tick at t=0 fires entry cues/spawns.
                 let done = tick_anim(
                     &mut anim, 0.0, animate, &region, &mut commands, &assets, &settings.0,
-                    &mut fx, &mut disp, &mut stage,
+                    &mut fx, &mut disp, &mut music, &mut stage,
                 );
                 if done {
                     finish_anim(
                         &anim, &region, &mut commands, &assets, &settings.0, &mut disp,
-                        &mut stage,
+                        &mut music, &mut stage,
                     );
                 } else {
                     theater.active = Some(anim);
                 }
             } else {
                 finish_anim(
-                    &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut stage,
+                    &anim, &region, &mut commands, &assets, &settings.0, &mut disp, &mut music,
+                    &mut stage,
                 );
             }
         }
@@ -1227,6 +1253,7 @@ fn tick_anim(
     settings: &save::Settings,
     fx: &mut FxState,
     disp: &mut DisplayedHp,
+    music: &mut crate::app::CurrentMusic,
     stage: &mut StageQueries,
 ) -> bool {
     let reduced = settings.reduced_motion;
@@ -1444,7 +1471,11 @@ fn tick_anim(
                     image.color = gilt;
                 } else if *caught {
                     if fire(1 << 16, &mut anim.fired) {
-                        crate::app::play_cue(commands, assets, settings, "settle");
+                        // The capture jingle replaces the bare settle
+                        // chime (P20); the battle theme bows out under
+                        // the closing lines.
+                        crate::app::play_cue(commands, assets, settings, "jingle_capture");
+                        music.override_track = None;
                     }
                     // The point rests, then dims out.
                     let p = ((t - wobble_end) / 0.4).clamp(0.0, 1.0);
@@ -1546,7 +1577,7 @@ fn tick_anim(
                             "sprites/monsters/{region}/{into}.front.png"
                         )));
                         play_cry(commands, assets, settings, region, into);
-                        crate::app::play_cue(commands, assets, settings, "confirm");
+                        crate::app::play_cue(commands, assets, settings, "jingle_evolution");
                     }
                     let level = if reduced {
                         1.0
@@ -1558,6 +1589,12 @@ fn tick_anim(
             }
             t >= 3.7
         }
+        Anim::Jingle { track } => {
+            if fire(1, &mut anim.fired) {
+                music.override_track = Some(track.clone());
+            }
+            true
+        }
     }
 }
 
@@ -1565,6 +1602,7 @@ fn tick_anim(
 /// animations-off path, and the natural-finish cleanup all land here.
 /// Cues/cries the ticking never fired (instant and reduced-motion
 /// paths) still sound: the audio is part of the scene, not the motion.
+#[expect(clippy::too_many_arguments, reason = "animation plumbing")]
 fn finish_anim(
     anim: &ActiveAnim,
     region: &str,
@@ -1572,6 +1610,7 @@ fn finish_anim(
     assets: &AssetServer,
     settings: &save::Settings,
     disp: &mut DisplayedHp,
+    music: &mut crate::app::CurrentMusic,
     stage: &mut StageQueries,
 ) {
     match &anim.kind {
@@ -1674,8 +1713,11 @@ fn finish_anim(
                     commands,
                     assets,
                     settings,
-                    if *caught { "settle" } else { "breakout" },
+                    if *caught { "jingle_capture" } else { "breakout" },
                 );
+            }
+            if *caught {
+                music.override_track = None;
             }
             if let Ok((mut node, mut image, _)) = stage.p0().single_mut() {
                 node.width = Val::Px(SPRITE_SIZE);
@@ -1693,11 +1735,14 @@ fn finish_anim(
         Anim::Evolve { into, .. } => {
             if anim.fired & (1 << 16) == 0 {
                 play_cry(commands, assets, settings, region, into);
-                crate::app::play_cue(commands, assets, settings, "confirm");
+                crate::app::play_cue(commands, assets, settings, "jingle_evolution");
             }
             if let Some(entity) = anim.spawned {
                 commands.entity(entity).despawn();
             }
+        }
+        Anim::Jingle { track } => {
+            music.override_track = Some(track.clone());
         }
     }
 }
@@ -1805,14 +1850,19 @@ fn battle_input(
         return;
     }
     if let Some((party_index, into)) = world.0.pending_evolutions.first().cloned() {
-        if let Some(mote) = world.0.party.get(party_index)
+        let holder = world
+            .0
+            .party
+            .get(party_index)
+            .map(|mote| world.0.text(&format!("motif.{}", mote.species)));
+        if let Some(species_name) = &holder
             && let Ok(mut message) = message_text.single_mut()
         {
-            let line = format!(
-                "{}'s phrase is shifting toward {}... (Z: let it / X: hold it back)",
-                world.0.text(&format!("motif.{}", mote.species)),
-                world.0.text(&format!("motif.{into}"))
-            );
+            let line = world
+                .0
+                .text("ui.evolve.prompt")
+                .replace("{0}", species_name)
+                .replace("{1}", &world.0.text(&format!("motif.{into}")));
             if message.0 != line {
                 message.0 = line;
             }
@@ -1823,6 +1873,12 @@ fn battle_input(
         } else if keys.just_pressed(KeyCode::KeyX) {
             let events = world.0.apply(WorldInput::Evolve { accept: false });
             stage_battle_events(&mut theater, &world.0, &events);
+            // The decline gets its own beat (P20).
+            if let Some(species_name) = holder {
+                theater.push_line(
+                    world.0.text("ui.evolve.held").replace("{0}", &species_name),
+                );
+            }
         }
         return;
     }

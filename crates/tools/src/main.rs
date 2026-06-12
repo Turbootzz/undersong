@@ -281,11 +281,22 @@ fn run() -> Result<bool> {
                     Mood::BattleHall,
                     Mode::Aeolian,
                 ),
+                // P20 story themes (doc 06): Lull's wrong-key lullaby,
+                // Vesper's held rests, the hall-final escalation, and
+                // three credits readings of THE main theme — same seed
+                // as cantorel_bed so the melody is the region's.
+                ("lull_theme", 0xCA_0020, Mood::Lull, Mode::Ionian),
+                ("vesper_theme", 0xCA_0021, Mood::Vesper, Mode::Aeolian),
+                ("hall_final", 0xCA_0022, Mood::HallFinal, Mode::Aeolian),
+                ("credits_chorus", 0xCA_0001, Mood::CreditsFull, Mode::Ionian),
+                ("credits_dacapo", 0xCA_0001, Mood::CreditsSlow, Mode::Ionian),
+                ("credits_tacet", 0xCA_0001, Mood::CreditsLone, Mode::Ionian),
             ] {
                 music::render_track(id, seed, mood, mode, &tracks)?;
             }
             music::render_sfx(&out.join("sfx"))?;
-            println!("music: 13 tracks + 13 cues → {}", out.display());
+            music::render_jingles(&out.join("sfx"), &tracks)?;
+            println!("music: 19 tracks + 12 cues + 5 jingles → {}", out.display());
             Ok(true)
         }
         Some("importmap") => {
