@@ -222,6 +222,8 @@ struct SpottedBubble;
 struct FxQueue {
     rustles: Vec<(u32, u32)>,
     door: Option<(u32, u32)>,
+    /// The Rest Stop heal landed — play the hummed jingle.
+    heal: bool,
 }
 
 /// Grass-rustle burst on a resonance patch (elapsed seconds).
@@ -829,6 +831,9 @@ fn handle_events(
                 // spotted_tick system plays the cue and holds input.
                 spotted.0 = Some((npc.clone(), 0.9, false));
             }
+            WorldEvent::PartyHealed => {
+                fxq.heal = true; // overworld_fx hums the nurse's phrase
+            }
             // A step that warps never rustles: the Stepped coords
             // belong to the source map, but world.0.map() is already
             // the arrival map by the time events land here.
@@ -1029,9 +1034,14 @@ fn badge_jingle(
     world: Res<WorldRes>,
     mut last: Local<Option<u8>>,
 ) {
+    // Both regions count: cantorel's badge.N and skalden's
+    // skalden.badge.N.
     let count = (1..=8u8)
         .filter(|n| world.0.vars.flags.contains(&format!("badge.{n}")))
-        .count() as u8;
+        .count() as u8
+        + (1..=4u8)
+            .filter(|n| world.0.vars.flags.contains(&format!("skalden.badge.{n}")))
+            .count() as u8;
     match *last {
         Some(old) if count > old => {
             play_cue(&mut commands, &assets, &settings.0, "jingle_badge");
@@ -1054,6 +1064,7 @@ fn clear_overworld_fx(mut spotted: ResMut<Spotted>, mut fxq: ResMut<FxQueue>) {
     spotted.0 = None;
     fxq.rustles.clear();
     fxq.door = None;
+    fxq.heal = false;
 }
 
 /// Spotted! — plays the alert, pops the "!" bubble over the trainer's
@@ -1110,10 +1121,15 @@ fn overworld_fx(
     mut commands: Commands,
     time: Res<Time>,
     assets: Res<AssetServer>,
+    settings: Res<SettingsRes>,
     mut fxq: ResMut<FxQueue>,
     mut rustles: Query<(Entity, &mut RustleFx, &mut Sprite), Without<DoorFx>>,
     mut doors: Query<(Entity, &mut DoorFx), Without<RustleFx>>,
 ) {
+    if fxq.heal {
+        fxq.heal = false;
+        play_cue(&mut commands, &assets, &settings.0, "heal");
+    }
     for (x, y) in fxq.rustles.drain(..) {
         commands.spawn((
             RustleFx(0.0),
@@ -2642,6 +2658,9 @@ the cost, posted later",
         for entity in &existing {
             commands.entity(entity).despawn();
         }
+        // The arrangement leaves with the roll — the map's own music
+        // resumes (P20 review: it used to loop over the post-game).
+        music.override_track = None;
     }
 }
 

@@ -1472,10 +1472,10 @@ fn tick_anim(
                 } else if *caught {
                     if fire(1 << 16, &mut anim.fired) {
                         // The capture jingle replaces the bare settle
-                        // chime (P20); the battle theme bows out under
-                        // the closing lines.
+                        // chime (P20). The battle theme stays until the
+                        // scene exits — clearing it here would start
+                        // the map track on the battle screen.
                         crate::app::play_cue(commands, assets, settings, "jingle_capture");
-                        music.override_track = None;
                     }
                     // The point rests, then dims out.
                     let p = ((t - wobble_end) / 0.4).clamp(0.0, 1.0);
@@ -1716,9 +1716,7 @@ fn finish_anim(
                     if *caught { "jingle_capture" } else { "breakout" },
                 );
             }
-            if *caught {
-                music.override_track = None;
-            }
+
             if let Ok((mut node, mut image, _)) = stage.p0().single_mut() {
                 node.width = Val::Px(SPRITE_SIZE);
                 node.height = Val::Px(SPRITE_SIZE);

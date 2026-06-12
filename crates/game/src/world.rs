@@ -100,6 +100,9 @@ pub enum WorldEvent {
         to: (u32, u32),
     },
     Saved,
+    /// The Rest Stop restored the party (the nurse hums the heal
+    /// jingle — the presenter plays it).
+    PartyHealed,
     /// A battle turn resolved; the presenter renders this stream.
     Battle(Vec<battle::BattleEvent>),
     BattleFinished {
@@ -833,6 +836,7 @@ impl WorldState {
                 StepResult::Effect(SideEffectReq::HealParty) => {
                     self.heal_party();
                     self.heal_point = (self.current_map.clone(), self.player);
+                    events.push(WorldEvent::PartyHealed);
                 }
                 StepResult::Effect(SideEffectReq::GiveMote { species, level }) => {
                     if let Some(registry) = &self.registry

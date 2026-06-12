@@ -453,7 +453,9 @@ pub fn story_score(seed: u64, mood: Mood, mode: Mode) -> StoryScore {
                     let tone = [0i32, 2, 4][rng.below(3) as usize];
                     lead.push(StoryNote {
                         start: start + 2.0,
-                        len: 1.4,
+                        // The final bar's note may not ring past the
+                        // loop seam (the stem loops via the director).
+                        len: if bar + 1 == bars { 1.0 } else { 1.4 },
                         midi: degree_midi(root, mode, chord + tone, 2) + 1,
                         gain: 0.050,
                     });
