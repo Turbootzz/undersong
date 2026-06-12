@@ -410,30 +410,30 @@ untouched.
 
 ## P19 — Beauty pass 2 (the indie-reference audit)
 
-- [ ] **Pixel font**: vendor m5x7 (or monogram) — both free/CC0; record
+- [x] **Pixel font**: vendor m5x7 (or monogram) — both free/CC0; record
       the license file in-repo and the dependency note in doc 03 §7
       (it's an asset, not a crate). Load as the default UI font; pass
       over every TextFont size (pixel fonts want exact px multiples);
       doc 05 §3 updated.
-- [ ] **Tile variety**: 3 grass variants + 2 path variants chosen by
+- [x] **Tile variety**: 3 grass variants + 2 path variants chosen by
       tile-position hash (kills the repetition shimmer); grass→path and
       grass→water edge tiles (8 edge pieces each, picked by neighbor
       mask in the renderer — data unchanged).
-- [ ] **Palette audit**: side-by-side the game against two indie
+- [x] **Palette audit**: side-by-side the game against two indie
       references (the agent picks; e.g. a Stardew screenshot's value
       range) using harness stills; adjust ramps (deeper shadows, warmer
       lights) in `tools sprites` constants; regenerate.
-- [ ] **Monster personality pass v3**: per-plan pose variance (head
+- [x] **Monster personality pass v3**: per-plan pose variance (head
       tilt, asymmetric tail/ear flips from the seed), 2-3 species-kit
       details per plan (whisker dots, back ridges, wing patterns),
       mouth lines (smile/frown/beak-open by temperament = catch rate
       proxy). Stars untouched (already hand-made) unless review says
       otherwise.
-- [ ] **UI skin v3**: parchment paper-grain texture on panels (generated
+- [x] **UI skin v3**: parchment paper-grain texture on panels (generated
       tile), corner caps on borders, hover/selected states with the
       gilt sweep, battle command icons (tiny sword/bell/flask/door
       glyphs drawn as sprites).
-- [ ] **Self-review + phase review**; STATUS with before/after stills.
+- [x] **Self-review + phase review**; STATUS with before/after stills.
 
 **Gate P19:** the agent's side-by-side verdict says the game holds its
 own next to the references on readability and palette (with stills in
@@ -479,6 +479,62 @@ a harness film; recontext pairs counted in STATUS; validate 0/0.
 ---
 
 ## STATUS
+
+### 2026-06-12 — P19 complete (beauty pass 2)
+
+**Built:** The monogram pixel font (CC0, vendored with license; doc 03
+§7 + 05 §3) embedded over Bevy's default-font handle before any text
+spawns — every glyph in the game is pixel type, sizes on the font's
+real 16px-em grid. Tile variety: two more grass tiles + a second
+path picked per-tile by an avalanche hash; sixteen grass-fringe
+pieces spill tufts over path/water edges by neighbor mask (renderer
+only — data untouched). The palette audit, measured against
+Stardew's press-kit stills: saturation 0.50 → 0.70 (reference 0.84),
+grass to 0x49a832 with v74 shadow tufts and v239 glints, deep water
+with bright sparkle, resaturated roofs; night veil deepened to the
+evening reference's drop. Monster personality v3: per-seed pose
+variance, one species kit per plan, temperament mouths from catch
+rate (20% frown / 36% flat / 45% smile across 130) — 343 sprites
+regenerated, backs mirrored, stars untouched. UI skin v3: paper
+grain + gilt corner caps on dialogue and plates, command icons with
+a breathing gilt selection.
+
+**Gate P19 (the side-by-side verdict, honest):** stills in
+docs/playtests/p19/ (pausa-before/after, battle-after,
+dialogue-after vs /tmp refs). The game now holds its own against the
+reference on READABILITY — the fringed transitions, varied tiles,
+and pixel font arguably read cleaner than the era baseline — and on
+color saturation (in band). It still falls short on macro value
+structure: Stardew's depth comes from large cast shadows (trees,
+eaves) that our world doesn't render; per-tile shadow accents can't
+substitute. Named gap, parked: a building/tree shade pass. All text
+renders monogram; no tofu (the ASCII sweep stands; ₵/—/… are
+available again if P20 wants them).
+
+**Phase review:** 5-lens adversarial workflow (17 agents) over
+`p19-start..HEAD`: 12 raw → 11 confirmed (~8 distinct), 1 refuted.
+All fixed (c9ef40a): the wasm font no-op (embedded bytes now), the
+off-grid size rule (re-swept; doc corrected), the stripe-degenerate
+variant hash, icon layout ghosting, the Shift-offer gilt freeze,
+rustle's stale greens, the clipped fourth wave trough. Won't-fix,
+recorded: peatling's icon sprout aliases at 16px (one species,
+icon-only).
+
+**Playfeel review (the agent's eyes):** The before/after Pausa pair
+is the largest single visual jump since P10 — the world finally has
+edges (fringes), depth in the water, and grass that reads alive; the
+battle plates with corner caps + icons look like a finished game's
+UI. The monsters carry themselves now: cinderle's pricked-ear smile
+vs avalanche's hunched frown is exactly the personality the user
+asked for. Still on my list: the world wants cast shadows (the one
+audit metric we couldn't close), building walls are still one flat
+parchment, and the battle stage background is a bare gradient next
+to everything else's new richness — P20 is sound/story, so these
+park in the icebox.
+
+**Next:** P20 — `git tag p20-start`; sound & story breath (story
+stems, jingles, per-speaker blips, recontext pairs).
+
 
 ### 2026-06-12 — P18 complete (overworld feel)
 
