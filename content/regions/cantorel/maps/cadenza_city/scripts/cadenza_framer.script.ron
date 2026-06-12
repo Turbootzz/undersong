@@ -1,0 +1,8 @@
+// P20 flavor NPC: frames the hall portraits; the hanging height comes
+// stamped on the work order (doc 01 §2 — that is not an accident).
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "cadenza_framer", key: "cadenza.framer.talk.late")],
+       else: [Say(who: "cadenza_framer", key: "cadenza.framer.talk")]),
+    End,
+]

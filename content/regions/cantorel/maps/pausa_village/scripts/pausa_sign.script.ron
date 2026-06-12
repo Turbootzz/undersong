@@ -1,4 +1,7 @@
+// P20 recontext pair (doc 01 §9 re-read rule).
 [
-    Say(who: "signpost_keeper", key: "pausa.sign.route1"),
+    If(flag: "story.door.seen",
+       then: [Say(who: "signpost_keeper", key: "pausa.sign.route1.recontext")],
+       else: [Say(who: "signpost_keeper", key: "pausa.sign.route1")]),
     End,
 ]

@@ -1,6 +1,9 @@
+// P20 recontext pair (doc 01 §9 re-read rule).
 [
-    If(flag: "hall.2.cleared",
-       then: [Say(who: "arbor_elder", key: "arbor.elder.after")],
-       else: [Say(who: "arbor_elder", key: "arbor.elder.hint")]),
+    If(flag: "story.door.seen",
+       then: [Say(who: "arbor_elder", key: "arbor.elder.recontext")],
+       else: [If(flag: "hall.2.cleared",
+                 then: [Say(who: "arbor_elder", key: "arbor.elder.after")],
+                 else: [Say(who: "arbor_elder", key: "arbor.elder.hint")])]),
     End,
 ]

@@ -1,0 +1,7 @@
+// P20 flavor NPC: Tam, who practices looking at portraits.
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "prelude_kid", key: "prelude.kid.talk.late")],
+       else: [Say(who: "prelude_kid", key: "prelude.kid.talk")]),
+    End,
+]

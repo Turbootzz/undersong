@@ -1,0 +1,7 @@
+// P20 flavor NPC: Mirelle's florist.
+[
+    If(flag: "hall.2.cleared",
+       then: [Say(who: "vale_florist", key: "arbor.florist.talk.badged")],
+       else: [Say(who: "vale_florist", key: "arbor.florist.talk")]),
+    End,
+]

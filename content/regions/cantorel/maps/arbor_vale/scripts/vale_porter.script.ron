@@ -1,0 +1,7 @@
+// P20 flavor NPC: greenhouse porter; the cellar he never hauls from.
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "vale_porter", key: "arbor.porter.talk.late")],
+       else: [Say(who: "vale_porter", key: "arbor.porter.talk")]),
+    End,
+]

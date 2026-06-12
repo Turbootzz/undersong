@@ -1,0 +1,7 @@
+// P20 flavor NPC: dock lunches in 3/4 (dex.gullegro).
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "calando_docker", key: "calando.docker.talk.late")],
+       else: [Say(who: "calando_docker", key: "calando.docker.talk")]),
+    End,
+]

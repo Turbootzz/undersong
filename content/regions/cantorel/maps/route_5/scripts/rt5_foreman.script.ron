@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.rt5_foreman.defeated",
-       then: [Say(who: "rt5_foreman", key: "rt5.foreman.after"), End],
+       then: [If(flag: "story.door.seen",
+                 then: [Say(who: "rt5_foreman", key: "rt5.foreman.after.recontext")],
+                 else: [Say(who: "rt5_foreman", key: "rt5.foreman.after")]),
+              End],
        else: []),
     Say(who: "rt5_foreman", key: "rt5.foreman.intro"),
     StartBattle(trainer: "rt5_foreman"),

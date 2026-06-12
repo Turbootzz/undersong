@@ -1,0 +1,7 @@
+// P20 flavor NPC: splits tips with a Cadenzear (dex.cadenzear).
+[
+    If(flag: "badge.8",
+       then: [Say(who: "cadenza_busker", key: "cadenza.busker.talk.badged")],
+       else: [Say(who: "cadenza_busker", key: "cadenza.busker.talk")]),
+    End,
+]

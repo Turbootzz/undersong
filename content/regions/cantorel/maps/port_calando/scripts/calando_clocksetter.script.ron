@@ -1,0 +1,7 @@
+// P20 flavor NPC: sets the tower clock by the Maridian (dex.maridian).
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "calando_clocksetter", key: "calando.clock.talk.late")],
+       else: [Say(who: "calando_clocksetter", key: "calando.clock.talk")]),
+    End,
+]

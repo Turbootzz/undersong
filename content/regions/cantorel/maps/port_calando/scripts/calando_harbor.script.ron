@@ -1,6 +1,9 @@
+// P20 recontext pair (doc 01 §9 re-read rule).
 [
-    If(flag: "hall.3.cleared",
-       then: [Say(who: "harbor_master", key: "calando.harbor.after")],
-       else: [Say(who: "harbor_master", key: "calando.harbor.hint")]),
+    If(flag: "story.door.seen",
+       then: [Say(who: "harbor_master", key: "calando.harbor.recontext")],
+       else: [If(flag: "hall.3.cleared",
+                 then: [Say(who: "harbor_master", key: "calando.harbor.after")],
+                 else: [Say(who: "harbor_master", key: "calando.harbor.hint")])]),
     End,
 ]

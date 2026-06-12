@@ -118,6 +118,11 @@ MapDef(
         (id: "harbor_master", at: (14, 8), facing: Down, sprite: "npc.villager", script: Some("calando_harbor.script.ron"), behavior: Static, sight_range: 0),
         (id: "echo_keeper_pausa", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_1.script.ron"), behavior: Static, sight_range: 0),
         (id: "keyshift_buff", at: (20, 6), facing: Down, sprite: "npc.villager", script: Some("keyshift_tutorial.script.ron"), behavior: Static, sight_range: 0),
+        // P20 flavor NPCs: dock end, NW corner, hall's east wall —
+        // off every entrance/door/boat corridor (replay-safe).
+        (id: "calando_docker", at: (24, 1), facing: Left, sprite: "npc.trainer", script: Some("calando_docker.script.ron"), behavior: Static, sight_range: 0),
+        (id: "calando_clocksetter", at: (1, 16), facing: Down, sprite: "npc.villager2", script: Some("calando_clocksetter.script.ron"), behavior: Static, sight_range: 0),
+        (id: "calando_netmender", at: (23, 14), facing: Left, sprite: "npc.villager", script: Some("calando_netmender.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_calando"),
 )

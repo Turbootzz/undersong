@@ -1,0 +1,7 @@
+// P20 flavor NPC: apprenticed under the Forgeling (dex.forgeling).
+[
+    If(flag: "hall.4.cleared",
+       then: [Say(who: "volt_apprentice", key: "volt.apprentice.talk.badged")],
+       else: [Say(who: "volt_apprentice", key: "volt.apprentice.talk")]),
+    End,
+]

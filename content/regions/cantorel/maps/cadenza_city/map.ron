@@ -120,6 +120,11 @@ MapDef(
         (id: "echo_keeper_8", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_8.script.ron"), behavior: Static, sight_range: 0),
         (id: "reed_capital", at: (13, 7), facing: Down, sprite: "npc.reed", script: Some("reed_confession.script.ron"), behavior: Static, sight_range: 0),
         (id: "cade_capital", at: (17, 6), facing: Down, sprite: "npc.villager2", script: Some("cade_plea.script.ron"), behavior: Static, sight_range: 0),
+        // P20 flavor NPCs: SW corner, NW corner, NE corner — off the
+        // route column, spire row, encore gate, and doors (replay-safe).
+        (id: "cadenza_framer", at: (1, 1), facing: Right, sprite: "npc.villager2", script: Some("cadenza_framer.script.ron"), behavior: Static, sight_range: 0),
+        (id: "cadenza_busker", at: (1, 16), facing: Down, sprite: "npc.trainer", script: Some("cadenza_busker.script.ron"), behavior: Static, sight_range: 0),
+        (id: "cadenza_bellwarden", at: (24, 16), facing: Down, sprite: "npc.villager", script: Some("cadenza_bellwarden.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_calando"),
 )

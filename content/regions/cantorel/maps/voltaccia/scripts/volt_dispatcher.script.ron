@@ -1,0 +1,8 @@
+// P20 flavor NPC: brownouts as concerts (dex.voltacelle); the missing
+// frequency in the outage logs (echo4.story).
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "volt_dispatcher", key: "volt.dispatcher.talk.late")],
+       else: [Say(who: "volt_dispatcher", key: "volt.dispatcher.talk")]),
+    End,
+]

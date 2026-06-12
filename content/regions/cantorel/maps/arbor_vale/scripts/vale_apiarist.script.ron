@@ -1,0 +1,7 @@
+// P20 flavor NPC: the choirmaster-beekeeper (dex.hummble).
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "vale_apiarist", key: "arbor.apiarist.talk.late")],
+       else: [Say(who: "vale_apiarist", key: "arbor.apiarist.talk")]),
+    End,
+]

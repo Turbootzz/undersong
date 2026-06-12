@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.hall_senior.defeated",
-       then: [Say(who: "hall_senior", key: "hall1.senior.after"), End],
+       then: [If(flag: "story.door.seen",
+                 then: [Say(who: "hall_senior", key: "hall1.senior.after.recontext")],
+                 else: [Say(who: "hall_senior", key: "hall1.senior.after")]),
+              End],
        else: []),
     Say(who: "hall_senior", key: "hall1.senior.intro"),
     StartBattle(trainer: "hall_senior"),

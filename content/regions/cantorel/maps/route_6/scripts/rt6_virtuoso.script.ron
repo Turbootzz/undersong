@@ -1,6 +1,10 @@
 // The audition circuit never closes (rematch: the era's rich trainer).
+// P20: no defeated-branch by design — the recontext rides the intro,
+// one line either way, so recorded rematches stay input-aligned.
 [
-    Say(who: "rt6_virtuoso", key: "rt6.virtuoso.intro"),
+    If(flag: "story.roster.read",
+       then: [Say(who: "rt6_virtuoso", key: "rt6.virtuoso.intro.recontext")],
+       else: [Say(who: "rt6_virtuoso", key: "rt6.virtuoso.intro")]),
     StartBattle(trainer: "rt6_virtuoso"),
     End,
 ]

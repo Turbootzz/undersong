@@ -1,7 +1,10 @@
-// Beat 4: dead air. (doc 01 §5; the recontext pair lands in Act 2.)
+// Beat 4: dead air. (doc 01 §5; the P6-planned recontext pair lands
+// here in P20 — same line count both branches, replay-stable.)
 [
     Say(who: "fisher_old", key: "quietcoast.fisher.1"),
-    Say(who: "fisher_old", key: "quietcoast.fisher.2"),
+    If(flag: "story.roster.read",
+       then: [Say(who: "fisher_old", key: "quietcoast.fisher.2.recontext")],
+       else: [Say(who: "fisher_old", key: "quietcoast.fisher.2")]),
     SetFlag(flag: "met.fisher_old"),
     End,
 ]

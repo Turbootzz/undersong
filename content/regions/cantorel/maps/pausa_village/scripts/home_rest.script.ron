@@ -1,5 +1,9 @@
+// P20 recontext pair: the six notes (doc 01 §4 plant — she lost on
+// purpose; the line never says so).
 [
-    Say(who: "mom", key: "pausa.mom.hums"),
+    If(flag: "story.roster.read",
+       then: [Say(who: "mom", key: "pausa.mom.hums.recontext")],
+       else: [Say(who: "mom", key: "pausa.mom.hums")]),
     HealParty,
     Say(who: "mom", key: "pausa.mom.rested"),
     End,

@@ -1,0 +1,7 @@
+// P20 flavor NPC: the substation's standby load.
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "volt_meter_reader", key: "volt.meter.talk.late")],
+       else: [Say(who: "volt_meter_reader", key: "volt.meter.talk")]),
+    End,
+]

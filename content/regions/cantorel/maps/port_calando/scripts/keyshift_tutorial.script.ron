@@ -1,8 +1,12 @@
 // The Keyshift tutorial moment (beat 2 rumor paid off): a collector
-// shows off a keyshifted Mote.
+// shows off a keyshifted Mote. P20: the repeat line re-reads after
+// the maintenance door.
 [
     If(flag: "story.keyshift.seen",
-       then: [Say(who: "keyshift_buff", key: "keyshift.again"), End],
+       then: [If(flag: "story.door.seen",
+                 then: [Say(who: "keyshift_buff", key: "keyshift.again.recontext")],
+                 else: [Say(who: "keyshift_buff", key: "keyshift.again")]),
+              End],
        else: []),
     Say(who: "keyshift_buff", key: "keyshift.1"),
     Say(who: "keyshift_buff", key: "keyshift.2"),

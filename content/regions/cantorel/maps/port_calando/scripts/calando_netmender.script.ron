@@ -1,0 +1,7 @@
+// P20 flavor NPC: Quiet Coast nets wear out tired (dex.mutewing).
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "calando_netmender", key: "calando.netmender.talk.late")],
+       else: [Say(who: "calando_netmender", key: "calando.netmender.talk")]),
+    End,
+]

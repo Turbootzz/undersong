@@ -1,0 +1,8 @@
+// P20 flavor NPC: stilts around the Mirefall beds (dex.mirefall);
+// the opera house's stone footings.
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "fen_stiltwright", key: "fen.stiltwright.talk.late")],
+       else: [Say(who: "fen_stiltwright", key: "fen.stiltwright.talk")]),
+    End,
+]

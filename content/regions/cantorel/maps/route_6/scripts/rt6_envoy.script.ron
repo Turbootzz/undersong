@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.rt6_envoy.defeated",
-       then: [Say(who: "rt6_envoy", key: "rt6.envoy.after"), End],
+       then: [If(flag: "story.roster.read",
+                 then: [Say(who: "rt6_envoy", key: "rt6.envoy.after.recontext")],
+                 else: [Say(who: "rt6_envoy", key: "rt6.envoy.after")]),
+              End],
        else: []),
     Say(who: "rt6_envoy", key: "rt6.envoy.intro"),
     StartBattle(trainer: "rt6_envoy"),

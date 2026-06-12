@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.rt5b_bogger.defeated",
-       then: [Say(who: "rt5b_bogger", key: "rt5b.bogger.after"), End],
+       then: [If(flag: "story.roster.read",
+                 then: [Say(who: "rt5b_bogger", key: "rt5b.bogger.after.recontext")],
+                 else: [Say(who: "rt5b_bogger", key: "rt5b.bogger.after")]),
+              End],
        else: []),
     Say(who: "rt5b_bogger", key: "rt5b.bogger.intro"),
     StartBattle(trainer: "rt5b_bogger"),

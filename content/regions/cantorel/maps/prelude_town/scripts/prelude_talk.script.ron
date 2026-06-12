@@ -1,6 +1,10 @@
+// P20 recontext pair (doc 01 §9 re-read rule): once the maintenance
+// door is seen, Ona's portrait joke stops being a joke.
 [
-    If(flag: "hall.1.cleared",
-       then: [Say(who: "townsfolk_ona", key: "prelude.ona.after_badge")],
-       else: [Say(who: "townsfolk_ona", key: "prelude.ona.hall_hint")]),
+    If(flag: "story.door.seen",
+       then: [Say(who: "townsfolk_ona", key: "prelude.ona.recontext")],
+       else: [If(flag: "hall.1.cleared",
+                 then: [Say(who: "townsfolk_ona", key: "prelude.ona.after_badge")],
+                 else: [Say(who: "townsfolk_ona", key: "prelude.ona.hall_hint")])]),
     End,
 ]

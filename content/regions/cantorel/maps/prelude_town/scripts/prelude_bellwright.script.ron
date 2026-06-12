@@ -1,0 +1,7 @@
+// P20 flavor NPC: bell maintenance as laundry-worldbuilding.
+[
+    If(flag: "story.door.seen",
+       then: [Say(who: "prelude_bellwright", key: "prelude.bellwright.talk.late")],
+       else: [Say(who: "prelude_bellwright", key: "prelude.bellwright.talk")]),
+    End,
+]

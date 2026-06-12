@@ -93,6 +93,11 @@ MapDef(
     ],
     npcs: [
         (id: "townsfolk_ona", at: (8, 5), facing: Down, sprite: "npc.villager", script: Some("prelude_talk.script.ron"), behavior: Wander(radius: 2), sight_range: 0),
+        // P20 flavor NPCs: parked against the fences, off every corridor
+        // between the entrances, doors, and the hall (replay-safe).
+        (id: "prelude_kid", at: (1, 1), facing: Right, sprite: "npc.villager", script: Some("prelude_kid.script.ron"), behavior: Static, sight_range: 0),
+        (id: "prelude_bellwright", at: (1, 12), facing: Down, sprite: "npc.villager", script: Some("prelude_bellwright.script.ron"), behavior: Static, sight_range: 0),
+        (id: "prelude_janitor", at: (20, 12), facing: Left, sprite: "npc.villager2", script: Some("prelude_janitor.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_prelude"),
 )

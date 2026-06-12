@@ -1,0 +1,8 @@
+// P20 flavor NPC: the hall janitor reviews challengers like a food
+// critic (doc 01 §9 humor source).
+[
+    If(flag: "hall.1.cleared",
+       then: [Say(who: "prelude_janitor", key: "prelude.janitor.talk.badged")],
+       else: [Say(who: "prelude_janitor", key: "prelude.janitor.talk")]),
+    End,
+]

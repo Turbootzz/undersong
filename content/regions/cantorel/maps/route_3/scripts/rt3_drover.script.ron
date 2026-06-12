@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.rt3_drover.defeated",
-       then: [Say(who: "rt3_drover", key: "rt3.drover.after"), End],
+       then: [If(flag: "story.door.seen",
+                 then: [Say(who: "rt3_drover", key: "rt3.drover.after.recontext")],
+                 else: [Say(who: "rt3_drover", key: "rt3.drover.after")]),
+              End],
        else: []),
     Say(who: "rt3_drover", key: "rt3.drover.intro"),
     StartBattle(trainer: "rt3_drover"),

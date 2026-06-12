@@ -106,6 +106,11 @@ MapDef(
     npcs: [
         (id: "echo_keeper_4", at: (5, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_4.script.ron"), behavior: Static, sight_range: 0),
         (id: "volt_worker", at: (13, 6), facing: Down, sprite: "npc.villager", script: Some("voltaccia_talk.script.ron"), behavior: Static, sight_range: 0),
+        // P20 flavor NPCs: SW corner, NW corner, NE pocket behind the
+        // hall — off the exit columns and door rows (replay-safe).
+        (id: "volt_apprentice", at: (1, 1), facing: Right, sprite: "npc.villager", script: Some("volt_apprentice.script.ron"), behavior: Static, sight_range: 0),
+        (id: "volt_dispatcher", at: (1, 14), facing: Down, sprite: "npc.villager2", script: Some("volt_dispatcher.script.ron"), behavior: Static, sight_range: 0),
+        (id: "volt_meter_reader", at: (22, 14), facing: Down, sprite: "npc.villager", script: Some("volt_meter_reader.script.ron"), behavior: Static, sight_range: 0),
     ],
     weather: Some(Heatwave),
     music: Some("town_calando"),

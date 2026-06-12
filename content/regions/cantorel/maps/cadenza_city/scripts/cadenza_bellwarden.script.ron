@@ -1,0 +1,7 @@
+// P20 flavor NPC: the tower Carilloy tolls a beat behind (dex.carilloy).
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "cadenza_bellwarden", key: "cadenza.bellwarden.talk.late")],
+       else: [Say(who: "cadenza_bellwarden", key: "cadenza.bellwarden.talk")]),
+    End,
+]

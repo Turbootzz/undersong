@@ -106,6 +106,11 @@ MapDef(
     npcs: [
         (id: "arbor_elder", at: (7, 6), facing: Down, sprite: "npc.villager", script: Some("arbor_elder.script.ron"), behavior: Static, sight_range: 0),
         (id: "echo_keeper_1", at: (13, 5), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_2.script.ron"), behavior: Static, sight_range: 0),
+        // P20 flavor NPCs: south fence, NE pocket behind the hall —
+        // off every entrance/door corridor (replay-safe).
+        (id: "vale_apiarist", at: (3, 1), facing: Right, sprite: "npc.villager", script: Some("vale_apiarist.script.ron"), behavior: Static, sight_range: 0),
+        (id: "vale_florist", at: (22, 14), facing: Down, sprite: "npc.villager2", script: Some("vale_florist.script.ron"), behavior: Static, sight_range: 0),
+        (id: "vale_porter", at: (20, 13), facing: Left, sprite: "npc.villager", script: Some("vale_porter.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_arbor"),
 )

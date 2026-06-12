@@ -96,6 +96,10 @@ MapDef(
     npcs: [
         (id: "echo_keeper_5", at: (6, 4), facing: Down, sprite: "npc.villager", script: Some("anchor_echo_5.script.ron"), behavior: Static, sight_range: 0),
         (id: "fen_elder", at: (13, 5), facing: Down, sprite: "npc.villager", script: Some("hollowfen_talk.script.ron"), behavior: Static, sight_range: 0),
+        // P20 flavor NPCs: SW corner and NE pocket — off the west entry
+        // rows, door row, and the pass column (replay-safe).
+        (id: "fen_stiltwright", at: (1, 1), facing: Right, sprite: "npc.villager", script: Some("fen_stiltwright.script.ron"), behavior: Static, sight_range: 0),
+        (id: "fen_lanternist", at: (20, 12), facing: Left, sprite: "npc.villager2", script: Some("fen_lanternist.script.ron"), behavior: Static, sight_range: 0),
     ],
     music: Some("town_arbor"),
 )

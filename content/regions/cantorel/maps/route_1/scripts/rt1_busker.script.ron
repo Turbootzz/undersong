@@ -1,6 +1,9 @@
 [
     If(flag: "trainer.rt1_busker.defeated",
-       then: [Say(who: "rt1_busker", key: "rt1.busker.after"), End],
+       then: [If(flag: "story.door.seen",
+                 then: [Say(who: "rt1_busker", key: "rt1.busker.after.recontext")],
+                 else: [Say(who: "rt1_busker", key: "rt1.busker.after")]),
+              End],
        else: []),
     Say(who: "rt1_busker", key: "rt1.busker.intro"),
     StartBattle(trainer: "rt1_busker"),

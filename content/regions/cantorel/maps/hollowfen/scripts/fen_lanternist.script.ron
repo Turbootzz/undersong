@@ -1,0 +1,7 @@
+// P20 flavor NPC: hangs the honest lamps (dex.willowisp).
+[
+    If(flag: "story.roster.read",
+       then: [Say(who: "fen_lanternist", key: "fen.lanternist.talk.late")],
+       else: [Say(who: "fen_lanternist", key: "fen.lanternist.talk")]),
+    End,
+]
