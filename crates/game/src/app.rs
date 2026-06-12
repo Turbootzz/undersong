@@ -396,6 +396,62 @@ fn shadow_child(assets: &AssetServer) -> (Sprite, Transform) {
     )
 }
 
+/// P19 UI skin: a faint paper-grain overlay tiled across a panel.
+/// The texture is mostly transparent, so the panel's BackgroundColor
+/// still does the work — the grain just kills the flatness.
+pub fn paper_overlay(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    assets: &AssetServer,
+) {
+    let mut paper = ImageNode::new(assets.load(art("sprites/ui/paper.png")));
+    paper.image_mode = bevy::ui::widget::NodeImageMode::Tiled {
+        tile_x: true,
+        tile_y: true,
+        stretch_value: 1.0,
+    };
+    parent.spawn((
+        paper,
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(0.0),
+            top: Val::Px(0.0),
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
+        },
+    ));
+}
+
+/// P19 UI skin: gilt corner caps on a panel's four corners (one
+/// 8×8 sprite, flipped per corner).
+pub fn corner_caps(
+    parent: &mut bevy::ecs::hierarchy::ChildSpawnerCommands,
+    assets: &AssetServer,
+) {
+    for (flip_x, flip_y) in [(false, false), (true, false), (false, true), (true, true)] {
+        let mut cap = ImageNode::new(assets.load(art("sprites/ui/corner.png")));
+        cap.flip_x = flip_x;
+        cap.flip_y = flip_y;
+        let mut node = Node {
+            position_type: PositionType::Absolute,
+            width: Val::Px(8.0),
+            height: Val::Px(8.0),
+            ..default()
+        };
+        if flip_x {
+            node.right = Val::Px(0.0);
+        } else {
+            node.left = Val::Px(0.0);
+        }
+        if flip_y {
+            node.bottom = Val::Px(0.0);
+        } else {
+            node.top = Val::Px(0.0);
+        }
+        parent.spawn((cap, node));
+    }
+}
+
 fn quad(color: Color, size: f32) -> Sprite {
     Sprite {
         color,
@@ -426,19 +482,37 @@ fn rebuild_map_if_needed(
     let map = world.0.map();
     // Generated tile art (P10) — interiors share ground id 4 with town
     // building blocks; the indoor flag picks plank floor vs masonry.
-    let ground_tile = |id: u16| match id {
-        1 => "sprites/tiles/grass.png",
-        2 => "sprites/tiles/path.png",
-        3 => "sprites/tiles/water.png",
-        4 => {
-            if map.indoor {
-                "sprites/tiles/floor.png" // solids resolved per-tile below
-            } else {
-                "sprites/tiles/wall.png"
+    // P19: grass/path pick variants by position hash (kills the
+    // repetition shimmer); grass fringes spill onto path/water
+    // neighbors by 4-neighbor mask. Data unchanged — renderer only.
+    let ground_tile = |id: u16, x: u32, y: u32| -> String {
+        match id {
+            1 => match (x * 7 + y * 13) % 3 {
+                0 => "sprites/tiles/grass.png".into(),
+                v => format!("sprites/tiles/grass.{v}.png"),
+            },
+            2 => match (x * 11 + y * 5) % 2 {
+                0 => "sprites/tiles/path.png".into(),
+                _ => "sprites/tiles/path.1.png".into(),
+            },
+            3 => "sprites/tiles/water.png".into(),
+            4 => {
+                if map.indoor {
+                    "sprites/tiles/floor.png".into() // solids resolved per-tile below
+                } else {
+                    "sprites/tiles/wall.png".into()
+                }
             }
+            5 => "sprites/tiles/deep.png".into(),
+            _ => "sprites/tiles/path.png".into(),
         }
-        5 => "sprites/tiles/deep.png",
-        _ => "sprites/tiles/path.png",
+    };
+    let grass_at = |x: i64, y: i64| -> bool {
+        x >= 0
+            && y >= 0
+            && x < i64::from(map.width)
+            && y < i64::from(map.height)
+            && map.ground[map.index(x as u32, y as u32)] == 1
     };
     for y in 0..map.height {
         for x in 0..map.width {
@@ -446,17 +520,48 @@ fn rebuild_map_if_needed(
             let ground = map.ground[index];
             if ground != 0 {
                 let rel = if map.indoor && ground == 4 && map.is_solid(x, y) {
-                    "sprites/tiles/wall_indoor.png"
+                    "sprites/tiles/wall_indoor.png".to_string()
                 } else {
-                    ground_tile(ground)
+                    ground_tile(ground, x, y)
                 };
                 let mut tile = commands.spawn((
                     MapTile,
-                    art_sprite(&assets, rel, TILE),
+                    art_sprite(&assets, &rel, TILE),
                     tile_pos(x, y, 0.0),
                 ));
                 if ground == 3 {
                     tile.insert(WaterTile); // two-frame shimmer (P18)
+                }
+                // Grass fringe overlays (P19): a tuft lip per grassy
+                // side, corner nibs where only the diagonal is grass.
+                if ground == 2 || ground == 3 {
+                    let kind = if ground == 2 { "path" } else { "water" };
+                    let (xi, yi) = (i64::from(x), i64::from(y));
+                    let n = grass_at(xi, yi + 1);
+                    let s = grass_at(xi, yi - 1);
+                    let e = grass_at(xi + 1, yi);
+                    let w = grass_at(xi - 1, yi);
+                    let corners = [
+                        (grass_at(xi + 1, yi + 1) && !n && !e, "ne"),
+                        (grass_at(xi - 1, yi + 1) && !n && !w, "nw"),
+                        (grass_at(xi + 1, yi - 1) && !s && !e, "se"),
+                        (grass_at(xi - 1, yi - 1) && !s && !w, "sw"),
+                    ];
+                    for (hit, piece) in
+                        [(n, "n"), (s, "s"), (e, "e"), (w, "w")].into_iter().chain(corners)
+                    {
+                        if hit {
+                            commands.spawn((
+                                MapTile,
+                                art_sprite(
+                                    &assets,
+                                    &format!("sprites/tiles/fringe_{kind}_{piece}.png"),
+                                    TILE,
+                                ),
+                                tile_pos(x, y, 0.1),
+                            ));
+                        }
+                    }
                 }
             }
             if map.is_patch(x, y) {
@@ -1339,6 +1444,8 @@ fn dialogue_ui(
                                 BackgroundColor(theme.color(&theme.palette.parchment)),
                             ))
                             .with_children(|panel| {
+                                paper_overlay(panel, &assets);
+                                corner_caps(panel, &assets);
                                 // Four staff lines (doc 05 §4 motif).
                                 for i in 0..4 {
                                     panel.spawn((
@@ -2577,7 +2684,7 @@ fn night_tint(
             && world.0.party_has_tag("performer.light"));
     let wants = world.0.is_night() || dark_map;
     // High contrast lightens the veil so sprites stay readable.
-    let mut alpha = if dark_map { 0.6 } else { 0.35 };
+    let mut alpha = if dark_map { 0.6 } else { 0.48 };
     if settings.0.high_contrast {
         alpha *= 0.6;
     }

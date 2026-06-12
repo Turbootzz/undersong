@@ -34,6 +34,7 @@ impl Plugin for BattleUiPlugin {
                 (
                     theater_tick,
                     battle_input,
+                    command_pulse,
                     refresh_sprites,
                     hp_drain,
                     refresh_panels,
@@ -86,6 +87,11 @@ struct MessageText;
 
 #[derive(Component)]
 struct CommandRow(usize);
+
+/// The little glyph leading a command label (hidden in move mode —
+/// the cells hold move names there).
+#[derive(Component)]
+struct CommandIcon;
 
 #[derive(Component)]
 struct FoeSprite;
@@ -848,6 +854,8 @@ fn battle_enter(
                 BorderColor::all(theme.color(&theme.palette.ink)),
             ))
             .with_children(|plate| {
+                crate::app::paper_overlay(plate, &assets);
+                crate::app::corner_caps(plate, &assets);
                 plate.spawn((
                     FoePlateText,
                     Text::new(""),
@@ -891,6 +899,8 @@ fn battle_enter(
                 BorderColor::all(theme.color(&theme.palette.ink)),
             ))
             .with_children(|plate| {
+                crate::app::paper_overlay(plate, &assets);
+                crate::app::corner_caps(plate, &assets);
                 plate.spawn((
                     PlayerPlateText,
                     Text::new(""),
@@ -951,15 +961,31 @@ fn battle_enter(
                 BackgroundColor(theme.color(&theme.palette.ink)),
             ))
             .with_children(|row| {
+                // Command icons (P19): tiny glyphs leading each label.
+                const ICONS: [&str; 4] = ["fight", "bell", "tonic", "run"];
                 for (index, label) in COMMANDS.iter().enumerate() {
                     row.spawn((
                         CommandRow(index),
                         Node {
                             flex_grow: 1.0,
                             padding: UiRect::all(Val::Px(5.0)),
+                            column_gap: Val::Px(4.0),
+                            align_items: AlignItems::Center,
                             ..default()
                         },
                         BackgroundColor(theme.color(&theme.palette.parchment)),
+                    ))
+                    .with_child((
+                        CommandIcon,
+                        ImageNode::new(assets.load(game::art::art(&format!(
+                            "sprites/ui/icon_{}.png",
+                            ICONS[index]
+                        )))),
+                        Node {
+                            width: Val::Px(12.0),
+                            height: Val::Px(12.0),
+                            ..default()
+                        },
                     ))
                     .with_child((
                         Text::new(*label),
@@ -1954,6 +1980,35 @@ fn apply_fx(
             paint(&mut image);
         }
         fx.flash = if alive { Some((side, remaining)) } else { None };
+    }
+}
+
+/// The gilt sweep (P19): the selected command breathes — a slow
+/// brightness pulse over the gilt highlight battle_input painted
+/// earlier this frame. Icons hide in move mode (cells hold move
+/// names there).
+fn command_pulse(
+    time: Res<Time>,
+    theme: Res<Theme>,
+    cursor: Res<BattleCursor>,
+    mut rows: Query<(&CommandRow, &mut BackgroundColor)>,
+    mut icons: Query<&mut Visibility, With<CommandIcon>>,
+) {
+    let pulse = 1.0 + 0.10 * (time.elapsed_secs() * 4.0).sin();
+    for (row, mut background) in &mut rows {
+        if row.0 == cursor.index {
+            background.0 = shade(theme.color(&theme.palette.gilt), pulse);
+        }
+    }
+    let wanted = if cursor.mode == 1 {
+        Visibility::Hidden
+    } else {
+        Visibility::Inherited
+    };
+    for mut visibility in &mut icons {
+        if *visibility != wanted {
+            *visibility = wanted;
+        }
     }
 }
 

@@ -209,6 +209,7 @@ fn run() -> Result<bool> {
             let content = PathBuf::from(value("--content", "content"));
             let out = PathBuf::from(value("--out", "assets"));
             let tiles = sprites::render_tiles(&out.join("sprites/tiles"))?;
+            let ui = sprites::render_ui(&out.join("sprites/ui"))?;
             let mut chars = sprites::render_characters(&out.join("sprites/chars"))?;
             sprites::render_platform(&out.join("sprites/battle"))?;
             let fx = effects::render_effects(&out.join("sprites/fx"))?
@@ -233,7 +234,7 @@ fn run() -> Result<bool> {
             }
             let stars = stars::render_stars(&out.join("sprites/monsters"))?;
             println!(
-                "sprites: {tiles} tiles, {chars} character frames, {fx} fx frames, {creatures} creatures ({stars} hand-authored) → {}",
+                "sprites: {tiles} tiles, {ui} ui, {chars} character frames, {fx} fx frames, {creatures} creatures ({stars} hand-authored) → {}",
                 out.display()
             );
             Ok(true)
