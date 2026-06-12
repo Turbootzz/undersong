@@ -441,22 +441,22 @@ docs/playtests/); all text renders in the pixel font with no tofu.
 
 ## P20 — Sound & story breath
 
-- [ ] **Story themes**: dedicated stems — Lull's theme (sparse, wrong-
+- [x] **Story themes**: dedicated stems — Lull's theme (sparse, wrong-
       key lullaby), Vesper's theme (low strings, held rests), per-ending
       credits themes (Da Capo = the main theme again, slower; Tacet =
       near-silence with one voice; Chorus = the main theme, full band),
       a hall-final theme for Ilva/Calder. Track table in `tools music`.
-- [ ] **Jingles**: victory (4 bars), capture success, evolution fanfare,
+- [x] **Jingles**: victory (4 bars), capture success, evolution fanfare,
       badge get (replaces the bare cue), heal chime rework. Wire into
       battle_ui/world events.
-- [ ] **Chat sound polish**: per-character typewriter blips (P17) get
+- [x] **Chat sound polish**: per-character typewriter blips (P17) get
       per-speaker pitch (hash of the speaker key), narrator stays
       silent-soft.
-- [ ] **Light story expansion**: the parked 25 recontext pairs (doc 04
+- [x] **Light story expansion**: the parked 25 recontext pairs (doc 04
       §8 pattern — plain line + post-Roster variant per named NPC);
       2-3 more flavor NPCs per hall town with act-aware lines;
       evolution-scene strings; keep it data-only (content/ + strings).
-- [ ] **Self-review + phase review**; final arc STATUS.
+- [x] **Self-review + phase review**; final arc STATUS.
 
 **Gate P20:** every story beat named above has its own audible theme in
 a harness film; recontext pairs counted in STATUS; validate 0/0.
@@ -479,6 +479,71 @@ a harness film; recontext pairs counted in STATUS; validate 0/0.
 ---
 
 ## STATUS
+
+### 2026-06-12 — P20 complete — THE LOOK & FEEL ARC (P17–P20) DONE
+
+**Built:** Six story stems — lull_theme (a 3/4 music-box lullaby
+whose every lead note lands deliberately wrong over the pad),
+vesper_theme (bare fifths, held tones, five beats of measured
+silence closing each phrase), hall_final (the hall engine escalated
+for Ilva and Calder), and three arrangements of the main theme from
+the same seed for the three endings (full band / slower and
+stripped / one lone voice at peak 0.056). Five jingles scored with
+the synth voices: victory (loops as the post-battle track), capture,
+evolution fanfare, badge flourish (both regions' badges counted),
+and the nurse's hummed heal — now actually wired through a new
+PartyHealed event. Typewriter blips take per-speaker pitch from the
+speaker's name; the narrator stays a hush. The story breathes: the
+parked 25 recontext pairs land (every branch Say-count-aligned so
+all six replays stayed green without re-recording), 17 flavor NPCs
+across six hall towns with act-aware lines, and the evolution scene
+reads from the string table in our own idiom ("Listen — {0}'s phrase
+is breaking open!").
+
+**Gate P20:** story themes verified audible — boot-battle films of
+admin_lull / vesper_epilogue / maestro_ilva each load their stem
+with zero audio errors (docs/playtests/p20/); the credits override
+carries each ending's arrangement and leaves with the roll; the
+evolution film shows the scene + fanfare + the new line. Recontext
+pairs: 25 new (28 total with the P6 trio), both trigger flags
+verified set by act-2/3 scripts. validate 0/0; 201 workspace tests
+(6 new music tests assert Lull's semitone clash note-by-note,
+Vesper's rests, tacet's theme identity); clippy clean.
+
+**Phase review:** 5-lens adversarial workflow (19 agents) over
+`p20-start..HEAD`: 14 raw → 13 confirmed (~6 distinct), 1 refuted.
+All fixed (f4db2a1): the forever-looping credits override, the
+never-played heal hum, the verbatim era text in the evolution line
+(an original-IP catch — golden rule honored), the lull loop seam,
+the mid-scene override clear, the skalden badge gap.
+
+**Playfeel review (the agent's eyes, closing the arc):** What P17
+started as mechanics now lands as theater with a score under it —
+the capture's bell-to-settle line resolving into its jingle while
+the battle theme holds is the game's best ten seconds. Lull's
+wrong-key lullaby is genuinely uneasy on paper (every lead note a
+semitone off a sounding chord tone) and her dark wisp on the new
+skinned stage sells the scene. The Mom recontext pair — six hummed
+notes that turn out to be a seven-note audition phrase she never
+finishes — is the single best line the project has produced. Honest
+residuals: films carry no audio, so the sound design is verified by
+construction and structural tests rather than ears — the user's
+windowed session is the real gate; the battle stage background
+remains a flat gradient (parked); and the world still wants cast
+shadows (P19's named gap).
+
+**THE ARC, CLOSED:** P17 the battle theater (sequenced anims,
+typewriter, capture/evolution scenes); P18 the overworld feel
+(spotted!, walk v2, shadows, weather); P19 beauty pass 2 (pixel
+font, fringes, the audited palette, monsters with carriage, the
+skinned UI); P20 sound & story breath. Four adversarial reviews,
+~31 distinct findings fixed, zero replay re-records needed, 195→201
+tests. Remaining ideas live in §Icebox and the named gaps above.
+
+**For the user:** boot it and listen — the films can't. The four
+phase evidence sets live under docs/playtests/ (p17/, theater-*,
+walk-*, p18/, p19/, p20/).
+
 
 ### 2026-06-12 — P19 complete (beauty pass 2)
 
