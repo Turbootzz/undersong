@@ -1991,23 +1991,38 @@ fn command_pulse(
     time: Res<Time>,
     theme: Res<Theme>,
     cursor: Res<BattleCursor>,
+    theater: Res<Theater>,
+    world: Res<WorldRes>,
     mut rows: Query<(&CommandRow, &mut BackgroundColor)>,
-    mut icons: Query<&mut Visibility, With<CommandIcon>>,
+    mut icons: Query<&mut Node, With<CommandIcon>>,
 ) {
+    // Icons leave LAYOUT in move mode (Visibility::Hidden would keep
+    // their 12px + gap as a dead indent in the move-name cells).
+    let wanted = if cursor.mode == 1 {
+        Display::None
+    } else {
+        Display::Flex
+    };
+    for mut node in &mut icons {
+        if node.display != wanted {
+            node.display = wanted;
+        }
+    }
+    // The pulse rides only while battle_input actually paints the rows
+    // — during the Shift offer the cursor indexes the BENCH, and an
+    // unguarded pulse would freeze stray cells gilt.
+    if !theater.idle()
+        || world.0.pending_shift
+        || !world.0.pending_learn_queue.is_empty()
+        || !world.0.pending_evolutions.is_empty()
+        || world.0.battle.is_none()
+    {
+        return;
+    }
     let pulse = 1.0 + 0.10 * (time.elapsed_secs() * 4.0).sin();
     for (row, mut background) in &mut rows {
         if row.0 == cursor.index {
             background.0 = shade(theme.color(&theme.palette.gilt), pulse);
-        }
-    }
-    let wanted = if cursor.mode == 1 {
-        Visibility::Hidden
-    } else {
-        Visibility::Inherited
-    };
-    for mut visibility in &mut icons {
-        if *visibility != wanted {
-            *visibility = wanted;
         }
     }
 }

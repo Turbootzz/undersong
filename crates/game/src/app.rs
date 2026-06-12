@@ -74,7 +74,6 @@ impl Plugin for UndersongPlugin {
                 Update,
                 (
                     audio_unlock,
-                    pixel_font_swap,
                     music_director,
                     credits_watch,
                     screenshot_key,
@@ -257,33 +256,6 @@ struct FlurrySpeck(u32);
 #[derive(Resource)]
 struct PreloadedArt(#[expect(dead_code, reason = "held to pin the assets")] Vec<Handle<Image>>);
 
-/// The vendored monogram pixel font (P19, CC0 — see
-/// assets/fonts/LICENSE-monogram.txt). It replaces Bevy's default
-/// font asset, so every `TextFont::from_font_size` in the codebase
-/// picks it up with no per-site plumbing. Native swaps synchronously
-/// in boot_load; wasm (no fs) swaps via this handle as soon as the
-/// asset lands — early enough, since wasm boots into the title.
-#[derive(Resource)]
-struct PixelFontHandle(Handle<Font>);
-
-fn pixel_font_swap(
-    handle: Option<Res<PixelFontHandle>>,
-    mut fonts: ResMut<Assets<Font>>,
-    mut done: Local<bool>,
-) {
-    if *done {
-        return;
-    }
-    let Some(handle) = handle else { return };
-    let Some(font) = fonts.get(&handle.0).cloned() else {
-        return;
-    };
-    if fonts.insert(&TextFont::default().font, font).is_err() {
-        bevy::log::warn!("pixel font: default-font swap failed");
-    }
-    *done = true;
-}
-
 fn boot_load(
     mut commands: Commands,
     assets: Res<AssetServer>,
@@ -291,20 +263,20 @@ fn boot_load(
     mut next: ResMut<NextState<AppState>>,
 ) {
     // The pixel font must own the default-font handle BEFORE any text
-    // spawns — glyph atlases are cached per font id, so a later swap
-    // never repaints text that already rendered once.
-    #[cfg(not(target_arch = "wasm32"))]
-    match std::fs::read("assets/fonts/monogram.ttf") {
-        Ok(bytes) => match Font::try_from_bytes(bytes) {
-            Ok(font) => {
-                let _ = fonts.insert(&TextFont::default().font, font);
-            }
-            Err(error) => bevy::log::warn!("pixel font parse failed: {error:?}"),
-        },
-        Err(error) => bevy::log::warn!("pixel font read failed: {error}"),
+    // spawns — bevy_text registers a font face once per asset id and
+    // never refreshes it, so a later swap is a permanent no-op. The
+    // bytes are embedded: no cwd assumption natively, no async race on
+    // wasm (P19 review).
+    let monogram = include_bytes!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../assets/fonts/monogram.ttf"
+    ));
+    match Font::try_from_bytes(monogram.to_vec()) {
+        Ok(font) => {
+            let _ = fonts.insert(&TextFont::default().font, font);
+        }
+        Err(error) => bevy::log::warn!("pixel font parse failed: {error:?}"),
     }
-    #[cfg(target_arch = "wasm32")]
-    commands.insert_resource(PixelFontHandle(assets.load("fonts/monogram.ttf")));
 
     let content = std::path::Path::new("content");
     let palette = data::load_palette(content).expect("palette.ron must load");
@@ -485,13 +457,20 @@ fn rebuild_map_if_needed(
     // P19: grass/path pick variants by position hash (kills the
     // repetition shimmer); grass fringes spill onto path/water
     // neighbors by 4-neighbor mask. Data unchanged — renderer only.
+    // A real avalanche hash: linear picks like (x*7 + y*13) % 3 collapse
+    // to (x + y) % 3 and tile the world in diagonal stripes.
+    let scatter = |x: u32, y: u32| -> u32 {
+        let h = x.wrapping_mul(0x9E37_79B1) ^ y.wrapping_mul(0x85EB_CA77);
+        let h = (h ^ (h >> 16)).wrapping_mul(0x45D9_F3B5);
+        h ^ (h >> 16)
+    };
     let ground_tile = |id: u16, x: u32, y: u32| -> String {
         match id {
-            1 => match (x * 7 + y * 13) % 3 {
+            1 => match scatter(x, y) % 3 {
                 0 => "sprites/tiles/grass.png".into(),
                 v => format!("sprites/tiles/grass.{v}.png"),
             },
-            2 => match (x * 11 + y * 5) % 2 {
+            2 => match scatter(x, y) % 2 {
                 0 => "sprites/tiles/path.png".into(),
                 _ => "sprites/tiles/path.1.png".into(),
             },

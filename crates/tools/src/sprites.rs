@@ -450,7 +450,7 @@ fn water_surface(img: &mut RgbaImage, base: Rgba<u8>, rng: &mut BattleRng, phase
     // dark wave troughs (P19 audit): static between the two shimmer
     // frames — only the highlights slide — value lands near 85.
     for row in 0..4u32 {
-        let y = 8 + row * 8 + rng.below(2);
+        let y = 5 + row * 7 + rng.below(2);
         let x0 = rng.below(TILE);
         let trough = shade(base, 0.48);
         for dx in 0..(5 + rng.below(5)) {
@@ -2197,12 +2197,12 @@ fn drop_shadow() -> RgbaImage {
 /// fleck flies a straight line; frame 2 drops half of them (sparse).
 fn rustle_frame(frame: u32) -> RgbaImage {
     let mut img = RgbaImage::new(TILE, TILE);
-    let base = hex(0x5fa653);
+    let base = hex(GRASS_BASE);
     let greens = [
         shade(base, 0.7),
         base,
-        shade(base, 1.15),
-        shade(hex(0x6a9a4e), 0.8),
+        hex(GRASS_GLINT),
+        hex(GRASS_DEEP),
     ];
     let alpha = [255u8, 200, 110][frame as usize];
     let mut put = |x: i32, y: i32, mut c: Rgba<u8>| {

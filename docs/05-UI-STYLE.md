@@ -41,9 +41,11 @@ Night palette: multiply overworld by `#9aa0c8` at 60% (data-driven curve per hou
   at boot, so all text is pixel type with no per-site plumbing.
   (m5x7/m6x11 were the original plan; monogram won on glyph coverage —
   577 glyphs incl. em-dash, cedi, ellipsis, arrows — and CC0.)
-- Sizes ride the pixel grid: with UiScale 8/3, crisp sizes are
-  multiples of 2.25 — **9.0 body**, 6.75 fine print, 11.25 headings,
-  27.0 title. Never scale fonts off-grid.
+- Sizes ride the pixel grid: monogram is 16 design px per em, so with
+  UiScale 8/3 the on-grid logical sizes are multiples of **6.0** on
+  every display (6.0 fine print, 12.0 headings) or multiples of 3.0
+  on 2x displays (**9.0 body**, 27.0 title — accepted: crisp on 2x,
+  slightly uneven at 1x). Never scale fonts off this grid.
 - Text speed: instant per-character reveal at 30/60/instant chars-per-tick (Settings);
   default fast. A/confirm dumps the full page (era convention).
 

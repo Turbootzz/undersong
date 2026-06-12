@@ -758,7 +758,7 @@ fn screens_visual(
                 let hp_text = commands
                     .spawn((
                         Text::new(format!("{hp}/{max}")),
-                        TextFont::from_font_size(6.75),
+                        TextFont::from_font_size(6.0),
                         TextColor(theme.color(&theme.palette.ink_soft)),
                     ))
                     .id();
@@ -787,7 +787,7 @@ fn screens_visual(
                 let unknown = commands
                     .spawn((
                         Text::new("- unheard -"),
-                        TextFont::from_font_size(11.25),
+                        TextFont::from_font_size(12.0),
                         TextColor(theme.color(&theme.palette.ink_soft)),
                     ))
                     .id();
@@ -859,7 +859,7 @@ fn screens_visual(
                         let tag = commands
                             .spawn((
                                 Text::new(label),
-                                TextFont::from_font_size(6.75),
+                                TextFont::from_font_size(6.0),
                                 TextColor(theme.color(&theme.palette.ink_soft)),
                                 Node {
                                     width: Val::Px(26.0),
@@ -897,7 +897,7 @@ fn screens_visual(
                 let entry = commands
                     .spawn((
                         Text::new(world.text(&format!("dex.{species}")).to_string()),
-                        TextFont::from_font_size(6.75),
+                        TextFont::from_font_size(6.0),
                         TextColor(theme.color(&theme.palette.ink)),
                     ))
                     .id();
